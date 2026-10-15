@@ -1,0 +1,20 @@
+{
+  "name": "fono-ludica-pediatrica-prototipo",
+  "version": "2.0.0",
+  "description": "Prototipo interactivo de alta fidelidad de la aplicación fono-lúdica para estimulación y mejora de la articulación fonética en preescolares de Lima Metropolitana",
+  "scripts": {
+    "dev": "npx serve . -l 5173",
+    "start": "npx serve . -l 5173"
+  },
+  "keywords": [
+    "ihc",
+    "speech-therapy",
+    "fonologia",
+    "preescolar",
+    "cci",
+    "wcag",
+    "serious-game"
+  ],
+  "author": "Equipo de Investigación IHC - UNMSM",
+  "license": "MIT"
+}
