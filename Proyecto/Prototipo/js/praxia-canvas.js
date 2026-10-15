@@ -187,16 +187,15 @@ class PraxiaCanvasEngine {
     }
     ctx.globalAlpha = 1.0;
 
-    // --- 6. RÓTULOS DIDÁCTICOS PEDIÁTRICOS ---
-    ctx.font = "bold 13px 'Fredoka', sans-serif";
-    ctx.fillStyle = '#2E7D32';
-    ctx.fillText("Alvéolo (Arrugas)", 130, 36);
-
-    ctx.fillStyle = '#C62828';
-    ctx.fillText("Lengua", 95, 215);
-
-    ctx.fillStyle = '#0277BD';
-    ctx.fillText("Aire", 260, 120);
+    // --- 6. INDICADOR VISUAL SUAVE (Sin textos anatómicos complejos) ---
+    // El punto verde y el movimiento de la lengua muestran la posición de manera 100% visual
+    if (this.currentPhoneme === 'r' || this.currentPhoneme === 'rr' || this.currentPhoneme === 'l') {
+      ctx.beginPath();
+      ctx.arc(200, 72, 10 + Math.sin(t * 3) * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
 
     requestAnimationFrame(() => this.render());
   }

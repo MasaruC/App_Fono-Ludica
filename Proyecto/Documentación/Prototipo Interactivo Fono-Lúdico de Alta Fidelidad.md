@@ -240,27 +240,27 @@ graph TD
 
 ### 6. Biofeedback Físico: Praxia Bucofacial Anatómica 2D en Tiempo Real
 
-> [!IMPORTANT] 🖼️ **ESPACIO RESERVADO PARA CAPTURA VISUAL: BIOFEEDBACK FÍSICO: PRAXIA BUCOFACIAL ANATÓMICA 2D EN TIEMPO REAL**
+> [!IMPORTANT] 🖼️ **ESPACIO RESERVADO PARA CAPTURA VISUAL: BIOFEEDBACK FÍSICO: MODELADO LINGUAL 2D TOTALMENTE NARRADO**
 > - **Archivo de Imagen Asignado:** [`capturas/06_praxia_bucofacial_2d.png`](file:///d:/.Antigravity/IHC/Proyecto/Documentación/capturas/06_praxia_bucofacial_2d.png)
 > - **Ruta / Disparador en Prototipo:** `Modal emergente de Praxias (#praxiaModal)`
 > - **Resolución Estándar Recomendada:** `1366 × 768 px` (Ratio 16:9 Panorámico Landscape)
 > - **Composición Visual y Elementos que Deben Figurar:**
->   Modal interactivo de modelado fonoaudiológico. Debe ilustrar: (1) Canvas 2D renderizado a 60 FPS con corte sagital de la cavidad bucal (paladar, alvéolos, úvula, incisivos y lengua dinámica en rosa cálido modelando la elevación apical); (2) Partículas de aire fónico azul celeste mostrando el flujo espiratorio; (3) Selector táctil de 6 fonemas clínicos (/r, rr, s, l, k, p/) y botón de pausa/reproducción.
+>   Modal interactivo de modelado lingual para preescolares. Debe ilustrar: (1) Canvas 2D renderizado a 60 FPS con movimiento lingual vectorial limpio (sin rótulos anatómicos médicos estáticos que saturen la vista); (2) Partículas de aire fónico azul mostrando el flujo de soplo; (3) Tarjeta de narración oral de Ava con avatar, bocadillo y botón `🔊 Escuchar` para reproducir la locución sintetizada; (4) Selector adaptado con nombres cotidianos (*"Sonido R (como Pera 🍐)"*, *"Sonido RR (como Carro 🚗)"*, etc., sin la palabra "fonema") y botón accesible de retorno `Volver al Juego`.
 
 > [!TIP] 📸 Guía de Inspección y Obtención de la Captura
-> - **Ruta / URL en Servidor Local:** Dentro de la pantalla de ejercicio fónico, pulsar la tarjeta **"👅 Praxia Bucofacial"** (`#btnOpenMiniPraxia`), o acceder desde la pantalla de Pares Mínimos.
+> - **Ruta / URL en Servidor Local:** Dentro de la pantalla de ejercicio fónico, pulsar el botón **"👅"** (`#btnOpenMiniPraxia`), o acceder desde la intervención asistida DDA.
 > - **Pasos de Navegación:** Despliega el modal emergente `#praxiaModal`.
-> - **Elementos Críticos a Inspeccionar:** Canvas animado en 2D (`#praxiaCanvas`) que dibuja el perfil sagital anatómico de la cabeza (labios, dientes, paladar duro, alvéolos, úvula y lengua dinámica), selector interactivo de 6 fonemas y botón de pausa/reproducción.
+> - **Elementos Críticos a Inspeccionar:** Canvas animado en 2D sin etiquetas de texto clínico (`#praxiaCanvas`), avatar de Ava narrando por voz, botón `🔊 Escuchar`, selector de sonidos cotidianos sin la palabra "fonema" y botón de retorno al juego.
 > - **Archivo de Imagen:** [`06_praxia_bucofacial_2d.png`](file:///d:/.Antigravity/IHC/Proyecto/Documentación/capturas/06_praxia_bucofacial_2d.png)
 
 #### A. Elementos Visibles y Dinámica de Interacción
-1. **Corte Sagital Anatómico Dinámico:** El canvas 2D renderiza a 60 FPS la geometría de la cavidad oral:
-   - Paladar superior en terracota suave (`#E29578`).
-   - Dientes incisivos superiores e inferiores.
-   - Masa lingual en rosa cálido (`#FF006E`) que deforma su curva Bezier en tiempo real simulando la contracción muscular.
-   - Partículas de aire fónico azul celeste (`#00F5D4`) que muestran la dirección del flujo fonatorio (espiración continua en fricativas vs. ráfagas intermitentes en la vibrante `/rr/`).
-2. **Selector de Fonemas Clínicos:** Permite alternar la animación entre 6 modos articulatorios: `/r/` simple, `/rr/` múltiple, `/s/` fricativa alveolar, `/l/` lateral alveolar, `/k/` velar oclusiva y `/p/` bilabial.
-3. **Instrucción Propioceptiva Sencilla:** Texto para el adulto/mediador: *"Coloca la punta de la lengua en las arrugas detrás de los dientes superiores y hazla vibrar"*.
+1. **Modelado Lingual 2D Limpio y Dinámico:** El canvas 2D renderiza a 60 FPS la cavidad oral sin rótulos anatómicos confusos:
+   - Paladar superior y marcador de posición alveolar (foco verde suave).
+   - Dientes incisivos superiores e inferiores y labios suaves.
+   - Masa lingual en rosa cálido que se deforma en bucle continuo mostrando la posición articulatoria exacta.
+   - Partículas de aire fónico azul celeste que ilustran el flujo espiratorio.
+2. **Selector de Sonidos Cotidianos (Sin la palabra "Fonema"):** Permite alternar la animación entre 6 sonidos familiares para el niño: *"Sonido R (como Pera 🍐)"*, *"Sonido RR (como Carro 🚗)"*, *"Sonido S (como Sol ☀️)"*, *"Sonido L (como Luna 🌙)"*, *"Sonido K (como Casa 🏠)"* y *"Sonido P (como Papá 🎈)"*.
+3. **Instrucción 100% Narrada por Voz (Voice-First):** Ava la Abejita habla automáticamente al abrir el modal narrando paso a paso cómo colocar la lengua y soplar (*"¡Sube la punta de tu lengua arribita, detrás de tus dientes de arriba, y sopla para que cosquillee: ¡Rrrrrr!"*). El niño o su cuidador pueden tocar en cualquier momento el botón `🔊 Escuchar` o la tarjeta de Ava para volver a oír la narración.
 
 #### B. Justificación en Fuentes Científicas (¿Por qué está diseñado así?)
 - **Pucuhuaranga (2016) [*Horizonte de la Ciencia*]:** En su programa cuasiexperimental de articulación verbal, concluye que el entrenamiento fonoarticulatorio no puede limitarse a la repetición auditiva ciega; requiere obligatoriamente una **fase previa de gimnasia y modelado bucofacial** (movilidad lingual, labial y de velo de paladar) para que el niño tome conciencia propioceptiva de sus órganos fonoarticuladores. Su protocolo de 6 pasos fundamenta la representación visual de la elevación apical lingual.

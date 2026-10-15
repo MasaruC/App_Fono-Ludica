@@ -129,8 +129,8 @@ graph TD
 ### Evidencia Gráfica
 El canvas vectorial renderiza la cavidad bucal con geometría anatómica diferenciada, dinámica de masa lingual deformable y partículas de flujo de aire fonatorio:
 
-![Simulador Anatómico 2D de Praxias Bucofaciales](file:///d:/.Antigravity/IHC/Proyecto/Documentación/capturas/06_praxia_bucofacial_2d.png)
-*Figura 3: Modal de Praxia Bucofacial 2D Interactiva ([06_praxia_bucofacial_2d.png](file:///d:/.Antigravity/IHC/Proyecto/Documentación/capturas/06_praxia_bucofacial_2d.png)), ilustrando el corte sagital de la cavidad bucal, elevación apical de la lengua hacia los alvéolos y selector de fonemas clínicos.*
+![Modelado Lingual 2D de Praxias Voice-First](file:///d:/.Antigravity/IHC/Proyecto/Documentación/capturas/06_praxia_bucofacial_2d.png)
+*Figura 3: Modal de Praxia Lingual 2D Narrada ([06_praxia_bucofacial_2d.png](file:///d:/.Antigravity/IHC/Proyecto/Documentación/capturas/06_praxia_bucofacial_2d.png)), ilustrando el movimiento dinámico de la lengua hacia los alvéolos guiado 100% por voz mediante Ava, sin etiquetas médicas y con selector de sonidos infantiles cotidianos.*
 
 En la vista del ejercicio fono-lúdico se observa el acceso directo a la praxia y la botonera de biofeedback de doble canal:
 

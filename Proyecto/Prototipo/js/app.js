@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     starsCounter: document.getElementById('starsCounter'),
     headerScreenTag: document.getElementById('headerScreenTag'),
     btnBackMenu: document.getElementById('btnBackMenu'),
-    btnCviToggle: document.getElementById('btnCviToggle'),
     btnSoundToggle: document.getElementById('btnSoundToggle'),
     btnParentalGate: document.getElementById('btnParentalGate'),
     dosingFill: document.getElementById('dosingFill'),
@@ -110,23 +109,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modales
     praxiaModal: document.getElementById('praxiaModal'),
     btnClosePraxia: document.getElementById('btnClosePraxia'),
+    btnClosePraxiaBottom: document.getElementById('btnClosePraxiaBottom'),
     praxiaTitle: document.getElementById('praxiaTitle'),
     praxiaDesc: document.getElementById('praxiaDesc'),
     btnPraxiaPlayPause: document.getElementById('btnPraxiaPlayPause'),
     praxiaPhonemeSelect: document.getElementById('praxiaPhonemeSelect'),
+    btnNarratePraxia: document.getElementById('btnNarratePraxia'),
+    praxiaNarrationBox: document.getElementById('praxiaNarrationBox'),
 
     mathgateModal: document.getElementById('mathgateModal'),
     mathgateChallengeText: document.getElementById('mathgateChallengeText'),
-    mathgateDisplay: document.getElementById('mathgateDisplay'),
-    keypadBtns: document.querySelectorAll('.keypad-btn[data-val]'),
-    btnMathgateClear: document.getElementById('btnMathgateClear'),
+    mathgateOptionsGrid: document.getElementById('mathgateOptionsGrid'),
+    mathgateOptionBtns: document.querySelectorAll('.mathgate-option-btn'),
     btnMathgateCancel: document.getElementById('btnMathgateCancel'),
-    btnMathgateSubmit: document.getElementById('btnMathgateSubmit'),
 
     // Dashboard Adulto Tabs
     dashTabs: document.querySelectorAll('.dash-tab-btn'),
     dashContents: document.querySelectorAll('.dashboard-tab-content'),
     audioVaultBody: document.getElementById('audioVaultBody'),
+    chkCviAdultToggle: document.getElementById('chkCviAdultToggle'),
     btnSaveAdultConfig: document.getElementById('btnSaveAdultConfig'),
     btnExitAdultPortal: document.getElementById('btnExitAdultPortal')
   };
@@ -160,6 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateStars(amount = 0) {
     state.effortStars += amount;
     elements.starsCounter.textContent = state.effortStars;
+    const shortcutStars = document.getElementById('starsShortcutCounter');
+    if (shortcutStars) shortcutStars.textContent = state.effortStars;
     if (amount > 0) {
       audioEngine.playChime();
     }
@@ -178,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = SpeechGamesData.TRABALENGUAS_DATA[index % SpeechGamesData.TRABALENGUAS_DATA.length];
       state.activePhoneme = data.targetPhoneme;
       elements.exerciseWord.textContent = data.word;
-      elements.exercisePhoneme.textContent = `Fonema /${data.targetPhoneme}/`;
+      elements.exercisePhoneme.textContent = `Sonido ${data.targetPhoneme.toUpperCase()}`;
       elements.exerciseIcon.textContent = data.icon;
       elements.exercisePhrase.textContent = data.phrase;
       elements.avatarBalloon.textContent = `¡Vamos! Repite conmigo: "${data.word}"`;
@@ -681,37 +684,93 @@ document.addEventListener('DOMContentLoaded', () => {
     audioEngine.speak(round.prompt);
   });
 
-  /* --- MODAL PRAXIA 2D BUCOFACIAL (UI-PRAXIA-CANVAS) --- */
+  /* --- MODAL PRAXIA 2D BUCOFACIAL: TOTALMENTE NARRADO POR VOZ (SIN METÁFORAS CONFUSAS, SIN LA PALABRA FONEMA) --- */
   let praxiaCallbackOnClose = null;
 
-  function openPraxiaModal(phoneme = 'r', onCloseCallback = null) {
-    praxiaCallbackOnClose = onCloseCallback;
-    praxiaCanvas.setPhoneme(phoneme);
-    elements.praxiaPhonemeSelect.value = phoneme;
-    elements.praxiaTitle.textContent = `Modelado Lingual 2D: Fonema /${phoneme}/`;
-
-    if (phoneme === 'r' || phoneme === 'rr') {
-      elements.praxiaDesc.textContent = "Coloca la punta de la lengua en las arrugas detrás de los dientes superiores y hazla vibrar.";
-    } else if (phoneme === 's') {
-      elements.praxiaDesc.textContent = "Lengua detrás de los dientes de abajo, dejando escapar el aire como un globo.";
-    } else if (phoneme === 'l') {
-      elements.praxiaDesc.textContent = "Pega firme la punta de la lengua en el techo y deja que el aire salga por los lados.";
-    } else if (phoneme === 'k') {
-      elements.praxiaDesc.textContent = "Sube la parte de atrás de la lengua al paladar blando y suelta de golpe: ¡Ka!";
-    } else {
-      elements.praxiaDesc.textContent = "Junta ambos labios con suavidad y suelta el sonido.";
+  const SOUND_NARRATIONS = {
+    'r': {
+      title: '👅 ¿Cómo ponemos la lengua para la R?',
+      spoken: '¡Hola amiguito! Para hacer este sonido, sube la punta de tu lengua arribita, justo detrás de tus dientes de arriba. Ahora sopla despacito y haz que tu lengua cosquillee: ¡Rrrrrr! ¡Pruébalo conmigo!',
+      display: '¡Sube la punta de tu lengua arribita, detrás de tus dientes de arriba, y sopla para que cosquillee: ¡Rrrrrr!'
+    },
+    'rr': {
+      title: '👅 ¿Cómo ponemos la lengua para la RR?',
+      spoken: '¡Vamos con fuerza! Apoya la punta de tu lengua arriba, detrás de tus dientes. Toma aire y sopla fuerte para que tu lengua vibre rápido: ¡Rrrrrrrrr! ¡Qué bien suena!',
+      display: '¡Apoya la punta de tu lengua arriba, detrás de los dientes, y sopla fuerte para que vibre rápido: ¡Rrrrrrrrr!'
+    },
+    's': {
+      title: '👅 ¿Cómo ponemos la boca para la S?',
+      spoken: '¡Escucha bien! Pon tu lengua abajo, detrás de tus dientes de abajo. Ahora sonríe mostrando tus dientes y sopla suavecito: ¡Sssssssss! ¡Excelente!',
+      display: '¡Pon tu lengua abajo, detrás de tus dientes, sonríe mostrando los dientes y sopla suavecito: ¡Sssssssss!'
+    },
+    'l': {
+      title: '👅 ¿Cómo ponemos la lengua para la L?',
+      spoken: '¡Mira qué fácil! Pega la punta de tu lengua arriba en el techo de tu boca. Déjala quietita y canta sacando tu voz: ¡Llllllllll! ¡Lo hiciste genial!',
+      display: '¡Pega la punta de tu lengua arriba en el techo de tu boca, déjala quietita y canta: ¡Llllllllll!'
+    },
+    'k': {
+      title: '👅 ¿Cómo ponemos la boca para la K?',
+      spoken: '¡Atento amiguito! Abre bien grande tu boca, sube la parte de atrás de tu lengua arriba y suelta el aire de golpe: ¡Kaaaa! ¡Inténtalo tú solo!',
+      display: '¡Abre grande la boca, sube la parte de atrás de la lengua y suelta el aire de golpe: ¡Kaaaa!'
+    },
+    'p': {
+      title: '👅 ¿Cómo ponemos los labios para la P?',
+      spoken: '¡Juguemos con los labios! Junta tus dos labios bien apretaditos, guarda un poquito de aire y suelta tus labios rápido: ¡Paaaa! ¡Muy bien!',
+      display: '¡Junta tus dos labios bien apretaditos, guarda aire y suéltalos rápido: ¡Paaaa!'
     }
+  };
 
-    elements.praxiaModal.classList.add('active');
+  function playCurrentPraxiaNarration() {
+    const currentKey = (elements.praxiaPhonemeSelect.value || 'r').toLowerCase();
+    const narration = SOUND_NARRATIONS[currentKey] || SOUND_NARRATIONS['r'];
+    audioEngine.speak(narration.spoken);
   }
 
-  elements.btnClosePraxia.addEventListener('click', () => {
+  function openPraxiaModal(soundKey = 'r', onCloseCallback = null) {
+    praxiaCallbackOnClose = onCloseCallback;
+    const key = (soundKey || 'r').toLowerCase();
+    const narration = SOUND_NARRATIONS[key] || SOUND_NARRATIONS['r'];
+
+    praxiaCanvas.setPhoneme(key);
+    elements.praxiaPhonemeSelect.value = key;
+    elements.praxiaTitle.textContent = narration.title;
+    elements.praxiaDesc.textContent = narration.display;
+
+    elements.praxiaModal.classList.add('active');
+
+    // Narración oral automática e inmediata por Ava (Voice-First para niños pre-lectores)
+    audioEngine.speak(narration.spoken);
+  }
+
+  function closePraxia() {
+    if (!canTouch()) return;
     elements.praxiaModal.classList.remove('active');
     if (praxiaCallbackOnClose) {
       praxiaCallbackOnClose();
       praxiaCallbackOnClose = null;
     }
-  });
+  }
+
+  if (elements.btnClosePraxia) {
+    elements.btnClosePraxia.addEventListener('click', closePraxia);
+  }
+
+  if (elements.btnClosePraxiaBottom) {
+    elements.btnClosePraxiaBottom.addEventListener('click', closePraxia);
+  }
+
+  if (elements.btnNarratePraxia) {
+    elements.btnNarratePraxia.addEventListener('click', (e) => {
+      e.stopPropagation();
+      playCurrentPraxiaNarration();
+    });
+  }
+
+  if (elements.praxiaNarrationBox) {
+    elements.praxiaNarrationBox.addEventListener('click', () => {
+      playCurrentPraxiaNarration();
+    });
+  }
 
   elements.btnOpenMiniPraxia.addEventListener('click', () => {
     openPraxiaModal(state.activePhoneme);
@@ -778,11 +837,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* --- CUS-03: CONTROL PARENTAL MATHGATE --- */
+  /* --- CUS-03: CONTROL PARENTAL MATHGATE (3 OPCIONES COGNITIVAS) --- */
   function openMathGate() {
     const challenge = telemetry.generateMathChallenge();
-    elements.mathgateChallengeText.textContent = `${challenge.question} = ?`;
-    elements.mathgateDisplay.textContent = "_";
+    elements.mathgateChallengeText.textContent = `${challenge.question}`;
+    const optionBtns = document.querySelectorAll('.mathgate-option-btn');
+    optionBtns.forEach((btn, idx) => {
+      if (challenge.options && challenge.options[idx] !== undefined) {
+        const val = challenge.options[idx];
+        btn.textContent = val;
+        btn.setAttribute('data-val', val);
+      }
+      btn.classList.remove('opt-wrong', 'opt-correct');
+    });
     elements.mathgateModal.classList.add('active');
   }
 
@@ -791,57 +858,45 @@ document.addEventListener('DOMContentLoaded', () => {
     openMathGate();
   });
 
-  elements.keypadBtns.forEach(btn => {
+  const mathOptionBtns = document.querySelectorAll('.mathgate-option-btn');
+  mathOptionBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const digit = btn.getAttribute('data-val');
-      if (digit === null || digit === undefined || digit === "") return;
-      const current = telemetry.appendKeypadDigit(digit);
-      elements.mathgateDisplay.textContent = current;
-      audioEngine.playClick();
+      if (!canTouch()) return;
+      const val = btn.getAttribute('data-val');
+      if (telemetry.verifyOption(val)) {
+        btn.classList.add('opt-correct');
+        audioEngine.playChime();
+        setTimeout(() => {
+          elements.mathgateModal.classList.remove('active');
+          renderAdultDashboard();
+          showScreen('screen-adult', 'Portal Clínico y Fonoaudiológico');
+        }, 300);
+      } else {
+        btn.classList.add('opt-wrong');
+        audioEngine.playGentleEncouragement();
+        setTimeout(() => {
+          btn.classList.remove('opt-wrong');
+        }, 800);
+      }
     });
   });
 
-  elements.btnMathgateClear.addEventListener('click', () => {
-    telemetry.clearKeypad();
-    elements.mathgateDisplay.textContent = "_";
-    audioEngine.playClick();
-  });
-
-  elements.btnMathgateCancel.addEventListener('click', () => {
-    elements.mathgateModal.classList.remove('active');
-  });
-
-  elements.btnMathgateSubmit.addEventListener('click', () => {
-    if (telemetry.verifyMathChallenge()) {
+  if (elements.btnMathgateCancel) {
+    elements.btnMathgateCancel.addEventListener('click', () => {
+      if (!canTouch()) return;
       elements.mathgateModal.classList.remove('active');
-      renderAdultDashboard();
-      showScreen('screen-adult', 'Portal Clínico y Fonoaudiológico');
-      audioEngine.playChime();
-    } else {
-      audioEngine.playGentleEncouragement();
-      elements.mathgateDisplay.textContent = "ERR";
-      setTimeout(() => {
-        telemetry.clearKeypad();
-        elements.mathgateDisplay.textContent = "_";
-      }, 900);
-    }
-  });
+    });
+  }
 
-  // Soporte de teclado físico para el adulto/terapeuta en PC
+  // Soporte de teclado físico (teclas 1, 2, 3 o Escape) para el adulto/terapeuta en PC
   window.addEventListener('keydown', (e) => {
     if (elements.mathgateModal.classList.contains('active')) {
-      if (e.key >= '0' && e.key <= '9') {
-        const current = telemetry.appendKeypadDigit(e.key);
-        elements.mathgateDisplay.textContent = current;
-        audioEngine.playClick();
-      } else if (e.key === 'Backspace' || e.key === 'Delete') {
-        telemetry.clearKeypad();
-        elements.mathgateDisplay.textContent = "_";
-        audioEngine.playClick();
-      } else if (e.key === 'Enter') {
-        elements.btnMathgateSubmit.click();
-      } else if (e.key === 'Escape') {
-        elements.btnMathgateCancel.click();
+      const optionBtns = document.querySelectorAll('.mathgate-option-btn');
+      if (e.key === '1' && optionBtns[0]) optionBtns[0].click();
+      else if (e.key === '2' && optionBtns[1]) optionBtns[1].click();
+      else if (e.key === '3' && optionBtns[2]) optionBtns[2].click();
+      else if (e.key === 'Escape') {
+        if (elements.btnMathgateCancel) elements.btnMathgateCancel.click();
       }
     }
   });
@@ -917,11 +972,27 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('screen-menu', 'Bosque Sonoro Amigable');
   });
 
+  // Banner interactivo auditivo de Ava (100% Voice-First)
+  const bannerAvaWelcome = document.getElementById('bannerAvaWelcome');
+  const btnHearAvaWelcome = document.getElementById('btnHearAvaWelcome');
+  function playAvaGreeting() {
+    if (!canTouch()) return;
+    audioEngine.playChime();
+    audioEngine.speak("¡Hola! Toca un vagón para jugar.");
+  }
+  if (bannerAvaWelcome) bannerAvaWelcome.addEventListener('click', playAvaGreeting);
+  if (btnHearAvaWelcome) {
+    btnHearAvaWelcome.addEventListener('click', (e) => {
+      e.stopPropagation();
+      playAvaGreeting();
+    });
+  }
+
   // Vagón Principal: Locomotora Fónica (Silbato y Saludo)
   if (elements.wagonLocomotive) {
     elements.wagonLocomotive.addEventListener('click', () => {
       audioEngine.playTrainWhistle();
-      audioEngine.speak("¡¡Choo-choo!! ¡Todos a bordo del Expreso Fonológico de Ava! Elige un vagón para comenzar a jugar.");
+      audioEngine.speak("¡Choo-choo! Toca un vagón para jugar.");
     });
   }
 
@@ -961,40 +1032,39 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('screen-avatar', 'Cueva del Avatar');
   });
 
-  /* --- ACCESIBILIDAD: MODO ALTO CONTRASTE CVI (WCAG 2.2 AA) --- */
-  elements.btnCviToggle.addEventListener('click', () => {
-    state.cviMode = !state.cviMode;
+  /* --- ACCESIBILIDAD: MODO ALTO CONTRASTE CVI (WCAG 2.2 AA / Mandel 1.9) --- */
+  function applyCviMode(enable) {
+    state.cviMode = !!enable;
     if (state.cviMode) {
       document.body.setAttribute('data-theme', 'cvi');
-      elements.btnCviToggle.innerHTML = `
-        <svg class="ui-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/>
-          <line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </svg>
-        <span class="btn-cvi-label">Modo Normal</span>
-      `;
-      elements.btnCviToggle.title = 'Cambiar a modo visual estándar';
     } else {
       document.body.removeAttribute('data-theme');
-      elements.btnCviToggle.innerHTML = `
-        <svg class="ui-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="6" cy="12" r="4"/>
-          <circle cx="18" cy="12" r="4"/>
-          <path d="M10 12h4"/>
-          <path d="M2 12h0.5M21.5 12h0.5"/>
-        </svg>
-        <span class="btn-cvi-label">Modo CVI</span>
-      `;
-      elements.btnCviToggle.title = 'Modo Alto Contraste CVI (Deterioro Visual Cortical)';
     }
-  });
+    if (elements.chkCviAdultToggle) {
+      elements.chkCviAdultToggle.checked = state.cviMode;
+    }
+    try {
+      localStorage.setItem('fono_cvi_mode', state.cviMode ? '1' : '0');
+    } catch (e) {
+      // Manejo seguro en entornos con almacenamiento bloqueado
+    }
+  }
+
+  // Conexión del switch CVI dentro de la Gobernanza Adulta / Clínica
+  if (elements.chkCviAdultToggle) {
+    elements.chkCviAdultToggle.addEventListener('change', (e) => {
+      applyCviMode(e.target.checked);
+      audioEngine.playClick();
+    });
+  }
+
+  // Restaurar preferencia guardada al iniciar
+  try {
+    const savedCvi = localStorage.getItem('fono_cvi_mode') === '1';
+    if (savedCvi) {
+      applyCviMode(true);
+    }
+  } catch (e) {}
 
   // Saludo inicial de Ava al cargar
   setTimeout(() => {

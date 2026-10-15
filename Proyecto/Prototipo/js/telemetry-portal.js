@@ -47,15 +47,28 @@ class TelemetryPortalEngine {
 
   generateMathChallenge() {
     const challenges = [
-      { question: "Tres por cuatro", answer: "12" },
-      { question: "Cinco más siete", answer: "12" },
-      { question: "Cuatro por dos", answer: "8" },
-      { question: "Nueve menos tres", answer: "6" },
-      { question: "Dos por ocho", answer: "16" }
+      { question: "¿Cuánto es tres por cuatro?", answer: "12", options: ["12", "7", "15"] },
+      { question: "¿Cuánto es cinco más siete?", answer: "12", options: ["12", "11", "13"] },
+      { question: "¿Cuánto es cuatro por dos?", answer: "8", options: ["8", "6", "10"] },
+      { question: "¿Cuánto es nueve menos tres?", answer: "6", options: ["6", "5", "7"] },
+      { question: "¿Cuánto es dos por ocho?", answer: "16", options: ["16", "14", "18"] },
+      { question: "¿Cuánto es siete más seis?", answer: "13", options: ["13", "12", "14"] },
+      { question: "¿Cuánto es ocho menos cinco?", answer: "3", options: ["3", "4", "2"] }
     ];
-    this.currentChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+    const item = challenges[Math.floor(Math.random() * challenges.length)];
+    const shuffledOptions = [...item.options].sort(() => Math.random() - 0.5);
+    this.currentChallenge = {
+      question: item.question,
+      answer: item.answer,
+      options: shuffledOptions
+    };
     this.inputCode = "";
     return this.currentChallenge;
+  }
+
+  verifyOption(selectedAnswer) {
+    if (!selectedAnswer || !this.currentChallenge) return false;
+    return String(selectedAnswer).trim() === String(this.currentChallenge.answer).trim();
   }
 
   appendKeypadDigit(digit) {
