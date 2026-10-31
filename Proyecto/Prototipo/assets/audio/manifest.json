@@ -1,0 +1,60 @@
+{
+  "project": "Bosque Sonoro - Aplicación Fono-Lúdica Pediátrica",
+  "version": "2.0.0",
+  "voice_spec": {
+    "character": "Ava la Abejita Fónica (Mascota Guía)",
+    "dialectal_standard": "Español Culto de Lima Metropolitana (Perú)",
+    "dialectal_features": [
+      "Seseo sistemático estricto (pronunciación idéntica de 'c/z' como /s/)",
+      "Yeísmo sin rehilamiento (/y/ y 'll' pronunciadas como aproximante palatal sonora [ʝ], nunca rehilada [ʃ]/[ʒ])",
+      "Conservación plena de la /s/ implosiva y final (ausencia total de aspiración [h] o elisión)",
+      "Entonación y prosodia infantil afable, rítmica y pedagógicamente pausada"
+    ],
+    "talent_profile": "Locutora profesional humana con experiencia en narración pedagógica infantil y locución fonoaudiológica",
+    "technical_specs": {
+      "sample_rate_hz": 44100,
+      "bit_depth": 16,
+      "channels": 1,
+      "format_master": "WAV (Linear PCM sin compresión)",
+      "format_web": "Opus WebM / MP3 320 kbps",
+      "noise_floor_db": -60,
+      "snr_db": ">= 45 dB",
+      "loudness_target_lufs": -18
+    },
+    "phonetic_constraints": {
+      "schwa_prohibition": "Estricta prohibición de emisión de vocal neutra [ə] al modelar consonantes aisladas (emitir [k] y nunca [kə] o 'kuh')",
+      "vowel_lengthening": "Sin prolongación desnaturalizada ni forzada de vocales en palabras estímulo",
+      "emotional_tone": "Cálido, entusiasta, empático, sin ansiedad y no punitivo",
+      "non_punitive_phrasing": "Prohibición de palabras secas o tonos de reproche; uso sistemático de frases de refuerzo al esfuerzo"
+    }
+  },
+  "recording_categories": {
+    "consignas": [
+      { "id": "bienvenida_menu", "text": "¡Hola amiguito! Soy Ava la abejita fónica. ¡Toca un vagón del tren para jugar conmigo!" },
+      { "id": "consigna_trabalenguas", "text": "Vamos a jugar con el trabalenguas. Escucha con atención, toca el gran botón y dilo fuerte." },
+      { "id": "consigna_rimas", "text": "¿Qué palabra rima? Escucha el sonido y encuentra la palabra que suena igual." },
+      { "id": "consigna_adivinanzas", "text": "¡Escucha mi acertijo y dime el nombre del animalito!" },
+      { "id": "consigna_carrera", "text": "¡Pronuncia la palabra para que mis alitas vuelen de flor en flor hasta la colmena real!" },
+      { "id": "consigna_bingo", "text": "¡Bingo sonoro! Escucha el sonido y toca el dibujo que tiene ese sonido." }
+    ],
+    "fonemas_puros": [
+      { "id": "fonema_k", "ipa": "[k]", "notes": "Oclusión velar sorda pura, burst de 20ms, cero vocal neutra [ə]" },
+      { "id": "fonema_s", "ipa": "[s]", "notes": "Fricativa alveolar sorda pura, flujo continuo sin schwa" },
+      { "id": "fonema_r", "ipa": "[ɾ]", "notes": "Vibrante alveolar simple pura (tap)" },
+      { "id": "fonema_rr", "ipa": "[r]", "notes": "Vibrante alveolar múltiple pura (trill)" },
+      { "id": "fonema_l", "ipa": "[l]", "notes": "Lateral alveolar líquida pura" },
+      { "id": "fonema_p", "ipa": "[p]", "notes": "Oclusión bilabial sorda pura sin [ə]" },
+      { "id": "fonema_t", "ipa": "[t]", "notes": "Oclusión dental sorda pura sin [ə]" }
+    ],
+    "refuerzos": [
+      { "id": "aliento_1", "text": "¡Excelente intento, diste lo mejor de ti! ¡Dilo fuerte!" },
+      { "id": "aliento_2", "text": "¡Qué gran esfuerzo amiguito! Escuchemos juntos y vuelve a tocar el botón." },
+      { "id": "aliento_3", "text": "¡Muy bien intentado! Tú tienes una voz maravillosa, vamos a decirlo una vez más." },
+      { "id": "aliento_4", "text": "¡Me encanta cómo practicas! Escucha cómo vuela mi sonido y repite conmigo." },
+      { "id": "exito_1", "text": "¡Lo lograste genial! ¡Sonó precioso!" },
+      { "id": "exito_2", "text": "¡Bravo amiguito! ¡Ganaste estrellas de esfuerzo!" },
+      { "id": "dda_rescate", "text": "¡Qué gran esfuerzo amigo! Mira en la pantalla cómo colocamos la lengua para que sea más fácil." }
+    ]
+  }
+}
+

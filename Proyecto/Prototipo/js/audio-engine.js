@@ -1,7 +1,9 @@
 /* ==========================================================================
    AUDIO ENGINE - SÍNTESIS, CAPTURA Y BIOFEEDBACK DE AUTOESCUCHA (<300ms)
-   Cumple con: RF-BIO-002, RF-BIO-003, RF-BIO-004, RF-AUD-001, RDOM-FON-001
-   Sustento: Peña et al. (2024), Du et al. (2023), Saeedi et al. (2024)
+   SISTEMA DE VOZ DE AVA: NORMA CULTA LIMA METROPOLITANA & CERO SCHWA [ə]
+   Cumple con: RF-BIO-002, RF-BIO-003, RF-BIO-004, RF-AUD-001, RF-AUD-002, RDOM-FON-001
+   Sustento: Peña et al. (2024), Du et al. (2023), Saeedi et al. (2024),
+             Furlong et al. (2018), Huertas & Roque (2023), Strömbergsson et al. (2026)
    ========================================================================== */
 
 class PhonoAudioEngine {
@@ -16,15 +18,237 @@ class PhonoAudioEngine {
     this.stream = null;
     this.recognition = null;
     this.lastTranscript = '';
+
+    // Perfil Acústico y Banco de Locuciones de Estudio (44.1 kHz)
+    this.voiceProfile = 'lima_studio'; // 'lima_studio' (preferente) | 'calibrated_tts'
+    this.studioSoundbank = {};
+    this.normalizedSoundbank = {};
+    this.currentPlayingAudio = null;
+    this.cachedNoiseBuffer = null;
+    this.encouragementPhrases = [
+      "¡Excelente intento, diste lo mejor de ti! ¡Dilo fuerte!",
+      "¡Qué gran esfuerzo amiguito! Escuchemos juntos y vuelve a tocar el botón.",
+      "¡Muy bien intentado! Tú tienes una voz maravillosa, vamos a decirlo una vez más.",
+      "¡Me encanta cómo practicas! Escucha cómo vuela mi sonido y repite conmigo."
+    ];
+
+    this.initStudioSoundbank();
     this.initAudioContext();
     this.initSpeechRecognition();
+  }
+
+    cleanTextKey(text) {
+    if (!text) return '';
+    return text.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar tildes
+      .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '') // Quitar emojis
+      .replace(/[^a-z0-9\s]/g, ' ') // Solo letras y numeros
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  initStudioSoundbank() {
+    const basePath = 'assets/audio/';
+    const registry = {
+      // 1. Menú y bienvenida
+      "¡hola amiguito! bienvenido al bosque sonoro. ¿qué juego quieres jugar hoy?": basePath + "consignas/bienvenida.mp3",
+      "¡hola! toca un vagón para jugar.": basePath + "consignas/toca_vagon.mp3",
+      "¡choo-choo! toca un vagón para jugar.": basePath + "consignas/locomotora.mp3",
+      "¡hola amiguito! bienvenido al bosque sonoro. ¡toca un vagón para empezar a jugar!": basePath + "consignas/ava_menu_tap.mp3",
+      "¡hola amiguito! ¡sigue jugando en el bosque sonoro!": basePath + "consignas/ava_header_tap.mp3",
+
+      // 2. Trabalenguas
+      "vamos a jugar con el trabalenguas de la palabra guitarra. toca el botón y di la palabra.": basePath + "consignas/trabalenguas_guitarra.mp3",
+      "vamos a jugar con el trabalenguas de la palabra sapo. toca el botón y di la palabra.": basePath + "consignas/trabalenguas_sapo.mp3",
+      "vamos a jugar con el trabalenguas de la palabra luna. toca el botón y di la palabra.": basePath + "consignas/trabalenguas_luna.mp3",
+
+      // 3. Rimas
+      "¿qué palabra rima con botón?": basePath + "consignas/rima_intro_boton.mp3",
+      "¿qué palabra rima con gato?": basePath + "consignas/rima_intro_gato.mp3",
+      "¿qué palabra rima con estrella?": basePath + "consignas/rima_intro_estrella.mp3",
+      "¡un ratón chiquitón se escondió en mi botón!": basePath + "consignas/rima_full_boton.mp3",
+      "¡el gato con zapatos juega con el pato!": basePath + "consignas/rima_full_gato.mp3",
+      "¡la estrella dorada es la más bella botella!": basePath + "consignas/rima_full_estrella.mp3",
+      "casi casi, ¡intenta otra palabra que suene como botón!": basePath + "consignas/rima_casi_boton.mp3",
+      "casi casi, ¡intenta otra palabra que suene como gato!": basePath + "consignas/rima_casi_gato.mp3",
+      "casi casi, ¡intenta otra palabra que suene como estrella!": basePath + "consignas/rima_casi_estrella.mp3",
+
+      // 4. Adivinanzas Reales
+      "¡escucha mi acertijo y dime el nombre del animalito!": basePath + "consignas/adivinanza_intro.mp3",
+      "tengo una melena grande, soy muy veloz y rujo fuerte en la selva... ¿quién soy?": basePath + "consignas/adiv_1_leon.mp3",
+      "pista especial: empieza con /l/...": basePath + "consignas/adiv_clue_1.mp3",
+      "vuelo de flor en flor haciendo zumbidos y preparo rica miel... ¿quién soy?": basePath + "consignas/adiv_2_abeja.mp3",
+      "pista especial: empieza con /a/ y tiene sonido /b/...": basePath + "consignas/adiv_clue_2.mp3",
+      "tengo orejas muy largas, salto muy alto y me gusta comer zanahoria... ¿quién soy?": basePath + "consignas/adiv_3_conejo.mp3",
+      "pista especial: empieza con /k/...": basePath + "consignas/adiv_clue_3.mp3",
+
+      // 5. Pares Mínimos
+      "¿dónde dormimos por la noche para soñar lindo?": basePath + "consignas/pair_cama_q.mp3",
+      "¡muy bien! ¡es cama! mira cómo se pronuncia:": basePath + "consignas/pair_cama_success.mp3",
+      "¡tama suena divertido! pero en una 'tama' no podemos dormir, ¡jejeje!": basePath + "consignas/pair_cama_foil.mp3",
+      "¡tama suena divertido! pero en una tama no podemos dormir, ¡jejeje!": basePath + "consignas/pair_cama_foil.mp3",
+      "¿qué astro brilla caliente en el cielo de día?": basePath + "consignas/pair_sol_q.mp3",
+      "¡muy bien! ¡es sol! mira cómo se pronuncia:": basePath + "consignas/pair_sol_success.mp3",
+      "¡tol! ¿un tol en el cielo? ¡el sol es el que nos calienta!": basePath + "consignas/pair_sol_foil.mp3",
+      "¿qué fruta jugosa es verde, dulce y nutritiva?": basePath + "consignas/pair_3_pera_q.mp3",
+      "¡muy bien! ¡es pera! mira cómo se pronuncia:": basePath + "consignas/pair_pera_success.mp3",
+      "¡pela la manzana, pero la fruta rica es la pera!": basePath + "consignas/pair_3_pela_comic.mp3",
+      "¡pela! pela es quitar la cáscara, ¡la fruta rica se llama pera!": basePath + "consignas/pair_pera_foil.mp3",
+
+      // 6. Carrera de Flores (Estaciones 1 a 5 y toques)
+      "estación 1: pronuncia la palabra plátano para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_1.mp3",
+      "flor 1: palabra plátano con sonido pl.": basePath + "consignas/carrera_flor_1.mp3",
+      "estación 2: pronuncia la palabra globo para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_2.mp3",
+      "flor 2: palabra globo con sonido gl.": basePath + "consignas/carrera_flor_2.mp3",
+      "estación 3: pronuncia la palabra tren para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_3.mp3",
+      "flor 3: palabra tren con sonido tr.": basePath + "consignas/carrera_flor_3.mp3",
+      "estación 4: pronuncia la palabra flor para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_4.mp3",
+      "flor 4: palabra flor con sonido fl.": basePath + "consignas/carrera_flor_4.mp3",
+      "estación 5: pronuncia la palabra dragón para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_5.mp3",
+      "flor 5: palabra dragón con sonido dr.": basePath + "consignas/carrera_flor_5.mp3",
+      "¡genial! ¡ava voló a la siguiente flor y recolectó néctar!": basePath + "consignas/carrera_avance.mp3",
+      "¡bravo amigo! ¡volaste por todo el jardín y llenaste la colmena real con néctar!": basePath + "consignas/carrera_meta.mp3",
+      "¡¡bravo amigo!! ¡volaste por todo el jardín y llenaste la colmena real con néctar!": basePath + "consignas/carrera_meta.mp3",
+
+      // 7. Bingo Sonoro
+      "¡encuentra y toca la tarjeta que empieza con /s/ como ¡sol!": basePath + "consignas/bingo_round_1_sol.mp3",
+      "¡encuentra y toca la tarjeta que empieza con /s/ como ¡sol! ☀️": basePath + "consignas/bingo_round_1_sol.mp3",
+      "¡ahora busca y toca la tarjeta que empieza con /l/ como ¡luna!": basePath + "consignas/bingo_round_2_luna.mp3",
+      "¡ahora busca y toca la tarjeta que empieza con /l/ como ¡luna! 🌙": basePath + "consignas/bingo_round_2_luna.mp3",
+      "¡toca la tarjeta que empieza con /f/ como ¡fresa!": basePath + "consignas/bingo_round_3_fresa.mp3",
+      "¡toca la tarjeta que empieza con /f/ como ¡fresa! 🍓": basePath + "consignas/bingo_round_3_fresa.mp3",
+      "¡excelente! ¡tiene el sonido pedido! pasemos a la siguiente.": basePath + "consignas/bingo_card_correct_generic.mp3",
+      "casi casi amiguito, busca con atención la tarjeta que tiene el sonido pedido.": basePath + "consignas/bingo_card_wrong.mp3",
+      "¡¡biiingo!! ¡qué gran oído tienes, completaste todo el cartón sonoro!": basePath + "consignas/bingo_win_bravo.mp3",
+      "¡biiingo! ¡qué gran oído tienes, completaste todo el cartón sonoro!": basePath + "consignas/bingo_win_bravo.mp3",
+
+      // 8. Refuerzos Positivos y Mic
+      "¡lo hiciste genial amiguito!": basePath + "refuerzos/exito_genial.mp3",
+      "¡qué buen intento! escucha cómo lo decimos y vuelve a tocar el botón.": basePath + "refuerzos/reintento_suave_344.mp3",
+      "¡excelente intento, diste lo mejor de ti! ¡dilo fuerte!": basePath + "refuerzos/aliento_1.mp3",
+      "¡excelente intento, diste lo mejor de ti! ¡dilo fuerte! escuchemos juntos y vuelve a tocar el botón.": basePath + "refuerzos/reintento_aliento_fuerte.mp3",
+      "¡qué gran esfuerzo amiguito! escuchemos juntos y vuelve a tocar el botón.": basePath + "refuerzos/aliento_2.mp3",
+      "¡muy bien intentado! tú tienes una voz maravillosa, vamos a decirlo una vez más.": basePath + "refuerzos/aliento_3.mp3",
+      "¡me encanta cómo practicas! escucha cómo vuela mi sonido y repite conmigo.": basePath + "refuerzos/aliento_4.mp3",
+      "¡qué gran esfuerzo amigo! mira en la pantalla cómo colocamos la lengua para que sea más fácil.": basePath + "refuerzos/dda_rescate.mp3",
+      "¡escucha cómo sonó tu voz en el megáfono!": basePath + "refuerzos/escuchate.mp3",
+      "¡te escuché muy bien!": basePath + "refuerzos/te_escuche.mp3",
+
+      // 9. Taps Reinteractivos de Ava
+      "¡aquí estoy amiguito! repite conmigo: guitarra. ¡toca el gran botón del micrófono y dilo bien fuerte!": basePath + "consignas/ava_tap_exercise.mp3",
+      "¡aquí estoy amiguito! escucha la palabra y repítela conmigo. ¡toca el gran botón del micrófono y dilo bien fuerte!": basePath + "consignas/ava_tap_exercise.mp3",
+      "¡yo te ayudo amiguito! escucha la pregunta y toca el dibujo que suena correcto.": basePath + "consignas/ava_tap_pairs.mp3",
+      "¡dilo fuerte y claro para que mis alitas me lleven hasta la siguiente flor!": basePath + "consignas/ava_tap_carrera.mp3",
+      "¡escucha con tus orejitas de conejo y busca el dibujo que tiene ese sonido!": basePath + "consignas/ava_tap_bingo.mp3",
+
+      // 10. Cueva del Avatar
+      "¡al abordaje con las palabras difíciles! ¡arrr!": basePath + "avatar_cave/phrase_pirate.mp3",
+      "¡qué estilo tengo hoy para pronunciar la erre!": basePath + "avatar_cave/phrase_glasses.mp3",
+      "¡volando por el bosque sonoro a toda velocidad!": basePath + "avatar_cave/phrase_cape.mp3",
+      "¡soy el rey de las rimas del bosque!": basePath + "avatar_cave/phrase_crown.mp3",
+      "¡mis alitas brillan con cada esfuerzo que haces!": basePath + "avatar_cave/phrase_wings.mp3",
+      "¡mmm... dulce miel para endulzar nuestra voz!": basePath + "avatar_cave/phrase_honey.mp3",
+      "sigue jugando en el bosque para ganar más estrellas de esfuerzo.": basePath + "avatar_cave/phrase_more_stars.mp3",
+
+      // 11. Praxias
+      "¡hola amiguito! para hacer este sonido, sube la punta de tu lengua arribita, justo detrás de tus dientes de arriba. ahora sopla despacito y haz que tu lengua cosquillee: ¡r! ¡pruébalo conmigo!": basePath + "consignas/praxia_r.mp3",
+      "¡vamos con fuerza! apoya la punta de tu lengua arriba, detrás de tus dientes. toma aire y sopla fuerte para que tu lengua vibre rápido: ¡rr! ¡qué bien suena!": basePath + "consignas/praxia_rr.mp3",
+      "¡escucha bien! pon tu lengua abajo, detrás de tus dientes de abajo. ahora sonríe mostrando tus dientes y sopla suavecito: ¡s! ¡excelente!": basePath + "consignas/praxia_s.mp3",
+      "¡mira qué fácil! pega la punta de tu lengua arriba en el techo de tu boca. déjala quietita y canta sacando tu voz: ¡l! ¡lo hiciste genial!": basePath + "consignas/praxia_l.mp3",
+      "¡atento amiguito! abre la boca, sube la parte de atrás de tu lengua arriba y suelta el aire puro de golpe: ¡k! ¡inténtalo tú solo!": basePath + "consignas/praxia_k.mp3",
+      "¡juguemos con los labios! junta tus dos labios bien apretaditos, guarda un poquito de aire y suelta tus labios rápido: ¡p! ¡muy bien!": basePath + "consignas/praxia_p.mp3",
+
+      // 12. Estímulos Bosch & Melgar y Juegos
+      "guitarra": basePath + "estimulos/guitarra.mp3",
+      "ratón": basePath + "estimulos/raton.mp3",
+      "raton": basePath + "estimulos/raton.mp3",
+      "sapo": basePath + "estimulos/sapo.mp3",
+      "luna": basePath + "estimulos/luna.mp3",
+      "lápiz": basePath + "estimulos/lapiz.mp3",
+      "lapiz": basePath + "estimulos/lapiz.mp3",
+      "sol": basePath + "estimulos/sol.mp3",
+      "pelota": basePath + "estimulos/pelota.mp3",
+      "collar": basePath + "estimulos/collar.mp3",
+      "vaso": basePath + "estimulos/vaso.mp3",
+      "gato": basePath + "estimulos/gato.mp3",
+      "casa": basePath + "estimulos/casa.mp3",
+      "boca": basePath + "estimulos/boca.mp3",
+      "pato": basePath + "estimulos/pato.mp3",
+      "bota": basePath + "estimulos/bota.mp3",
+      "dedo": basePath + "estimulos/dedo.mp3",
+      "foca": basePath + "estimulos/foca.mp3",
+      "cama": basePath + "estimulos/cama.mp3",
+      "pera": basePath + "estimulos/pera.mp3",
+      "perro": basePath + "estimulos/perro.mp3",
+      "botón": basePath + "estimulos/boton.mp3",
+      "boton": basePath + "estimulos/boton.mp3",
+      "estrella": basePath + "estimulos/estrella.mp3",
+      "botella": basePath + "estimulos/botella.mp3",
+      "tren": basePath + "estimulos/tren.mp3",
+      "globo": basePath + "estimulos/globo.mp3",
+      "plátano": basePath + "estimulos/platano.mp3",
+      "platano": basePath + "estimulos/platano.mp3",
+      "flor": basePath + "estimulos/flor.mp3",
+      "dragón": basePath + "estimulos/dragon.mp3",
+      "dragon": basePath + "estimulos/dragon.mp3",
+      "fresa": basePath + "estimulos/fresa.mp3",
+      "león": basePath + "estimulos/leon.mp3",
+      "leon": basePath + "estimulos/leon.mp3",
+      "abeja": basePath + "estimulos/abeja.mp3",
+      "conejo": basePath + "estimulos/conejo.mp3",
+      "mesa": basePath + "estimulos/mesa.mp3"
+    };
+
+    Object.assign(this.studioSoundbank, registry);
+
+    // Generar diccionario normalizado para matching infalible
+    for (const [key, path] of Object.entries(this.studioSoundbank)) {
+      this.normalizedSoundbank[this.cleanTextKey(key)] = path;
+    }
+  }
+
+  findStudioClip(text) {
+    if (!text) return null;
+    const directKey = text.trim().toLowerCase();
+    if (this.studioSoundbank[directKey]) return this.studioSoundbank[directKey];
+
+    const clean = this.cleanTextKey(text);
+    if (this.normalizedSoundbank[clean]) return this.normalizedSoundbank[clean];
+
+    // 1. Detección semántica infalible para praxias bucofaciales
+    if (clean.includes('sube la punta de tu lengua') || clean.includes('cosquillee')) {
+      return 'assets/audio/consignas/praxia_r.mp3';
+    }
+    if (clean.includes('apoya la punta de tu lengua') || clean.includes('vibre rapido')) {
+      return 'assets/audio/consignas/praxia_rr.mp3';
+    }
+    if (clean.includes('pon tu lengua abajo') || clean.includes('sopla suavecito')) {
+      return 'assets/audio/consignas/praxia_s.mp3';
+    }
+    if (clean.includes('pega la punta de tu lengua') || clean.includes('canta sacando tu voz')) {
+      return 'assets/audio/consignas/praxia_l.mp3';
+    }
+    if (clean.includes('suelta el aire puro de golpe') || (clean.includes('abre la boca') && clean.includes('atras'))) {
+      return 'assets/audio/consignas/praxia_k.mp3';
+    }
+    if (clean.includes('junta tus dos labios') || clean.includes('juguemos con los labios')) {
+      return 'assets/audio/consignas/praxia_p.mp3';
+    }
+
+    // 2. Búsqueda difusa para consignas que contengan la frase clave (mínimo 6 caracteres)
+    for (const [key, path] of Object.entries(this.normalizedSoundbank)) {
+      if (key.length >= 6 && (clean.includes(key) || key.includes(clean))) {
+        return path;
+      }
+    }
+    return null;
   }
 
   initAudioContext() {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) {
-        this.audioCtx = new AudioContext();
+        this.audioCtx = new AudioContext({ sampleRate: 44100 });
       }
     } catch (e) {
       console.warn("AudioContext no inicializado:", e);
@@ -114,24 +338,24 @@ class PhonoAudioEngine {
     this.resumeAudioContext();
     if (!this.audioCtx) return;
     const now = this.audioCtx.currentTime;
-    // Tono cálido en acorde dulce de aliento (F4 -> A4)
-    const notes = [349.23, 440.00];
+    // Tono cálido en acorde dulce de aliento (F4 -> A4 -> C5)
+    const notes = [349.23, 440.00, 523.25];
     notes.forEach((freq, idx) => {
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
-      const noteTime = now + idx * 0.1;
+      const noteTime = now + idx * 0.09;
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, noteTime);
 
-      gain.gain.setValueAtTime(0.2, noteTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.45);
+      gain.gain.setValueAtTime(0.18, noteTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.48);
 
       osc.connect(gain);
       gain.connect(this.audioCtx.destination);
 
       osc.start(noteTime);
-      osc.stop(noteTime + 0.45);
+      osc.stop(noteTime + 0.48);
     });
   }
 
@@ -156,9 +380,281 @@ class PhonoAudioEngine {
     osc.stop(now + 0.05);
   }
 
+  /* --- BANCO DE AUDIO DE ESTUDIO (44.1 kHz, Locución Humana Lima) --- */
+
+  registerStudioClip(key, audioUrl) {
+    this.studioSoundbank[key.toLowerCase().trim()] = audioUrl;
+  }
+
+  hasStudioClip(key) {
+    return !!this.studioSoundbank[key.toLowerCase().trim()];
+  }
+
+  /* --- MODELADO FONÉTICO PURO EN WEB AUDIO API (PROHIBICIÓN ESTRICTA DE SCHWA [ə]) --- */
+
+  getOrCreateNoiseBuffer(duration = 0.5) {
+    if (this.cachedNoiseBuffer) return this.cachedNoiseBuffer;
+    if (!this.audioCtx) return null;
+    const bufferSize = Math.floor(this.audioCtx.sampleRate * duration);
+    const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.9;
+    }
+    this.cachedNoiseBuffer = buffer;
+    return buffer;
+  }
+
+  /**
+   * Emite fonema consonántico aislado puro SIN vocal neutra parásita [ə].
+   * Resuelve el antipatrón de Furlong et al. (2018) donde las apps emiten [kə] ("kuh").
+   */
+  playPurePhoneme(phoneme, onEndCallback = null) {
+    this.resumeAudioContext();
+    if (!this.audioCtx) {
+      if (onEndCallback) onEndCallback();
+      return;
+    }
+
+    const cleanPhoneme = (phoneme || '').toLowerCase().replace(/[\/\[\]\s]/g, '');
+    const now = this.audioCtx.currentTime;
+
+    // Si existe clip de estudio registrado para este fonema puro, reproducirlo
+    const studioKey = `fonema_${cleanPhoneme}`;
+    if (this.hasStudioClip(studioKey)) {
+      const audio = new Audio(this.studioSoundbank[studioKey]);
+      if (onEndCallback) audio.onended = onEndCallback;
+      audio.play().catch(e => console.warn("Error reproduciendo clip de estudio:", e));
+      return;
+    }
+
+    switch (cleanPhoneme) {
+      case 'k': {
+        // [k] Oclusión velar sorda pura: ráfaga de ruido transitorio (~1900-2200 Hz), 22ms, decay abrupto
+        const noiseBuf = this.getOrCreateNoiseBuffer(0.1);
+        if (noiseBuf) {
+          const noiseSrc = this.audioCtx.createBufferSource();
+          noiseSrc.buffer = noiseBuf;
+
+          const filter = this.audioCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(2050, now);
+          filter.Q.setValueAtTime(2.8, now);
+
+          const gain = this.audioCtx.createGain();
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.024); // Estrictamente 24 ms (sin schwa)
+
+          noiseSrc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.audioCtx.destination);
+
+          noiseSrc.start(now);
+          noiseSrc.stop(now + 0.03);
+        }
+        if (onEndCallback) setTimeout(onEndCallback, 350);
+        break;
+      }
+
+      case 's': {
+        // [s] Fricativa alveolar sorda pura: ruido blanco filtrado paso-banda 5000-7500 Hz, 300ms suave
+        const noiseBuf = this.getOrCreateNoiseBuffer(0.4);
+        if (noiseBuf) {
+          const noiseSrc = this.audioCtx.createBufferSource();
+          noiseSrc.buffer = noiseBuf;
+
+          const filter = this.audioCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(6200, now);
+          filter.Q.setValueAtTime(2.2, now);
+
+          const gain = this.audioCtx.createGain();
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.24, now + 0.04);
+          gain.gain.setValueAtTime(0.24, now + 0.22);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+          noiseSrc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.audioCtx.destination);
+
+          noiseSrc.start(now);
+          noiseSrc.stop(now + 0.34);
+        }
+        if (onEndCallback) setTimeout(onEndCallback, 450);
+        break;
+      }
+
+      case 'p': {
+        // [p] Oclusión bilabial sorda pura: burst de presión percusivo sordo centrado en 650 Hz (15ms)
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(650, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.018);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02); // 20 ms estrictos
+
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.025);
+
+        if (onEndCallback) setTimeout(onEndCallback, 300);
+        break;
+      }
+
+      case 't': {
+        // [t] Oclusión alveolar/dental sorda pura: burst agudo transitorio centrado en 3600 Hz (14ms)
+        const noiseBuf = this.getOrCreateNoiseBuffer(0.1);
+        if (noiseBuf) {
+          const noiseSrc = this.audioCtx.createBufferSource();
+          noiseSrc.buffer = noiseBuf;
+          const filter = this.audioCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(3600, now);
+          filter.Q.setValueAtTime(3.2, now);
+
+          const gain = this.audioCtx.createGain();
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.016);
+
+          noiseSrc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.audioCtx.destination);
+          noiseSrc.start(now);
+          noiseSrc.stop(now + 0.02);
+        }
+        if (onEndCallback) setTimeout(onEndCallback, 300);
+        break;
+      }
+
+      case 'r':
+      case 'rr': {
+        // [ɾ] o [r] Vibrante alveolar pura: pulsos mecánicos percusivos sin formante vocálico parásito
+        const isMultiple = cleanPhoneme === 'rr';
+        const numTaps = isMultiple ? 4 : 1;
+        const tapInterval = 0.04; // 25 Hz aproximado de la vibración lingual humana
+
+        for (let i = 0; i < numTaps; i++) {
+          const tapTime = now + (i * tapInterval);
+          const osc = this.audioCtx.createOscillator();
+          const gain = this.audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1450, tapTime);
+          osc.frequency.exponentialRampToValueAtTime(450, tapTime + 0.025);
+
+          gain.gain.setValueAtTime(0.25, tapTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, tapTime + 0.028);
+
+          osc.connect(gain);
+          gain.connect(this.audioCtx.destination);
+          osc.start(tapTime);
+          osc.stop(tapTime + 0.03);
+        }
+        const totalDurationMs = Math.round((numTaps * tapInterval + 0.1) * 1000);
+        if (onEndCallback) setTimeout(onEndCallback, totalDurationMs);
+        break;
+      }
+
+      case 'l': {
+        // [l] Lateral alveolar líquida: resonancia armónica F1=360Hz y F2=1300Hz continua limpia
+        const osc1 = this.audioCtx.createOscillator();
+        const osc2 = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(360, now);
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(1300, now);
+
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+        gain.gain.setValueAtTime(0.2, now + 0.22);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.32);
+        osc2.stop(now + 0.32);
+
+        if (onEndCallback) setTimeout(onEndCallback, 400);
+        break;
+      }
+
+      default:
+        // Si no es un fonema consonántico puro mapeado, derivar a locución estándar
+        this.speak(cleanPhoneme, onEndCallback);
+    }
+  }
+
   /* --- LOCUCIÓN NARRADA EN ESPAÑOL (Norma Lima Metropolitana sin Schwa) --- */
 
-  speak(text, onEndCallback = null) {
+  /**
+   * Identifica si una cadena representa un fonema aislado para proteger al menor de la schwa [ə]
+   */
+  isIsolatedConsonant(text) {
+    if (!text) return false;
+    const clean = text.trim().toLowerCase().replace(/[\/\[\]\.\,\!\?]/g, '');
+    const pureConsonants = ['k', 's', 'r', 'rr', 'l', 'p', 't', 'm', 'n', 'f', 'b', 'd', 'g', 'ch', 'll', 'y', 'j'];
+    return pureConsonants.includes(clean);
+  }
+
+  /**
+   * Emite la voz de Ava.
+   * Si es un fonema aislado, emite síntesis pura SIN schwa.
+   * Si existe un archivo pregrabado de estudio 44.1 kHz, lo reproduce prioritariamente.
+   * En modo fallback TTS, aplica filtro estricto a español de Lima / Perú o latinoamericano amigable.
+   */
+  speak(text, onEndCallback = null, options = {}) {
+    if (!text) {
+      if (onEndCallback) onEndCallback();
+      return;
+    }
+
+    // 1. Prohibición estricta de Schwa: Si es fonema aislado, NUNCA usar TTS comercial (evita [kə] o "kuh")
+    if (this.isIsolatedConsonant(text)) {
+      this.playPurePhoneme(text, onEndCallback);
+      return;
+    }
+
+    // 0. Detener cualquier audio de locución o TTS sintético previo para evitar traslapes
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+    if (this.currentPlayingAudio) {
+      try {
+        this.currentPlayingAudio.pause();
+        this.currentPlayingAudio.currentTime = 0;
+      } catch (err) {}
+      this.currentPlayingAudio = null;
+    }
+
+    // 2. Verificar banco de audio de estudio humano pregrabado a 44.1 kHz (Norma Lima)
+    const clipUrl = this.findStudioClip(text);
+    if (clipUrl) {
+      console.log("🔊 Reproduciendo locución humana de estudio (Norma Lima):", clipUrl);
+      const audio = new Audio(clipUrl);
+      this.currentPlayingAudio = audio;
+      if (onEndCallback) {
+        audio.onended = () => {
+          this.currentPlayingAudio = null;
+          onEndCallback();
+        };
+      }
+      audio.play().catch(e => {
+        console.warn("Autoplay bloqueado por navegador hasta interacción:", e);
+        if (onEndCallback) onEndCallback();
+      });
+      return;
+    }
+
+    // 3. Fallback: Web Speech API calibrada con parámetros de calidez preescolar y norma dialectal
     if (!('speechSynthesis' in window)) {
       if (onEndCallback) setTimeout(onEndCallback, 1000);
       return;
@@ -166,15 +662,21 @@ class PhonoAudioEngine {
 
     window.speechSynthesis.cancel(); // Detiene emisiones previas
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-PE'; // Variedad lingüística preferente de Perú
-    utterance.rate = 0.92;    // Velocidad ralentizada para infantes preescolares
-    utterance.pitch = 1.15;   // Tono afectuoso y cálido
+    utterance.lang = 'es-PE'; // Variedad lingüística preferente de Lima Metropolitana
+    utterance.rate = 0.88;    // Velocidad pausada para preescolares no lectores (Du et al., 2023)
+    utterance.pitch = 1.16;   // Tono cálido, afectuoso y maternal (tutor empático no punitivo)
 
     const voices = window.speechSynthesis.getVoices();
-    // Busca voz en español peruano o latinoamericano amigable
-    const preferredVoice = voices.find(v => v.lang.includes('es-PE')) ||
-                           voices.find(v => v.lang.includes('es-419')) ||
-                           voices.find(v => v.lang.includes('es'));
+    // Prioridad 1: es-PE nativo de Perú
+    // Prioridad 2: es-419 latinoamericano
+    // Prioridad 3: Voces femeninas cálidas latinoamericanas (evita ceceo peninsular de España)
+    const preferredVoice =
+      voices.find(v => v.lang === 'es-PE' || v.lang === 'es_PE') ||
+      voices.find(v => v.lang.includes('es-419')) ||
+      voices.find(v => (v.lang.startsWith('es') && !v.lang.includes('ES')) && (v.name.includes('Sabina') || v.name.includes('Paulina') || v.name.includes('Sofia') || v.name.includes('Mia') || v.name.includes('Monica') || v.name.includes('Paloma') || v.name.includes('Camila'))) ||
+      voices.find(v => v.lang.startsWith('es') && !v.lang.includes('ES')) ||
+      voices.find(v => v.lang.startsWith('es'));
+
     if (preferredVoice) {
       utterance.voice = preferredVoice;
     }
@@ -185,6 +687,21 @@ class PhonoAudioEngine {
     }
 
     window.speechSynthesis.speak(utterance);
+  }
+
+  /* --- REFUERZO POSITIVO AFECTIVO Y NO PUNITIVO (CRITERIO 3) --- */
+
+  /**
+   * Emite frases de aliento cálidas ante intentos no inteligibles o fallos del menor.
+   * Erradica antipatrones de sonidos secos, buzzers o correcciones punitivas.
+   */
+  playNonPunitiveEncouragement(phrase = null, onEndCallback = null) {
+    this.playGentleEncouragement(); // Acorde musical dulce previo
+    setTimeout(() => {
+      const selectedPhrase = phrase ||
+        this.encouragementPhrases[Math.floor(Math.random() * this.encouragementPhrases.length)];
+      this.speak(selectedPhrase, onEndCallback);
+    }, 280);
   }
 
   /* --- RECONOCIMIENTO DE VOZ ASR TOLERANTE (Web Speech API) --- */
@@ -328,7 +845,7 @@ class PhonoAudioEngine {
 
   /* --- REPRODUCCIÓN COMPARATIVA ALTERNADA (RF-BIO-004) --- */
   playComparative(modelText, onEndCallback = null) {
-    // 1. Modelo Nativo de Lima
+    // 1. Modelo Nativo de Lima (clip de estudio o fonema puro sin schwa)
     this.speak(modelText, () => {
       // Silencio de 500 ms
       setTimeout(() => {
@@ -340,7 +857,7 @@ class PhonoAudioEngine {
 
   /* --- EVALUACIÓN DE INTELIGIBILIDAD ASR CON TOLERANCIA PEDIÁTRICA (RF-ASR-001) --- */
   evaluateSpeech(targetWord, attemptCount = 1) {
-    const cleanTarget = targetWord.toLowerCase().trim();
+    const cleanTarget = (targetWord || '').toLowerCase().trim();
     const cleanRec = (this.lastTranscript || '').toLowerCase().trim();
 
     // 1. Coincidencia exacta o contenida en la transcripción ASR real

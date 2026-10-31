@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Inicialización de subsistemas
   const audioEngine = new PhonoAudioEngine();
+  window.audioEngine = audioEngine;
   const confetti = new ConfettiEngine('confettiCanvas');
   const praxiaCanvas = new PraxiaCanvasEngine('praxiaCanvas');
   const telemetry = new TelemetryPortalEngine();
@@ -134,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- CONTROL DE DEBOUNCE TÁCTIL (< 80ms) Y GESTIÓN DE PANTALLAS --- */
   function canTouch() {
+    audioEngine.resumeAudioContext();
     const now = Date.now();
     if (now - state.lastTouchTime < 80) {
       return false; // Ignora rebote táctil involuntario infantil
@@ -339,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
           elements.feedbackBadge.className = 'feedback-status-badge status-retry active';
           elements.feedbackBadge.textContent = `💜 ¡Buen intento! (${state.consecutiveFailures}/3) Vamos a intentarlo otra vez.`;
           elements.micCaption.textContent = "Toca para reintentar";
-          audioEngine.speak("¡Qué buen intento! Escucha cómo lo decimos y vuelve a tocar el botón.");
+          audioEngine.speak("¡Excelente intento, diste lo mejor de ti! ¡Dilo fuerte! Escuchemos juntos y vuelve a tocar el botón.");
 
           telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, `REINTENTO (${state.consecutiveFailures})`, url, "tag-yellow");
 
@@ -649,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
           updateStars(2);
 
           if (bingoRoundIndex < BINGO_ROUNDS.length - 1) {
-            audioEngine.speak(`¡Excelente! ¡${c.word} tiene el sonido pedido! Pasemos a la siguiente.`, () => {
+            audioEngine.speak("¡Excelente! ¡Tiene el sonido pedido! Pasemos a la siguiente.", () => {
               setTimeout(() => {
                 loadBingoGame(bingoRoundIndex + 1);
               }, 1200);
@@ -667,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           // Intento no concordante (aliento suave, no punitivo)
           audioEngine.playGentleEncouragement();
-          audioEngine.speak(`Casi casi... ${c.word} empieza con el sonido /${c.sound}/. ¡Busca la que empieza con /${round.targetSound}/!`);
+          audioEngine.speak("Casi casi amiguito, busca con atención la tarjeta que tiene el sonido pedido.");
         }
       };
 
@@ -690,33 +692,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const SOUND_NARRATIONS = {
     'r': {
       title: '👅 ¿Cómo ponemos la lengua para la R?',
-      spoken: '¡Hola amiguito! Para hacer este sonido, sube la punta de tu lengua arribita, justo detrás de tus dientes de arriba. Ahora sopla despacito y haz que tu lengua cosquillee: ¡Rrrrrr! ¡Pruébalo conmigo!',
-      display: '¡Sube la punta de tu lengua arribita, detrás de tus dientes de arriba, y sopla para que cosquillee: ¡Rrrrrr!'
+      spoken: '¡Hola amiguito! Para hacer este sonido, sube la punta de tu lengua arribita, justo detrás de tus dientes de arriba. Ahora sopla despacito y haz que tu lengua cosquillee: ¡r! ¡Pruébalo conmigo!',
+      display: '¡Sube la punta de tu lengua arribita, detrás de tus dientes de arriba, y hazla cosquillear: [r]!'
     },
     'rr': {
       title: '👅 ¿Cómo ponemos la lengua para la RR?',
-      spoken: '¡Vamos con fuerza! Apoya la punta de tu lengua arriba, detrás de tus dientes. Toma aire y sopla fuerte para que tu lengua vibre rápido: ¡Rrrrrrrrr! ¡Qué bien suena!',
-      display: '¡Apoya la punta de tu lengua arriba, detrás de los dientes, y sopla fuerte para que vibre rápido: ¡Rrrrrrrrr!'
+      spoken: '¡Vamos con fuerza! Apoya la punta de tu lengua arriba, detrás de tus dientes. Toma aire y sopla fuerte para que tu lengua vibre rápido: ¡rr! ¡Qué bien suena!',
+      display: '¡Apoya la punta de tu lengua arriba, detrás de los dientes, y sopla fuerte para que vibre: [rr]!'
     },
     's': {
       title: '👅 ¿Cómo ponemos la boca para la S?',
-      spoken: '¡Escucha bien! Pon tu lengua abajo, detrás de tus dientes de abajo. Ahora sonríe mostrando tus dientes y sopla suavecito: ¡Sssssssss! ¡Excelente!',
-      display: '¡Pon tu lengua abajo, detrás de tus dientes, sonríe mostrando los dientes y sopla suavecito: ¡Sssssssss!'
+      spoken: '¡Escucha bien! Pon tu lengua abajo, detrás de tus dientes de abajo. Ahora sonríe mostrando tus dientes y sopla suavecito: ¡s! ¡Excelente!',
+      display: '¡Pon tu lengua abajo, detrás de tus dientes, sonríe mostrando los dientes y sopla suavecito: [s]!'
     },
     'l': {
       title: '👅 ¿Cómo ponemos la lengua para la L?',
-      spoken: '¡Mira qué fácil! Pega la punta de tu lengua arriba en el techo de tu boca. Déjala quietita y canta sacando tu voz: ¡Llllllllll! ¡Lo hiciste genial!',
-      display: '¡Pega la punta de tu lengua arriba en el techo de tu boca, déjala quietita y canta: ¡Llllllllll!'
+      spoken: '¡Mira qué fácil! Pega la punta de tu lengua arriba en el techo de tu boca. Déjala quietita y canta sacando tu voz: ¡l! ¡Lo hiciste genial!',
+      display: '¡Pega la punta de tu lengua arriba en el techo de tu boca, déjala quietita y canta: [l]!'
     },
     'k': {
       title: '👅 ¿Cómo ponemos la boca para la K?',
-      spoken: '¡Atento amiguito! Abre bien grande tu boca, sube la parte de atrás de tu lengua arriba y suelta el aire de golpe: ¡Kaaaa! ¡Inténtalo tú solo!',
-      display: '¡Abre grande la boca, sube la parte de atrás de la lengua y suelta el aire de golpe: ¡Kaaaa!'
+      spoken: '¡Atento amiguito! Abre la boca, sube la parte de atrás de tu lengua arriba y suelta el aire puro de golpe: ¡k! ¡Inténtalo tú solo!',
+      display: '¡Abre la boca, sube la parte de atrás de la lengua y suelta el aire puro de golpe: [k]!'
     },
     'p': {
       title: '👅 ¿Cómo ponemos los labios para la P?',
-      spoken: '¡Juguemos con los labios! Junta tus dos labios bien apretaditos, guarda un poquito de aire y suelta tus labios rápido: ¡Paaaa! ¡Muy bien!',
-      display: '¡Junta tus dos labios bien apretaditos, guarda aire y suéltalos rápido: ¡Paaaa!'
+      spoken: '¡Juguemos con los labios! Junta tus dos labios bien apretaditos, guarda un poquito de aire y suelta tus labios rápido: ¡p! ¡Muy bien!',
+      display: '¡Junta tus dos labios bien apretaditos, guarda aire y suéltalos rápido con el sonido puro: [p]!'
     }
   };
 
@@ -978,7 +980,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function playAvaGreeting() {
     if (!canTouch()) return;
     audioEngine.playChime();
-    audioEngine.speak("¡Hola! Toca un vagón para jugar.");
+    audioEngine.speak("¡Hola amiguito! Bienvenido al Bosque Sonoro. ¡Toca un vagón para empezar a jugar!");
   }
   if (bannerAvaWelcome) bannerAvaWelcome.addEventListener('click', playAvaGreeting);
   if (btnHearAvaWelcome) {
@@ -1040,6 +1042,28 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       document.body.removeAttribute('data-theme');
     }
+  
+  // Conexión de botones de prueba acústica de Ava en el panel adulto
+  const btnAuditionPureK = document.getElementById('btnAuditionPureK');
+  const btnAuditionPureS = document.getElementById('btnAuditionPureS');
+  const btnAuditionAvaWarmth = document.getElementById('btnAuditionAvaWarmth');
+
+  if (btnAuditionPureK) {
+    btnAuditionPureK.addEventListener('click', () => {
+      audioEngine.playPurePhoneme('k');
+    });
+  }
+  if (btnAuditionPureS) {
+    btnAuditionPureS.addEventListener('click', () => {
+      audioEngine.playPurePhoneme('s');
+    });
+  }
+  if (btnAuditionAvaWarmth) {
+    btnAuditionAvaWarmth.addEventListener('click', () => {
+      audioEngine.playNonPunitiveEncouragement();
+    });
+  }
+
     if (elements.chkCviAdultToggle) {
       elements.chkCviAdultToggle.checked = state.cviMode;
     }
@@ -1067,7 +1091,21 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {}
 
   // Saludo inicial de Ava al cargar
+    // Desbloqueo y activación de voz en el primer toque (cumple con Autoplay Policy de Chrome/Edge)
+  let initialGreetingPlayed = false;
+  function triggerInitialGreetingOnFirstTouch() {
+    if (initialGreetingPlayed) return;
+    initialGreetingPlayed = true;
+    audioEngine.resumeAudioContext();
+    audioEngine.speak("¡Hola amiguito! Bienvenido al Bosque Sonoro. ¿Qué juego quieres jugar hoy?");
+  }
+
+  // Intento inicial inmediato por si el navegador permite autoplay
   setTimeout(() => {
     audioEngine.speak("¡Hola amiguito! Bienvenido al Bosque Sonoro. ¿Qué juego quieres jugar hoy?");
-  }, 600);
+  }, 400);
+
+  // Activación universal en el primer clic o toque en cualquier parte de la pantalla
+  document.addEventListener('click', triggerInitialGreetingOnFirstTouch, { once: true, capture: true });
+  document.addEventListener('pointerdown', triggerInitialGreetingOnFirstTouch, { once: true, capture: true });
 });

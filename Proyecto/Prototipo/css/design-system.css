@@ -3361,3 +3361,81 @@ html, body {
   margin-top: 10px;
   text-align: center;
 }
+
+
+/* ==========================================================================
+   MICROINTERACCIONES DE LA MASCOTA AVA (CRITERIO 4: INTERACTIVIDAD TÁCTIL)
+   NORMA CULTA LIMA METROPOLITANA & MODELADO FONÉTICO PURO SIN SCHWA [ə]
+   ========================================================================== */
+
+.avatar-mascot-img,
+.welcome-mascot-avatar,
+.pairs-ava-avatar,
+.bingo-caller-left img,
+.header-app-logo {
+  cursor: pointer;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avatar-mascot-img:hover,
+.welcome-mascot-avatar:hover,
+.pairs-ava-avatar:hover,
+.bingo-caller-left img:hover {
+  transform: scale(1.07);
+}
+
+.avatar-mascot-img:active,
+.welcome-mascot-avatar:active,
+.pairs-ava-avatar:active,
+.bingo-caller-left img:active {
+  transform: scale(0.94);
+}
+
+/* Micro-animación de aleteo alegre de la abejita al recibir un toque táctil */
+.ava-tapped {
+  animation: avaFlutterBounce 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes avaFlutterBounce {
+  0% { transform: scale(1) rotate(0deg); }
+  20% { transform: scale(1.15) rotate(-8deg); }
+  45% { transform: scale(1.08) rotate(8deg); }
+  70% { transform: scale(1.12) rotate(-4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.avatar-speech-balloon {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.avatar-speech-balloon:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 14px rgba(255, 179, 0, 0.35);
+}
+
+/* Card y Badge de Especificación Acústica de Ava */
+.acoustic-spec-card {
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.acoustic-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E8F5E9;
+  color: #1B5E20;
+  border: 1px solid #A5D6A7;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
