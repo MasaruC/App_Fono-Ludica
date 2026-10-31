@@ -26,33 +26,34 @@ Toda la documentación técnica se encuentra centralizada y enlazada de forma na
 
 | Entregable / Módulo Técnico | Enlace Directo al Documento | Descripción y Contenido Clave |
 | :--- | :--- | :--- |
-| **📑 Índice Central de Documentación** | [Documentación.md](Proyecto/Documentación/Documentación.md) | Centro de comando y mapa MOC de todos los documentos técnicos del proyecto. |
-| **📋 Especificación de Requisitos de Software** | [Especificación Refinada de Requisitos.md](Proyecto/Documentación/Especificación%20Refinada%20de%20Requisitos%20de%20Software%20Aplicación%20Fono-Lúdica%20para%20la%20Articulación%20Fonética%20en%20Preescolares.md) | Catálogo de RF y RNF bajo ISO/IEC 25010, criterios de aceptación BDD (Gherkin/PAR), matriz RTM e indexación de antecedentes científicos. |
-| **🔄 Casos de Uso y Diagramas de Secuencia** | [Especificación de Casos de Uso.md](Proyecto/Documentación/Especificación%20de%20Casos%20de%20Uso%20y%20Diagramas%20de%20Secuencia%20Aplicación%20Fono-Lúdica%20Pediátrica.md) | Modelado AS-IS ➔ TO-BE, CUS textuales estructurados, diagramas de actividades con swimlanes y 4 diagramas de secuencia Mermaid. |
-| **🎨 Sistema de Diseño y Guía HCI/UX** | [Sistema de Diseño, Tokens y Wireflows.md](Proyecto/Documentación/Sistema%20de%20Diseño%20(Design%20System),%20Tokens%20de%20Diseño,%20Directrices%20HCIUX%20y%20Wireflows%20Pediátricos.md) | Design tokens (WCAG 2.2 AA y Modo CVI), componentes atómicos para motricidad pediátrica (botones $\ge 56\text{ px}$), directrices CCI y wireflows. |
-| **🎮 Catálogo del Prototipo de Alta Fidelidad** | [Prototipo Interactivo de Alta Fidelidad.md](Proyecto/Documentación/Prototipo%20Interactivo%20Fono-Lúdico%20de%20Alta%20Fidelidad.md) | Sustento empírico de las 13 pantallas, biofeedback contingente (<300 ms), algoritmo de Dificultad Dinámica (DDA) y dashboard de fonometría. |
-| **👑 Aplicación de Reglas de Mandel y Estándares** | [Aplicación de Principios y Reglas de Mandel.md](Proyecto/Documentación/Aplicación%20de%20Principios,%20Reglas%20de%20Mandel,%20Est%C3%A1ndares%20y%20Gu%C3%ADa%20de%20Estilo%20en%20Prototipos%20de%20Alta%20Fidelidad.md) | Ficha de usuario/tarea/contexto, contraste evolutivo v1 vs v2 vs v3 (100% No Textual y Voice-First), matriz de 9 decisiones justificadas, guía de estilo y plan de pruebas. |
-| **📖 Marco Teórico de Adaptación Pediátrica** | [Marco de Adaptación Teórica.md](Proyecto/Documentación/Marco%20Conceptual/Fundamentaci%C3%B3n%20Te%C3%B3rica%20y%20Adaptaci%C3%B3n%20de%20Directrices%20IHC,%20Reglas%20de%20Mandel%20y%20Est%C3%A1ndares%20de%20Accesibilidad%20en%20Fonoaudiolog%C3%ADa%20Pedi%C3%A1trica.md) | Investigación y justificación científica sobre superación del sesgo adultocéntrico de Mandel, ISO 9241 y WCAG 2.2 en preescolares. |
-| **🎭 Marco de Metáforas de Diseño** | [Aplicación de Metáforas de Diseño](Proyecto/Documentación/Marco%20Conceptual/Aplicación%20de%20Metáforas%20de%20Diseño%20en%20los%20Prototipos.md) | Operacionalización de metáforas visuales, funcionales, organizacionales y de interacción bajo el modelo de Nielsen y Mandell. |
-| **📚 Repositorio de Antecedentes y Estado del Arte** | [Antecedentes.md](Proyecto/Antecedentes/Antecedentes.md) | Análisis sistemático, matriz comparativa de brechas y 10 fichas bibliográficas RAE completas de literatura científica especializada. |
+| **📑 Índice Central de Documentación** | [Documentación.md](Proyecto/Documentación/Documentación.md) | Centro de comando y mapa MOC de las 4 carpetas técnicas del proyecto. |
+| **🎭 Actividad 6: Metáforas de Interfaz** | [Actividad 6 - Metáforas](Proyecto/Documentación/Actividad%206%20-%20Metaforas/Actividad%206%20-%20Metáforas%20de%20Interfaz.md) | Marco conceptual (5+ artículos), modelos mentales, y operacionalización de los 4 tipos de metáforas. |
+| **👑 Actividad 7: Principios y Guías de Estilo** | [Actividad 7 - Principios y Guía de Estilo](Proyecto/Documentación/Actividad%207%20-%20Principios,%20directrices,%20estándares%20y%20guías%20de%20estilo/Actividad%207%20-%20Principios,%20directrices,%20estándares%20y%20guías%20de%20estilo.md) | Tres reglas de Mandel, evolución v1➔v2➔v3, matriz de 9 decisiones, guía de estilo y catálogo de pantallas. |
+| **🧪 Actividad 10: Usabilidad y Accesibilidad** | [Actividad 10 - Usabilidad y Accesibilidad](Proyecto/Documentación/Actividad%2010%20-%20Prueba%20de%20Usabilidad%20y%20Accesibilidad/Actividad%2010%20-%20Prueba%20de%20Usabilidad%20y%20Accesibilidad.md) | Plan y reporte ágil para dislalia funcional (audición normal), 3 tareas, Smileyometer, SUS y matriz IP_F. |
+| **🌳 Contexto Maestro (SSOT)** | [Contexto Maestro Bosque Sonoro](Proyecto/Documentación/Recursos%20Compartidos/Contexto%20Maestro%20del%20Proyecto%20-%20Aplicación%20Fono-Lúdica%20Bosque%20Sonoro.md) | Repositorio canónico y memoria técnica del proyecto: clínica fonética, 10 antecedentes y arquitectura. |
+| **🎨 Sistema de Diseño y Guía HCI/UX** | [Sistema de Diseño Pediátrico](Proyecto/Documentación/Recursos%20Compartidos/Sistema%20de%20Diseño%20(Design%20System),%20Tokens%20de%20Diseño,%20Directrices%20HCIUX%20y%20Wireflows%20Pediátricos.md) | Design tokens (WCAG 2.2 AA y Modo CVI), componentes atómicos para motricidad pediátrica y wireflows. |
+| **🎮 Catálogo del Prototipo de Alta Fidelidad** | [Prototipo Interactivo](Proyecto/Documentación/Recursos%20Compartidos/Prototipo%20Interactivo%20Fono-Lúdico%20de%20Alta%20Fidelidad.md) | Sustento empírico de las 13 pantallas, biofeedback contingente (<300 ms), algoritmo DDA y dashboard. |
+| **📋 Especificación de Requisitos de Software** | [Especificación de Requisitos](Proyecto/Documentación/Recursos%20Compartidos/Especificación%20Refinada%20de%20Requisitos%20de%20Software%20Aplicación%20Fono-Lúdica%20para%20la%20Articulación%20Fonética%20en%20Preescolares.md) | Catálogo de RF y RNF bajo ISO/IEC 25010, criterios de aceptación BDD (Gherkin/PAR) y matriz RTM. |
+| **🔄 Casos de Uso y Diagramas de Secuencia** | [Casos de Uso y Secuencia](Proyecto/Documentación/Recursos%20Compartidos/Especificación%20de%20Casos%20de%20Uso%20y%20Diagramas%20de%20Secuencia%20Aplicación%20Fono-Lúdica%20Pediátrica.md) | Modelado AS-IS ➔ TO-BE, CUS textuales estructurados, diagramas de actividades y 4 diagramas Mermaid. |
+| **📚 Repositorio de Antecedentes y Estado del Arte** | [Antecedentes.md](Proyecto/Antecedentes/Antecedentes.md) | Análisis sistemático, matriz comparativa de brechas y 10 fichas bibliográficas RAE completas. |
 | **🚀 Nota General del Proyecto** | [Proyecto.md](Proyecto/Proyecto.md) | Planificación del curso, competencias curriculares (CT6.3, CT8.2, RA2-RA4), cronograma Gantt y rúbricas de evaluación continua. |
 
 ---
 
 ## 📸 Evidencia Visual del Prototipo
 
-El prototipo cuenta con 13 interfaces de alta fidelidad documentadas con capturas de pantalla de alta resolución en [`Proyecto/Documentación/capturas/`](Proyecto/Documentación/capturas/):
+El prototipo cuenta con 13 interfaces de alta fidelidad documentadas con capturas de pantalla de alta resolución en [`Proyecto/Documentación/Recursos Compartidos/capturas/`](Proyecto/Documentación/Recursos Compartidos/capturas/):
 
 | Interfaz | Vista Previa |
 | :---: | :---: |
-| **Menú Principal Lúdico (El Bosque de los Sonidos)** | ![Menú Principal](Proyecto/Documentación/capturas/01_menu_principal.png) |
-| **Ejercicio de Pronunciación Fonética y Biofeedback** | ![Ejercicio Fonético](Proyecto/Documentación/capturas/02_ejercicio_landscape.png) |
-| **Minijuego: Carrera Fónica (Control por Fonación)** | ![Carrera Fónica](Proyecto/Documentación/capturas/03_carrera_fonica.png) |
-| **Simulador de Praxias Bucofaciales 2D** | ![Praxias 2D](Proyecto/Documentación/capturas/06_praxia_bucofacial_2d.png) |
-| **Dashboard Clínico-Docente (TEPROSIF-R & PSF)** | ![Dashboard Clínico](Proyecto/Documentación/capturas/10_dashboard_clinico_psf_teprosif.png) |
-| **Modo Alto Contraste y Accesibilidad CVI** | ![Modo CVI](Proyecto/Documentación/capturas/12_modo_alto_contraste_cvi.png) |
+| **Menú Principal Lúdico (El Bosque de los Sonidos)** | ![Menú Principal](Proyecto/Documentación/Recursos Compartidos/capturas/01_menu_principal.png) |
+| **Ejercicio de Pronunciación Fonética y Biofeedback** | ![Ejercicio Fonético](Proyecto/Documentación/Recursos Compartidos/capturas/02_ejercicio_landscape.png) |
+| **Minijuego: Carrera Fónica (Control por Fonación)** | ![Carrera Fónica](Proyecto/Documentación/Recursos Compartidos/capturas/03_carrera_fonica.png) |
+| **Simulador de Praxias Bucofaciales 2D** | ![Praxias 2D](Proyecto/Documentación/Recursos Compartidos/capturas/06_praxia_bucofacial_2d.png) |
+| **Dashboard Clínico-Docente (TEPROSIF-R & PSF)** | ![Dashboard Clínico](Proyecto/Documentación/Recursos Compartidos/capturas/10_dashboard_clinico_psf_teprosif.png) |
+| **Modo Alto Contraste y Accesibilidad CVI** | ![Modo CVI](Proyecto/Documentación/Recursos Compartidos/capturas/12_modo_alto_contraste_cvi.png) |
 
-*(Para ver la totalidad de las 13 capturas e inspección técnica paso a paso, consulta el [Catálogo del Prototipo](Proyecto/Documentación/Prototipo%20Interactivo%20Fono-Lúdico%20de%20Alta%20Fidelidad.md)).*
+*(Para ver la totalidad de las 13 capturas e inspección técnica paso a paso, consulta el [Catálogo del Prototipo](Proyecto/Documentación/Recursos%20Compartidos/Prototipo%20Interactivo%20Fono-Lúdico%20de%20Alta%20Fidelidad.md)).*
 
 ---
 
