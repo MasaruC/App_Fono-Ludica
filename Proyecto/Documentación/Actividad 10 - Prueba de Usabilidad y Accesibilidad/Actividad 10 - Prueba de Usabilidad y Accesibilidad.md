@@ -19,9 +19,9 @@ integrantes:
   - "Sandoval Dominguez, Erick Marco A. (24200172)"
   - "Melendez Bustamante, Alvaro M. (24200166)"
 institucion: "Universidad Nacional Mayor de San Marcos - FISI"
-version: 2.0.0
+version: 2.1.0
 fecha: 2026-10-31
-estado: Consolidado y Adaptado a Contexto Real
+estado: Consolidado con Kit de Campo y Especificación Tap-to-Talk
 aliases:
   - Actividad 10 - Prueba de Usabilidad y Accesibilidad
   - Plan de Pruebas de Usabilidad Bosque Sonoro
@@ -62,7 +62,7 @@ graph TD
         P3["3. Tarea Crítica del Mediador<br>T3: Superación de MathGate y revisión de reportes"]
         P4["4. Evaluación de Accesibilidad WCAG 2.2<br>Touch targets ≥ 48dp, Voice-First, No Textual, Modo CVI"]
         P5["5. Triangulación Psicométrica<br>Smileyometer infantil (3 caritas) + SUS mediador"]
-        P6["6. Plan de Mejoras Priorizado<br>Matriz IP_F para optimización ágil de V2"]
+        P6["6. Plan de Mejoras Priorizado<br>Matriz IP_F para optimización ágil de V2 (Modo Tap-to-Talk)"]
     end
 
     P1 --> P2
@@ -184,16 +184,64 @@ sequenceDiagram
 
 ---
 
-## 5. Protocolo de Ejecución y Moderación Pediátrica
+## 5. Protocolo de Ejecución y Diagrama de Flujo en Campo
 
-### 5.1 Reglas de facilitación ética y no invasiva
-1. **Rapport inicial (2 minutos):** El evaluador se agacha a la altura de los ojos del niño, le muestra la tableta con una sonrisa y le presenta a la abejita Ava en tono lúdico.
-2. **Derecho a pausa continua:** Si el niño muestra desinterés, distracción persistente o cansancio vocal, la sesión se pausa o concluye de inmediato: **el bienestar del infante está siempre por encima del testeo**.
-3. **Exploración libre sin inducción:** El moderador no señala botones ni anticipa respuestas; permite que el niño descubra la interfaz a su propio ritmo.
+### 5.1 Diagrama de flujo de actividades durante la prueba de campo
 
-### 5.2 Clasificación operativa de resultados por intento
+El siguiente diagrama detalla la secuencia operativa paso a paso que ejecuta el equipo evaluador en el aula o consultorio:
+
+```mermaid
+flowchart TD
+    Start(["🚀 Inicio de la Jornada de Testeo"]) --> PreCheck["Fase 0: Preparación de Sala y Tableta<br>• Carga ≥ 50%, atril a 25°, volumen al 70%<br>• Permisos de micrófono concedidos<br>• Cuadernillo impreso y tarjetones en mesa"]
+    
+    PreCheck --> AdultConsent["Fase 1A: Consentimiento del Apoderado<br>• Explicación informativa (no es examen escolar)<br>• Firma de Consentimiento Legal (Ley 29733)"]
+    
+    AdultConsent --> ChildRapport["Fase 1B: Rapport con el Infante (2-3 min)<br>• Moderador a la altura de sus ojos<br>• Presentación de la abejita Ava (peluche/títere)<br>• Explicación de tarjetas: Ava Jugando vs. Ava Pausa"]
+    
+    ChildRapport --> ChildAssent{"Fase 1C: ¿El niño asiente jugar?<br>(Señala carita sonriente de Ava)"}
+    
+    ChildAssent -- "No / Quiere descansar" --> PauseSession["🛑 Fin respetuoso sin insistencia<br>• Refuerzo positivo con pegatina<br>• Reprogramación optativa"]
+    ChildAssent -- "Sí, ¡quiero jugar!" --> StartTask1["Fase 2: Tarea 1 - Navegación en el Tren<br>• Ava: '¿A qué vagón quieres jugar hoy?'<br>• Cronómetro en marcha (Meta: < 45 s)<br>• Niño toca vagón por el juguete visual"]
+    
+    StartTask1 --> EvalT1{"¿Ingresó al juego?"}
+    EvalT1 -- "Solo (SA)" --> LogT1_SA["Registrar T1: SA (Sin ayuda)"]
+    EvalT1 -- "Bloqueo > 10s" --> GuideT1["Apoyo verbal neutro del moderador"] --> LogT1_CA["Registrar T1: CA (Con ayuda)"]
+    EvalT1 -- "Abandono / > 45s" --> LogT1_NC["Registrar T1: NC (No completado)"]
+    
+    LogT1_SA --> StartTask2["Fase 3: Tarea 2 - Articulación y Biofeedback<br>• Ava emite modelo fónico (ej. 'Pera')<br>• Niño presiona micrófono y vocaliza<br>• Cronómetro en marcha (Meta: < 90 s)"]
+    LogT1_CA --> StartTask2
+    LogT1_NC --> StartTask2
+    
+    StartTask2 --> CheckFeedback{"Respuesta del sistema"}
+    CheckFeedback -- "Fonación correcta" --> Victory["Salto festivo de Ava + Estrellas doradas"]
+    CheckFeedback -- "Fallo persistente (3 intentos)" --> DDA_Trigger["Algoritmo DDA:<br>Despliegue automático de Praxia 2D<br>Ava: '¡Mira cómo muevo mi lengüita!'"]
+    
+    Victory --> CheckChildState{"¿El niño muestra fatiga o<br>levanta tarjeta de pausa?"}
+    DDA_Trigger --> CheckChildState
+    
+    CheckChildState -- "Sí (Fatiga / Pausa)" --> EndChild["Pausa inmediata de la actividad"]
+    CheckChildState -- "No (Contento / Atento)" --> SmileyEval["Fase 4: Satisfacción Infantil (Smileyometer)<br>• Mostrar tarjetón de 3 caritas de Ava<br>• El niño señala espontáneamente: 🙁 / 😐 / 😊<br>• Entrega de estrella física de agradecimiento"]
+    
+    EndChild --> SmileyEval
+    SmileyEval --> TransitionMed["Fase 5: Tarea 3 - Transición al Mediador<br>• '¡Préstale un ratito la tableta a tu profe!'<br>• Mediador toca candado superior"]
+    
+    TransitionMed --> Task3_MathGate["Resolución de MathGate Verbalizado<br>• ¿Resuelve en < 5s sin error?<br>• Acceso a Dashboard TEPROSIF-R<br>• Registro T3: SA / CA / NC"]
+    
+    Task3_MathGate --> SUS_Survey["Fase 6: Evaluación del Adulto Mediador<br>• Fonoaudióloga/Docente llena SUS de 10 ítems<br>• Breve entrevista cualitativa (3 preguntas)"]
+    
+    SUS_Survey --> DataClose["Fase 7: Cierre y Gestión de Datos<br>• Ficha consolidada y archivada con código anónimo<br>• Base de datos local resguardada (Ley 29733)"] --> End(["🏁 Fin de la Sesión"])
+```
+
+---
+
+### 5.2 Reglas de facilitación ética y no invasiva
+1. **Rapport inicial (2 a 3 minutos):** El evaluador se agacha a la altura de los ojos del niño, le muestra la tableta con una sonrisa y le presenta a la abejita Ava en tono lúdico, utilizando un peluche o títere de dedo.
+2. **Derecho a pausa continua (Asentimiento continuo):** Si el niño muestra desinterés, distracción persistente o cansancio vocal, o si levanta el tarjetón físico de *"Ava durmiendo"*, la sesión se pausa o concluye de inmediato: **el bienestar y la tranquilidad del infante están siempre por encima de cualquier medición métrica**.
+3. **Exploración libre sin inducción:** El moderador no señala botones en la pantalla ni anticipa respuestas; permite que el niño descubra la interfaz a su propio ritmo.
+
+### 5.3 Clasificación operativa de resultados por intento
 - **SA (Sin Ayuda - Éxito Autónomo):** El participante completa la tarea por sí mismo guiado únicamente por los estímulos de la app.
-- **CA (Con Ayuda - Éxito Asistido):** El participante completa la tarea tras una indicación verbal neutra del moderador (permitida si permanece inactivo más de 10 segundos).
+- **CA (Con Ayuda - Éxito Asistido):** El participante completa la tarea tras una indicación verbal neutra del moderador (permitida si permanece inactivo o bloqueado más de 10 segundos).
 - **NC (No Completado):** El participante abandona la tarea, supera el tiempo límite o el moderador debe intervenir físicamente para resolver la acción.
 
 ---
@@ -214,26 +262,52 @@ La evaluación técnica audita los componentes clave frente a pautas de accesibi
 
 ---
 
-## 7. Instrumentos de Registro Prácticos (Listos para Aplicación)
+## 7. Cuadernillo de Evaluación de Campo (Field Testing Kit)
 
-### 7.1 Ficha de observación de sesión infantil (1 página por participante)
+El **Cuadernillo de Evaluación de Campo** es el paquete instrumental físico estandarizado que el equipo lleva al aula o consultorio. Se compone de 4 instrumentos listos para imprimir:
 
+### 7.1 Guía rápida para el moderador (Hoja de ruta de 1 página)
+```
+================================================================================
+ GUÍA RÁPIDA DE CAMPO DEL EVALUADOR - IHC BOSQUE SONORO (UNMSM)
+================================================================================
+1. PREVIO AL INICIO:
+   - Chequear la tableta (volumen al 70%, modo pantalla completa, sin notificaciones).
+   - Colocar sobre la mesa: peluche/títere de Ava, tarjetones de pausa y ficha impresa.
+2. CONSENTIMIENTO Y RAPPORT:
+   - Saludar al apoderado, explicar el fin pedagógico de usabilidad y solicitar firma.
+   - Presentar a Ava al infante en tono cálido: "¡Hola! Mira quién vino a jugar hoy".
+   - Mostrar las dos tarjetas: "Si quieres jugar me muestras la feliz; si te cansas,
+     levantas a Ava durmiendo y paramos a pintar o jugar con bloques".
+3. DURANTE LAS TAREAS:
+   - Consignas directas y lúdicas (evitar 'fonema', 'ejercicio' o 'prueba').
+   - Dejar 10 segundos de exploración libre antes de intervenir.
+   - Si se bloquea >10s, brindar apoyo verbal neutro y marcar 'CA' en la ficha.
+4. CIERRE AFECTIVO:
+   - Mostrar el Smileyometer (🙁 / 😐 / 😊) y registrar la carita señalada.
+   - Pegar una estrella física en la mano del niño agradeciendo su valiosa ayuda.
+================================================================================
+```
+
+### 7.2 Ficha de observación clínica de 1 página (Plantilla operativa)
 ```
 ================================================================================
            FICHA DE OBSERVACIÓN DE USABILIDAD PEDIÁTRICA - BOSQUE SONORO
 ================================================================================
-Participante: [ P___ ]    Edad: [   ] años    Género: [ ] M  [ ] F
-Condición articulatoria: [ ] Rotacismo (/r/)   [ ] Sigmatismo (/s/)   [ ] Sinfones
+Código Participante: [ P___ ]    Edad: [   ] años    Género: [ ] M  [ ] F
+Diagnóstico fonoaudiológico: [ ] Rotacismo (/r/)   [ ] Sigmatismo (/s/)   [ ] Sinfones
 Dispositivo: Tableta 10" Landscape    Lugar: [ ] Aula inicial   [ ] Consultorio
+Fecha: _____/_____/2026               Evaluador: ______________________________
 --------------------------------------------------------------------------------
-TAREA 1: Selección e Ingreso en Menú de Vagones
+TAREA 1: Navegación Autónoma en Menú de Vagones
   - Resultado:       [ ] SA (Sin ayuda)    [ ] CA (Con ayuda)    [ ] NC (No completó)
   - Tiempo total:    [____] segundos (Meta: < 45 s)
   - ¿Reconoció el vagón por el juguete visual?    [ ] Sí    [ ] Dudó
-  - Deslices motores / Toques fuera de botón:    [____] toques
+  - Deslices motores / Toques fuera de blanco:    [____] toques erróneos
   - Observaciones: ___________________________________________________________
 
 TAREA 2: Articulación Fónica, Micrófono y Biofeedback
+  - Modalidad mic:   [ ] Tap-to-Talk (1 toque)     [ ] Hold-to-Talk (sostenido)
   - Resultado:       [ ] SA (Sin ayuda)    [ ] CA (Con ayuda)    [ ] NC (No completó)
   - Tiempo total:    [____] segundos (Meta: < 90 s)
   - ¿Presionó con facilidad el micrófono central? [ ] Sí    [ ] Le costó mantener
@@ -241,15 +315,19 @@ TAREA 2: Articulación Fónica, Micrófono y Biofeedback
   - Si falló 3 veces, ¿miró la praxia 2D de Ava?  [ ] Sí    [ ] No requirió
   - Observaciones: ___________________________________________________________
 
+TAREA 3: Gobernanza Clínica (Mediador / Docente)
+  - Superación de MathGate: [ ] < 5 s (Exitoso)    [ ] Requiere reintento
+  - Consulta en Dashboard:  [ ] Rápida / Fluida     [ ] Dudó en las métricas
+--------------------------------------------------------------------------------
 SATISFACCIÓN INFANTIL (Smileyometer de 3 Caritas):
   El niño señala espontáneamente:
      [ 🙁 ] No me gustó       [ 😐 ] Más o menos       [ 😊 ] ¡Me gustó mucho!
 ================================================================================
 ```
 
-### 7.2 Cuestionario SUS adaptado para Mediadores (Fonoaudiólogo / Docente)
+### 7.3 Cuestionario SUS adaptado para Mediadores (Fonoaudiólogo / Docente)
 
-El mediador completa la escala estándar de 10 ítems (1: Totalmente en desacuerdo a 5: Totalmente de acuerdo):
+El mediador completa la escala estandarizada de 10 ítems (1: Muy en desacuerdo a 5: Muy de acuerdo):
 
 | N.º | Ítem Adaptado a la Intervención Fono-Lúdica | 1 | 2 | 3 | 4 | 5 |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -300,10 +378,81 @@ $$IP_F = \text{Frecuencia } (1-3) \times \text{Severidad Usabilidad } (1-4) \tim
 
 | ID | Hallazgo Observado en Pruebas Piloto | Componente | F | SU | IP | $IP_F$ | Prioridad | Acción de Mejora Concreta en V2 |
 | :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **H-01** | El niño retira el dedo del micrófono antes de terminar de hablar, cortando la grabación. | Pulsador `UI-BTN-MIC` | 3 | 3 | 3 | **27** | 🔴 **P1 (Inmediata)** | Cambiar a modo *Tap-to-Talk* con temporizador inteligente de 3 segundos y animación elástica continua, en lugar de requerir pulsación sostenida. |
-| **H-02** | Tras 3 fallos en la palabra, el modal de praxias se abría pero el niño intentaba seguir tocando el fondo. | Modal `UI-PRAXIS-CANVAS` | 2 | 3 | 3 | **18** | 🟠 **P2 (Alta)** | Bloquear el fondo lúdico con overlay oscuro suave y resaltar el botón *"Volver al Juego"* con una micro-animación pulsante. |
-| **H-03** | El mediador demoraba más de 8 segundos en leer la pregunta de MathGate en texto largo. | Compuerta `UI-GATE-MATH` | 2 | 2 | 2 | **8** | 🟡 **P3 (Media)** | Simplificar la consigna a operaciones directas con números grandes (ej. *"5 + 2 = ?"*) con 3 botones táctiles de $60\times 60\text{ px}$. |
+| **H-01** | El niño retira el dedo del micrófono antes de terminar de hablar, cortando la grabación. | Pulsador `UI-BTN-MIC` | 3 | 3 | 3 | **27** | 🔴 **P1 (Inmediata)** | **Implementar modo *Tap-to-Talk*** con VAD inteligente de 3.5 segundos y feedback elástico radial (Ver Especificación 9.1). |
+| **H-02** | Tras 3 fallos en la palabra, el modal de praxias se abría pero el niño intentaba seguir tocando el fondo. | Modal `UI-PRAXIS-CANVAS` | 2 | 3 | 3 | **18** | 🟠 **P2 (Alta)** | Bloquear el fondo lúdico con overlay oscuro suave y resaltar el botón *"Volver al Juego"* con micro-animación pulsante. |
+| **H-03** | El mediador demoraba más de 8 segundos en leer la pregunta de MathGate en texto largo. | Compuerta `UI-GATE-MATH` | 2 | 2 | 2 | **8** | 🟡 **P3 (Media)** | Simplificar la consigna a operaciones aritméticas directas (ej. *"5 + 2 = ?"*) con 3 botones táctiles de $60\times 60\text{ px}$. |
 | **H-04** | En tabletas de marcos delgados, la palma rozaba las esquinas inferiores del césped decorativo. | Franja `UI-PALM-REST` | 2 | 2 | 2 | **8** | 🟡 **P3 (Media)** | Incrementar la franja de descanso pasivo inferior a $56\text{ dp}$ y reforzar el filtro software de debounce a $100\text{ ms}$. |
+
+---
+
+### 9.1 Especificación Técnica y Plan de Implementación: Modo *Tap-to-Talk* (Resolución H-01)
+
+#### 9.1.1 Fundamentación ergonómica y neuromotriz
+En niños de 3 a 5 años, exigir que mantengan presionado un botón táctil mientras articulan una palabra multisilábica (*Hold-to-Talk*) provoca un **conflicto de doble tarea motriz**: la tensión isométrica del dedo índice interfiere con la relajación y control neuromotor orofacial necesario para articular fonemas complejos como `/r/` o `/tr/` (*Hourcade, 2008; Du et al., 2023*). Como consecuencia, los infantes sufren *premature lift-off* (levantan el dedo a la mitad de la palabra), cortando la captura acústica y provocando falsos rechazos en el sistema.
+
+La solución consiste en desacoplar la pulsación manual de la fonación mediante el **Modo *Tap-to-Talk***: un solo toque táctil pone al sistema en escucha activa con detección automática de silencio.
+
+#### 9.1.2 Máquina de Estados Finita (FSM) de Captura Vocal
+
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE : Inicio / Espera
+
+    IDLE --> LISTENING : Tap único en botón de Ava (UI-BTN-MIC)
+    note right of LISTENING
+        • Microvibración háptica (40 ms)
+        • Halo elástico animado activo
+        • Web Audio AnalyserNode captura buffer
+        • Temporizador VAD activado
+    end note
+
+    LISTENING --> PROCESSING : Detección de Fin de Voz (VAD)<br>o Timeout de Seguridad (3.5 s)
+    note right of PROCESSING
+        • Doble vibración háptica corta (20ms + 20ms)
+        • Análisis acústico y comparación de formantes
+        • Indicador visual de procesamiento
+    end note
+
+    PROCESSING --> FEEDBACK_SUCCESS : Coincidencia acústica lograda
+    PROCESSING --> FEEDBACK_RETRY : Discrepancia acústica (Intento 1 o 2)
+    PROCESSING --> DDA_ASSIST : 3er Fallo Consecutivo (DDA)
+
+    FEEDBACK_SUCCESS --> IDLE : Salto festivo + Estrellas doradas (2 s)
+    FEEDBACK_RETRY --> IDLE : Locución afectiva de Ava: "¡Casi, otra vez!"
+    DDA_ASSIST --> IDLE : Abre modal de Praxia 2D + 1 Estrella dorada
+```
+
+#### 9.1.3 Parámetros acústicos y temporales de control
+
+| Parámetro Técnico | Valor Calibrado | Justificación Clínica / IHC |
+| :--- | :---: | :--- |
+| **Tiempo de Gracia (*Hangover Time*)** | **$800\text{ ms}$** | Evita que pausas silábicas naturales infantiles (ej. *"pe... ra"*) cierren la grabación prematuramente. |
+| **Corte Forzado (*Safety Timeout*)** | **$3.5\text{ s}$** | Límite máximo para impedir que el micrófono quede indefinidamente abierto ante ruido ambiental. |
+| **Umbral de Ruido Basal (RMS)** | **Adaptativo ($\approx -42\text{ dBFS}$)** | Se calibra con el ruido de fondo del aula en los primeros 200 ms de apertura del flujo de audio. |
+| **Indicador Visual Radial** | **Anillo de cuenta regresiva** | Aro verde/dorado continuo alrededor de Ava que muestra visualmente que la tableta sigue escuchando. |
+
+#### 9.1.4 Hoja de ruta de implementación en el código del prototipo
+
+```mermaid
+graph LR
+    subgraph TareasCodigo ["💻 Roadmap de Implementación en Software"]
+        T1["Paso 1: Audio Engine<br>Incorporar startTapToTalkSession() en audio-engine.js con AnalyserNode y VAD"]
+        T2["Paso 2: Controlador App<br>Modificar eventos pointer en app.js para alternar entre Tap y Hold"]
+        T3["Paso 3: Micro-animaciones CSS<br>Definir @keyframes micPulseRadial en design-system.css"]
+        T4["Paso 4: Gobernanza Clínica<br>Agregar switch 'Modo Micrófono' en panel administrativo"]
+    end
+    T1 --> T2 --> T3 --> T4
+```
+
+1. **`audio-engine.js`:**
+   - Incorporar la función `startTapToTalkSession(onAudioEndCallback)` que monitorea el nivel RMS mediante un `ScriptProcessorNode` / `AudioWorkletNode`.
+   - Implementar la ventana de silencio post-fonación de $800\text{ ms}$ y el temporizador maestro de $3.5\text{ s}$.
+2. **`app.js`:**
+   - Reemplazar la dependencia estricta de `pointerdown` y `pointerup` simultáneos por un disparador de alternancia (*toggle state*).
+3. **`design-system.css`:**
+   - Crear la clase `.mic-tap-active` con efecto de aros concéntricos ondulantes y barra perimétrica circular que se reduce armónicamente durante los 3.5 segundos.
+4. **`telemetry-portal.js`:**
+   - Añadir un control en el dashboard del especialista: `Modo de Activación: [x] Tap-to-Talk inteligente  [ ] Presión continua tradicional`.
 
 ---
 
@@ -312,46 +461,81 @@ $$IP_F = \text{Frecuencia } (1-3) \times \text{Severidad Usabilidad } (1-4) \tim
 1. **Adecuación al dominio real del habla infantil:** Corregir el enfoque del documento hacia niños con dificultades de pronunciación y dislalia funcional restaura la coherencia técnica y pedagógica de "Bosque Sonoro". Los estímulos auditivos, la voz cálida de Ava y el biofeedback no son adaptaciones para sordera, sino las herramientas fonoaudiológicas esenciales para el modelado fonético y la conciencia articulatoria.
 2. **Factibilidad en el mundo real:** El presente plan prescinde de instrumentación de laboratorio compleja e inaplicable en colegios (como sonómetros industriales o streaming a audífonos), ofreciendo en su lugar un protocolo de testeo ágil, reproducible y éticamente blindado para preescolares de 3 a 5 años.
 3. **Ergonomía y accesibilidad integrada:** Las decisiones de diseño (pulsador central de $76/90\text{ px}$, interfaz 100% no textual, rescate adaptativo DDA, franja palmar con debounce y Modo CVI de alto contraste) garantizan una experiencia inclusiva, tolerante a fallos y emocionalmente segura.
-4. **Recomendación para la Ronda Presencial V2:** Se recomienda ejecutar la prueba con un grupo piloto de 6 a 8 preescolares en coordinación con una institución educativa de nivel inicial en Lima Metropolitana, utilizando las fichas de 1 página y el cuestionario SUS estandarizado.
+4. **Recomendación para la Ronda Presencial V2:** Se recomienda ejecutar la prueba con un grupo piloto de 6 a 8 preescolares en coordinación con una institución educativa de nivel inicial en Lima Metropolitana, utilizando las fichas de 1 página, los tarjetones de asentimiento y el modo *Tap-to-Talk*.
 
 ---
 
-## 11. Anexos Operativos
+## 11. Anexos Operativos del Cuadernillo de Campo
 
-### Anexo 1: Formato Breve de Consentimiento Informado para Padres
+### Anexo 1: Formato Institucional de Consentimiento Informado (UNMSM)
 ```
-PROYECTO ACADÉMICO: APLICACIÓN FONO-LÚDICA "BOSQUE SONORO"
-UNIVERSIDAD NACIONAL MAYOR DE SAN MARCOS - FACULTAD DE ING. DE SISTEMAS
+================================================================================
+ UNIVERSIDAD NACIONAL MAYOR DE SAN MARCOS
+ FACULTAD DE INGENIERÍA DE SISTEMAS E INFORMÁTICA
+ PROYECTO ACADÉMICO: APLICACIÓN FONO-LÚDICA PEDIÁTRICA "BOSQUE SONORO"
+ FORMATO DE CONSENTIMIENTO INFORMADO (LEY N.° 29733 DE PROTECCIÓN DE DATOS)
+================================================================================
 
-Yo, ____________________________________________________________________,
-identificado con DNI ______________________, en condición de Padre/Madre/Tutor del
-menor ____________________________________________________ de _____ años de edad:
+Yo, __________________________________________________________________________,
+identificado(a) con DNI/CE N.° __________________________, en mi condición de:
+( ) Padre   ( ) Madre   ( ) Tutor(a) Legal
+del menor: __________________________________________________, de _____ años de edad:
 
 DECLARO:
-1. Haber sido informado de que la actividad consiste en una prueba de usabilidad lúdica
-   en tableta de 10-15 minutos para evaluar la facilidad de uso del prototipo educativo.
-2. Que la sesión es 100% voluntaria, confidencial y sin valor de evaluación clínica escolar.
-3. Que no se registrarán ni difundirán imágenes del rostro de mi hijo(a).
+1. Haber sido debidamente informado(a) de que el estudio tiene por objeto evaluar
+   la facilidad de uso (usabilidad y ergonomía táctil) del software educativo
+   "Bosque Sonoro" para la estimulación de la pronunciación infantil.
+2. Que la sesión durará como máximo 15 minutos en presencia del docente o terapeuta.
+3. Que la actividad NO constituye un examen médico ni influye en las calificaciones
+   escolares de mi hijo(a).
+4. Que las grabaciones de voz se procesan localmente para el biofeedback del juego,
+   se anonimizan bajo código alfanumérico (ej. P01) y no serán difundidas comercialmente.
+5. Que la participación es 100% voluntaria y puedo retirarme en cualquier momento.
 
-Firma del Padre / Tutor: _________________________   Fecha: _____/_____/2026
+AUTORIZO:
+[X] Interacción táctil con la tableta y registro de tiempos de navegación.
+[X] Grabación acústica anonimizada de los fonemas practicados para biofeedback.
+[ ] Registro fotográfico/video institucional enfocado solo en manos y pantalla (sin rostro).
+
+Firma del Padre, Madre o Tutor: ___________________________   Fecha: _____/_____/2026
+Teléfono / Correo de contacto: ____________________________
+Firma del Investigador Responsable: _________________________
+================================================================================
 ```
 
-### Anexo 2: Asentimiento Lúdico Ilustrado para el Niño (Pre-lector)
-```
-            ¿QUIERES JUGAR HOY CON AVA Y EL BOSQUE SONORO?
-            (El niño señala con su dedo o marca con un sello)
+### Anexo 2: Tarjetones Físicos de Asentimiento Continuo Infantil
+*(Recortar y plastificar en cartulina para uso manual en mesa de pruebas)*
 
-      [ CARITA FELIZ DE AVA ]                  [ CARITA DESCANSANDO ]
-      "¡SÍ, QUIERO JUGAR!"                     "HOY PREFIERO DESCANSAR"
-              (   )                                     (   )
+```
++------------------------------------+  +------------------------------------+
+|       [ CARITA FELIZ DE AVA ]      |  |      [ CARITA DURMIENDO AVA ]      |
+|                                    |  |                                    |
+|       "¡SÍ, QUIERO JUGAR!"         |  |     "QUIERO DESCANSAR / PAUSA"     |
+|                                    |  |                                    |
+|       ( Borde Verde Brillante )    |  |       ( Borde Naranja Suave )      |
++------------------------------------+  +------------------------------------+
 ```
 
-### Anexo 3: Checklist Rápido Pre-Sesión (30 segundos)
-- [ ] Tableta con carga $\ge 50\%$ en posición horizontal sobre la mesa.
-- [ ] Volumen multimedia configurado al $70\%$ (sonido claro sin estridencia).
-- [ ] Permisos de micrófono concedidos en el navegador o app.
-- [ ] Ficha de observación impresa y lápiz listo.
-- [ ] Ambiente tranquilo sin ruido perturbador excesivo.
+### Anexo 3: Tarjetón de Satisfacción Infantil (Smileyometer de 3 Caritas)
+*(Escala gráfica colosal para señalización directa del menor con el dedo)*
+
+```
++----------------------------------------------------------------------------+
+|             ¿CÓMO TE SENTISTE JUGANDO HOY CON LA ABEJITA AVA?              |
+|                                                                            |
+|        [ 🙁 ]                      [ 😐 ]                     [ 😊 ]       |
+|                                                                            |
+|     No me gustó                 Más o menos             ¡Me gustó mucho!   |
+|      (Triste)                    (Neutro)                   (Feliz)        |
++----------------------------------------------------------------------------+
+```
+
+### Anexo 4: Checklist Rápido Pre-Vuelo (30 segundos)
+- [ ] **Tableta:** Batería $\ge 50\%$, soporte o atril inclinado a 25°, orientación horizontal (16:9).
+- [ ] **Volumen multimedia:** Ajustado al $70\%$ (sonido claro y confortable sin saturar).
+- [ ] **Micrófono:** Permiso de captura concedido en la app y filtro de cancelación activado.
+- [ ] **Material impreso en mesa:** Cuadernillo con Consentimiento firmado, tarjetones de Ava y ficha.
+- [ ] **Ambiente:** Sala de aula o consultorio con ruido habitual controlado, sin distractores directos.
 
 ---
 
@@ -374,4 +558,3 @@ Firma del Padre / Tutor: _________________________   Fecha: _____/_____/2026
 - Strömbergsson, S., Edlund, E., Pettersson, M., Phan, N., & Kurimo, M. (2026). Self-supervised app-based speech training for children with speech sound disorder—A single-case experimental design study. *International Journal of Language & Communication Disorders*, 61(1).
 - World Wide Web Consortium. (2023). *Web content accessibility guidelines (WCAG) 2.2*. https://www.w3.org/TR/WCAG22/
 - Zohaib, M. (2018). Dynamic difficulty adjustment (DDA) in computer games: A review. *Advances in Human-Computer Interaction*, 2018, Article 5681652.
-
