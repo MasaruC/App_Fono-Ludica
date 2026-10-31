@@ -1,5 +1,6 @@
 # Dependencias y compilación
 node_modules/
+dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -18,3 +19,6 @@ Thumbs.db
 
 # Archivos de depuración y pruebas locales
 Proyecto/Prototipo/node_modules/
+Proyecto/Prototipo_Refactorización/node_modules/
+Proyecto/Prototipo_Refactorización/dist/
+

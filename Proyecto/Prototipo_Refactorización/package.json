@@ -1,0 +1,39 @@
+{
+  "name": "bosque-sonoro-mobile",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Aplicación fono-lúdica para estimulación y mejora de la articulación fonética en preescolares - Versión Móvil Android",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host --port 5173",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cap:sync": "cap sync",
+    "cap:copy": "cap copy",
+    "cap:open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/haptics": "^6.0.2",
+    "@capacitor/screen-orientation": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2",
+    "@capacitor-community/speech-recognition": "^6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "vite": "^6.1.1"
+  },
+  "keywords": [
+    "ihc",
+    "speech-therapy",
+    "fonologia",
+    "preescolar",
+    "capacitor",
+    "android",
+    "serious-game"
+  ],
+  "author": "Equipo de Investigación IHC - UNMSM",
+  "license": "MIT"
+}
+

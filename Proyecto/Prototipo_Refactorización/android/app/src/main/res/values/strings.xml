@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bosque Sonoro</string>
+    <string name="title_activity_main">Bosque Sonoro</string>
+    <string name="package_name">pe.edu.unmsm.fisi.bosquesonoro</string>
+    <string name="custom_url_scheme">pe.edu.unmsm.fisi.bosquesonoro</string>
+</resources>

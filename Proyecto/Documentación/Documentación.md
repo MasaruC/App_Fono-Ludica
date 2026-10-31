@@ -50,6 +50,9 @@ graph TD
 - 📄 **[[Proyecto/Documentación/Actividad 10 - Prueba de Usabilidad y Accesibilidad/Actividad 10 - Prueba de Usabilidad y Accesibilidad|Actividad 10 - Prueba de Usabilidad y Accesibilidad.md]]:** Documento oficial consolidado, corregido y simplificado.
   - **Corrección clínica clave:** Erradicación total del error de hipoacusia/discapacidad auditiva. El software está enfocado estrictamente en **niños preescolares (3 a 5 años) con problemas de pronunciación y dislalia funcional**, con audición normal y funcional.
   - **Simplificación práctica:** Protocolo ágil, realista y aplicable para aulas de inicial y consultorios (sesiones de 10-15 min, 3 tareas observables, fichas de 1 página, escala visual Smileyometer de 3 caritas, cuestionario SUS adaptado a mediadores y matriz priorizada $IP_F$ para la versión V2).
+- ⚙️ **[[Proyecto/Documentación/Actividad 10 - Prueba de Usabilidad y Accesibilidad/Plan de Implementación - Modo Evaluación y Telemetría Automática|Plan de Implementación - Modo Evaluación y Telemetría Automática.md]]:** Especificación técnica detallada del Eje 2.
+  - **Definición de 12 KPIs:** Eficacia (SA%, CA%, NC%), Eficiencia temporal (TTFT, TCT), Ergonomía táctil (Toques palmares con debounce, Toques fuera de blanco), Fonoarticulación/DDA y Satisfacción lúdica/mediador (PAI% Smileyometer, SUS Adulto).
+  - **Arquitectura de telemetría no intrusiva:** Captura con `performance.now()`, activación por gesto/atajo discreto, HUD del observador, componente interactivo de Smileyometer al finalizar y exportación en formato JSON.
 
 ### 4. 📦 [[Proyecto/Documentación/Recursos Compartidos/Contexto Maestro del Proyecto - Aplicación Fono-Lúdica Bosque Sonoro|Recursos Compartidos]]
 *Carpeta transversal que centraliza los artefactos, especificaciones, tokens y capturas compartidos entre las actividades.*

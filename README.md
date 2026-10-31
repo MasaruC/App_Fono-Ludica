@@ -59,31 +59,76 @@ El prototipo cuenta con 13 interfaces de alta fidelidad documentadas con captura
 
 ## 💻 Ejecución del Prototipo Interactivo
 
-El prototipo funcional de alta fidelidad está desarrollado en Vanilla HTML5, CSS3 moderno y JavaScript (Web Audio API y Canvas 2D), sin requerir configuraciones complejas de compilación:
+El proyecto cuenta con dos entornos de prototipado:
+1. **Nuevo Prototipo Móvil Refactorizado (Proyecto/Prototipo_Refactorización) [RECOMENDADO]**: Migrado a Vite 6 + Capacitor 6 para generación de APK Android, reconocimiento de voz dual (VAD + Web Speech / Plugin Nativo), avatar vectorial dinámico multicapa de Ava, praxias bucofaciales con metáforas visuales, telemetría clínica con triple toque y banco fonético pregrabado en norma culta de Lima.
+2. **Prototipo Clásico de Referencia (Proyecto/Prototipo)**: Prototipo web original en Vanilla HTML5/CSS3 preservado intacto.
 
-### Requisitos Previos
-- [Node.js](https://nodejs.org/) (versión 18 o superior recomendada).
-- Navegador moderno con soporte para Web Audio API (Chrome, Edge o Firefox).
+---
 
-### Pasos para Ejecutar Localmente
+### 🚀 Nuevo Prototipo Refactorizado (Vite + Capacitor / Android)
 
-1. **Navegar a la carpeta del prototipo:**
-   ```bash
-   cd Proyecto/Prototipo
-   ```
+#### Requisitos Previos
+- [Node.js](https://nodejs.org/) (versión 18, 20 o superior recomendada).
+- Navegador moderno (Google Chrome, Microsoft Edge o Firefox) con permisos de micrófono habilitados.
+- *(Opcional para compilar APK)*: [Android Studio Hedgehog o superior](https://developer.android.com/studio) con Android SDK 34+.
 
-2. **Instalar dependencias locales de servicio:**
-   ```bash
+#### Pasos para Ejecutar Localmente en Web (Modo Desarrollo)
+
+1. **Abrir la terminal e ingresar a la carpeta del nuevo prototipo:**
+   `ash
+   cd Proyecto/Prototipo_Refactorización
+   `
+
+2. **Instalar dependencias de Node.js:**
+   `ash
    npm install
-   ```
+   `
 
-3. **Iniciar el servidor local de desarrollo:**
-   ```bash
+3. **Iniciar el servidor local de desarrollo (Vite):**
+   `ash
    npm run dev
-   ```
+   `
 
 4. **Abrir en el navegador:**
-   Accede a [http://localhost:5173](http://localhost:5173).
+   Accede a la URL indicada en la terminal (por defecto [http://localhost:5173](http://localhost:5173)).
+   > 💡 **Tip:** Asegúrate de conceder permisos de micrófono al navegador para probar el reconocimiento de voz en los minijuegos.
+
+#### Construcción y Sincronización Móvil (Capacitor / Android)
+
+1. **Generar el build optimizado de producción:**
+   `ash
+   npm run build
+   `
+
+2. **Sincronizar activos web con el proyecto nativo de Android:**
+   `ash
+   npx cap sync
+   `
+
+3. **Abrir en Android Studio para depurar o generar el APK:**
+   `ash
+   npm run cap:open:android
+   `
+   *(O abre la carpeta Proyecto/Prototipo_Refactorización/android directamente desde Android Studio).*
+
+---
+
+### 🏛️ Prototipo Clásico Web (Proyecto/Prototipo)
+
+Si deseas ejecutar la versión clásica original:
+
+1. **Navegar a la carpeta:**
+   `ash
+   cd Proyecto/Prototipo
+   `
+
+2. **Instalar dependencias y ejecutar:**
+   `ash
+   npm install
+   npm run dev
+   `
+
+3. **Abrir en:** [http://localhost:5173](http://localhost:5173).
 
 ---
 
