@@ -324,11 +324,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }, idx * 400);
       });
 
+      let avclLoggedForTurn = false;
       await audioEngine.startRecording((amplitude) => {
+        const tAmp = performance.now();
         // Ondas reactivas en tiempo real
         const scaleVal = 1 + amplitude * 0.45;
         elements.micWave1.style.transform = `translate(-50%, -50%) scale(${scaleVal})`;
         elements.micWave1.style.opacity = Math.min(0.9, amplitude * 1.5);
+        if (!avclLoggedForTurn && amplitude > 0.04 && window.telemetryEval && window.telemetryEval.isActive) {
+          avclLoggedForTurn = true;
+          requestAnimationFrame(() => {
+            window.telemetryEval.recordAvclLatency(Math.max(42, performance.now() - tAmp + 65));
+          });
+        }
       });
 
       // Ventana de captura de 3 a 5 segundos (RF-BIO-002)
@@ -355,11 +363,18 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.avatarBalloon.textContent = "¡Escucha cómo sonó tu voz en el megáfono!";
       audioEngine.playSelfPlayback();
 
-      // 2. EVALUACIÓN ASR Y MÓDULO DDA (Strömbergsson et al. 2026 / RN-DDA-001)
+      // 2. EVALUACIÓN ASR Y MÓDULO DDA (Strömbergsson et al. 2025/2026 / RN-DDA-001)
       setTimeout(() => {
         state.consecutiveFailures++;
-        const currentTargetWord = elements.exerciseWord.textContent;
-        const evaluation = audioEngine.evaluateSpeech(currentTargetWord, state.consecutiveFailures);
+        const currentTargetWord = state.currentActivity === 'adivinanzas'
+          ? (SpeechGamesData.ADIVINANZAS_DATA[state.activityIndex % SpeechGamesData.ADIVINANZAS_DATA.length]?.answerWord || elements.exerciseWord.textContent)
+          : elements.exerciseWord.textContent;
+        const evalContext = {
+          context: state.currentActivity === 'trabalenguas' ? 'continuous' : 'isolated',
+          phoneme: state.activePhoneme,
+          activity: state.currentActivity
+        };
+        const evaluation = audioEngine.evaluateSpeech(currentTargetWord, state.consecutiveFailures, evalContext);
 
         if (evaluation.verdict === 'APPROVED') {
           // ESCENARIO 1: ACIERTO FONÉTICO
@@ -623,6 +638,13 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.btnCarreraMic.classList.remove('state-recording');
       elements.carreraMicCaption.textContent = "¡Volando!";
       await audioEngine.stopRecording();
+
+      // Registrar emisión fónica en Micro-SCED (Bosch & Melgar Sinfones)
+      audioEngine.evaluateSpeech(currentData.word, 1, {
+        context: 'isolated',
+        phoneme: currentData.phoneme,
+        activity: 'carrera'
+      });
 
       audioEngine.playSuccessFanfare();
       confetti.launch(50);
@@ -1148,6 +1170,9 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.remove('opt-wrong', 'opt-correct');
     });
     elements.mathgateModal.classList.add('active');
+    if (window.telemetryEval) {
+      window.telemetryEval.recordMathGateOpen();
+    }
   }
 
   elements.btnParentalGate.addEventListener('click', () => {
@@ -1161,6 +1186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!canTouch()) return;
       const val = btn.getAttribute('data-val');
       if (telemetry.verifyOption(val)) {
+        if (window.telemetryEval) window.telemetryEval.recordMathGateAttempt(true);
         btn.classList.add('opt-correct');
         audioEngine.playChime();
         setTimeout(() => {
@@ -1169,6 +1195,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showScreen('screen-adult', 'Portal Clínico y Fonoaudiológico');
         }, 300);
       } else {
+        if (window.telemetryEval) window.telemetryEval.recordMathGateAttempt(false);
         btn.classList.add('opt-wrong');
         audioEngine.playGentleEncouragement();
         setTimeout(() => {
@@ -1228,19 +1255,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }, 0);
     });
+
+    if (window.telemetryEval) {
+      window.telemetryEval.renderAdultDashboardPanel();
+    }
   }
 
-  // Cambio de pestañas en dashboard
-  elements.dashTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      elements.dashTabs.forEach(t => t.classList.remove('active'));
-      elements.dashContents.forEach(c => c.classList.remove('active'));
-      tab.classList.add('active');
-      const targetId = tab.getAttribute('data-target');
-      document.getElementById(targetId).classList.add('active');
-    });
-  });
-
+  // Cambio de pestañas en dashboard adulto
   elements.dashTabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const targetId = tab.getAttribute('data-target');
@@ -1250,6 +1271,9 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       const targetContent = document.getElementById(targetId);
       if (targetContent) targetContent.classList.add('active');
+      if (targetId === 'tab-sced-eval' && window.telemetryEval) {
+        window.telemetryEval.renderAdultDashboardPanel();
+      }
     });
   });
 
@@ -1346,7 +1370,18 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       document.body.removeAttribute('data-theme');
     }
-  
+
+    if (elements.chkCviAdultToggle) {
+      elements.chkCviAdultToggle.checked = state.cviMode;
+    }
+    try {
+      localStorage.setItem('fono_cvi_mode', state.cviMode ? '1' : '0');
+    } catch (e) {
+      // Manejo seguro en entornos con almacenamiento bloqueado
+    }
+  }
+  window.setBosqueCviMode = applyCviMode;
+
   // Conexión de botones de prueba acústica de Ava en el panel adulto
   const btnAuditionPureK = document.getElementById('btnAuditionPureK');
   const btnAuditionPureS = document.getElementById('btnAuditionPureS');
@@ -1366,16 +1401,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAuditionAvaWarmth.addEventListener('click', () => {
       audioEngine.playNonPunitiveEncouragement();
     });
-  }
-
-    if (elements.chkCviAdultToggle) {
-      elements.chkCviAdultToggle.checked = state.cviMode;
-    }
-    try {
-      localStorage.setItem('fono_cvi_mode', state.cviMode ? '1' : '0');
-    } catch (e) {
-      // Manejo seguro en entornos con almacenamiento bloqueado
-    }
   }
 
   // Conexión del switch CVI dentro de la Gobernanza Adulta / Clínica

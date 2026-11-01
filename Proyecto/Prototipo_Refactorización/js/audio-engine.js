@@ -921,7 +921,7 @@ class PhonoAudioEngine {
   }
 
   /* --- EVALUACIÓN DE INTELIGIBILIDAD ASR CON TOLERANCIA PEDIÁTRICA (RF-ASR-001) --- */
-  evaluateSpeech(targetWord, attemptCount = 1) {
+  evaluateSpeech(targetWord, attemptCount = 1, contextHint = {}) {
     let result;
     if (this.speechService) {
       result = this.speechService.evaluateSpeechPediatric(targetWord, attemptCount);
@@ -942,11 +942,11 @@ class PhonoAudioEngine {
       }
     }
 
-    // Registro automático de esfuerzo acústico en Modo Evaluación (KPI-10)
+    // Registro automático Micro-SCED (Bosch & Melgar, PSF y Concordancia ASR vs. Humano)
     if (window.telemetryEval && window.telemetryEval.isActive) {
       const dur = (result.acousticData && result.acousticData.phonatoryDurationMs) || 1650;
       const rms = (result.acousticData && result.acousticData.peakRms) || 0.18;
-      window.telemetryEval.recordVoicePhonation(targetWord, dur, rms, result.verdict);
+      window.telemetryEval.recordVoicePhonation(targetWord, dur, rms, result.verdict, contextHint);
     }
 
     return result;

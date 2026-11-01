@@ -3464,226 +3464,1024 @@ html, body {
 
 
 /* ==========================================================================
-   MODO EVALUACIÓN, TELEMETRÍA AUTOMÁTICA Y SMILEYOMETER PEDIÁTRICO (ACTIVIDAD 10)
+   MODO EVALUACIÓN MICRO-SCED v3.0, TELEMETRÍA Y CUESTIONARIO PICTÓRICO (ACTIVIDAD 10)
+   Fundamentación: Saeedi et al. (2024), Strömbergsson et al. (2025),
+   Furlong et al. (2018), Liu et al. (2026), Peña et al. (2024), Pucuhuaranga (2016)
    ========================================================================== */
 
-/* 1. Barra Flotante HUD del Evaluador */
-.evaluator-hud-bar {
-  position: fixed;
-  top: 8px;
-  right: 12px;
-  z-index: 9999;
-  background: rgba(30, 41, 59, 0.94);
-  color: #FFFFFF;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(6px);
-  border: 1.5px solid #475569;
-  font-family: var(--font-primary);
-  font-size: 0.85rem;
+#headerAppLogo {
+  cursor: pointer;
 }
 
-.hud-content {
+/* Garantizar ocultamiento estricto del atributo HTML hidden */
+.evaluator-hud-bar [hidden],
+.eval-modal-overlay [hidden] {
+  display: none !important;
+}
+
+/* 1. Overlay Universal para Modales de Evaluación (Config, Emojis y Suite 4-Tabs) */
+.eval-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.76);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: evalFadeIn 180ms ease-out;
+}
+
+.eval-modal-overlay.active {
+  display: flex;
+}
+
+@keyframes evalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Permitir selección y escritura normal dentro de inputs y tablas del evaluador */
+.eval-config-card input,
+.eval-config-card select,
+.eval-suite-card input,
+.eval-suite-card select,
+.eval-suite-card textarea,
+.eval-suite-card td,
+.eval-suite-card p {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* 2. Modal de Configuración Rápida de Sesión Micro-SCED (#evalConfigModal) */
+.eval-config-card {
+  background: var(--color-adult-surface);
+  color: var(--color-adult-text);
+  font-family: var(--font-adult);
+  width: min(680px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: var(--radius-modal);
+  padding: 22px 24px;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.38);
+  border: 1.5px solid var(--color-adult-border);
+}
+
+.eval-config-header,
+.eval-suite-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid var(--color-adult-border);
+}
+
+.eval-pill-eyebrow {
+  display: inline-block;
+  font-family: var(--font-adult);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-adult-primary);
+  background: #DBEAFE;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 4px;
+}
+
+.eval-config-title,
+.eval-suite-title {
+  font-family: var(--font-adult);
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: var(--color-adult-text);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.eval-icon-close-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: var(--radius-full);
+  border: 1px solid #CBD5E1;
+  background: #F8FAFC;
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.eval-icon-close-btn:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+  transform: scale(1.05);
+}
+
+.eval-config-desc {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #475569;
+  margin: 12px 0 14px;
+}
+
+.eval-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.eval-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eval-field-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.eval-field-full {
+  grid-column: 1 / -1;
+}
+
+.eval-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.eval-chip {
+  font-family: var(--font-adult);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: var(--radius-full);
+  border: 1px solid #CBD5E1;
+  background: #F8FAFC;
+  color: #334155;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eval-chip:hover {
+  border-color: var(--color-adult-primary);
+  background: #EFF6FF;
+}
+
+.eval-chip.active {
+  background: var(--color-adult-primary);
+  color: #FFFFFF;
+  border-color: var(--color-adult-primary);
+}
+
+.eval-input {
+  width: 100%;
+  font-family: var(--font-adult);
+  font-size: 0.86rem;
+  color: #0F172A;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 8px 11px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.eval-input:focus {
+  outline: none;
+  border-color: var(--color-adult-primary);
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.16);
+}
+
+.eval-config-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--color-adult-border);
+}
+
+.eval-btn {
+  font-family: var(--font-adult);
+  font-size: 0.84rem;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.eval-btn-primary {
+  background: var(--color-primary-forest);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.24);
+}
+
+.eval-btn-primary:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.eval-btn-outline {
+  background: #FFFFFF;
+  color: #1E293B;
+  border-color: #CBD5E1;
+}
+
+.eval-btn-outline:hover {
+  background: #F1F5F9;
+  border-color: #94A3B8;
+}
+
+.eval-btn-amber {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #F59E0B;
+}
+
+.eval-btn-amber:hover {
+  background: #FDE68A;
+}
+
+/* 3. Arquitectura Zero-HUD en Dispositivo Infantil + Emparejamiento Remoto (evaluador.html) */
+.evaluator-hud-bar {
+  display: none !important; /* Cero cajas invasivas en la pantalla donde juega el niño */
+}
+
+.eval-remote-pairing-box {
+  background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%);
+  border: 1.5px solid #93C5FD;
+  border-radius: 14px;
+  padding: 12px 15px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eval-remote-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eval-room-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-adult);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1E3A8A;
+  background: #DBEAFE;
+  border: 1px solid #93C5FD;
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+}
+
+.eval-peer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #065F46;
+  background: #D1FAE5;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.eval-peer-status.waiting {
+  color: #92400E;
+  background: #FEF3C7;
+}
+
+.eval-remote-url-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.eval-lan-url-pill {
+  flex: 1 1 240px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0F172A;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 6px 10px;
+  user-select: all;
+  -webkit-user-select: all;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* 4. Cuestionario Pictórico Infantil con Emojis (#emojiQuestionnaireModal - Saeedi et al., 2024) */
+.emoji-child-card {
+  background: #FFFFFF;
+  width: min(740px, 95vw);
+  border-radius: 30px;
+  padding: 22px 26px 28px;
+  box-shadow: 0 22px 54px rgba(27, 94, 32, 0.34);
+  border: 5px solid var(--color-accent-honey);
+  font-family: var(--font-body-infant);
+  color: var(--color-text-dark);
+}
+
+.emoji-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.emoji-step-dots {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.hud-status-dot {
-  width: 10px;
-  height: 10px;
+.emoji-step-dot {
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: #EF4444;
-  animation: pulseDot 1.5s infinite;
+  background: #E2E8F0;
+  border: 2px solid #CBD5E1;
+  transition: all 220ms ease;
 }
 
-@keyframes pulseDot {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.8; }
+.emoji-step-dot.done {
+  background: var(--color-primary-forest);
+  border-color: var(--color-primary-forest);
 }
 
-.hud-btn {
-  border: none;
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.emoji-step-dot.current {
+  width: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-amber);
+  border-color: var(--color-accent-gold);
 }
 
-.hud-btn-assist {
-  background: #F59E0B;
-  color: #FFFFFF;
-}
-
-.hud-btn-assist:hover {
-  background: #D97706;
-}
-
-.hud-btn-finish {
-  background: #10B981;
-  color: #FFFFFF;
-}
-
-.hud-btn-finish:hover {
-  background: #059669;
-}
-
-/* 2. Modal Smileyometer Pediátrico (Read, 2008) */
-.smiley-modal-box {
-  background: #FFFFFF;
-  max-width: 680px;
-  width: 92%;
-  border-radius: 28px;
-  padding: 28px 24px;
-  text-align: center;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
-  border: 4px solid #FFE082;
-  margin: auto;
-}
-
-.smiley-title {
-  font-size: 1.6rem;
-  font-family: var(--font-fun);
-  color: #2E7D32;
-  margin-bottom: 6px;
-}
-
-.smiley-subtitle {
-  font-size: 1.1rem;
-  color: #558B2F;
-  margin-bottom: 24px;
-}
-
-.smiley-options-grid {
+.emoji-ava-header {
   display: flex;
-  justify-content: center;
+  align-items: center;
   gap: 14px;
-  flex-wrap: wrap;
+  background: var(--color-primary-light);
+  border: 2px solid var(--color-card-border);
+  border-radius: 22px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
 }
 
-.smiley-btn {
+.emoji-ava-mount {
+  width: 78px;
+  height: 78px;
+  min-width: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-speech-box {
+  flex: 1;
+  text-align: left;
+}
+
+.emoji-q-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  background: #C8E6C9;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 4px;
+}
+
+.emoji-q-title {
+  font-family: var(--font-display-infant);
+  font-size: 1.38rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  line-height: 1.25;
+  margin: 0;
+}
+
+/* Botón circular de altavoz (100% redondo 1:1, sobreescribe el padding horizontal de .touch-btn) */
+.touch-btn.emoji-speaker-btn,
+.emoji-speaker-btn {
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  min-height: 58px;
+  max-width: 58px;
+  max-height: 58px;
+  padding: 0 !important;
+  flex: 0 0 58px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50% !important;
+  border: 3px solid var(--color-accent-gold);
+  background: #FFF8E1;
+  color: #D97706;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 179, 0, 0.28);
+}
+
+.touch-btn.emoji-speaker-btn:hover,
+.emoji-speaker-btn:hover {
+  background: #FFECB3;
+  transform: scale(1.06);
+}
+
+.emoji-choices-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Tarjetas táctiles gigantes para motricidad preescolar (≥136x140 px >> 48x48 dp) */
+.emoji-choice-card {
+  min-height: 148px;
+  padding: 16px 12px;
+  border-radius: 24px;
+  border: 4px solid #E2E8F0;
+  background: #FAFAFA;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 100px;
-  min-height: 110px;
-  padding: 12px 10px;
-  border-radius: 20px;
-  border: 3px solid #E0E0E0;
-  background: #FAFAFA;
-  cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  gap: 10px;
+  transition: transform var(--transition-normal), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
-.smiley-btn:hover, .smiley-btn:focus-visible {
-  transform: translateY(-8px) scale(1.06);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+.emoji-choice-card.emoji-opt-low {
+  background: #F3E5F5;
+  border-color: #CE93D8;
 }
 
-.smiley-face-emoji {
-  font-size: 3rem;
+.emoji-choice-card.emoji-opt-mid {
+  background: #FFFDE7;
+  border-color: #FFF176;
+}
+
+.emoji-choice-card.emoji-opt-high {
+  background: #E8F5E9;
+  border-color: #66BB6A;
+}
+
+.emoji-choice-card:hover,
+.emoji-choice-card:focus-visible {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 14px 28px rgba(46, 125, 50, 0.2);
+}
+
+.emoji-choice-card.selected-bounce {
+  transform: scale(1.09);
+  border-color: var(--color-accent-gold);
+  box-shadow: 0 0 0 5px rgba(255, 179, 0, 0.38);
+}
+
+.emoji-giant-face {
+  font-size: 3.7rem;
   line-height: 1;
-  margin-bottom: 8px;
-  display: inline-block;
-  transition: transform 0.2s ease;
 }
 
-.smiley-btn:hover .smiley-face-emoji {
-  transform: scale(1.18);
-}
-
-.smiley-label {
-  font-size: 0.9rem;
+.emoji-choice-label {
+  font-family: var(--font-display-infant);
+  font-size: 1.12rem;
   font-weight: 700;
-  color: #424242;
+  color: var(--color-text-dark);
 }
 
-.btn-smile-5 { border-color: #81C784; background: #E8F5E9; }
-.btn-smile-4 { border-color: #AED581; background: #F1F8E9; }
-.btn-smile-3 { border-color: #FFF176; background: #FFFDE7; }
-.btn-smile-2 { border-color: #FFB74D; background: #FFF3E0; }
-.btn-smile-1 { border-color: #E57373; background: #FFEBEE; }
-
-/* 3. Modal de Reporte de Telemetría (Actividad 10) */
-.eval-report-box {
-  background: #FFFFFF;
-  max-width: 820px;
-  width: 95%;
-  max-height: 90vh;
-  overflow-y: auto;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-  margin: auto;
-}
-
-.eval-report-header {
+/* 5. Suite Multipestaña del Evaluador / Mediador (#evalReportModal - 4 Pestañas) */
+.eval-suite-card {
+  background: var(--color-adult-surface);
+  color: var(--color-adult-text);
+  font-family: var(--font-adult);
+  width: min(980px, 96vw);
+  max-height: 92vh;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #E2E8F0;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  border-radius: var(--radius-modal);
+  padding: 20px 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.42);
+  border: 1.5px solid var(--color-adult-border);
 }
 
-.eval-report-header h2 {
-  font-size: 1.35rem;
-  color: #1E293B;
-  margin: 0;
-}
-
-.report-session-meta {
+.eval-suite-meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
   background: #F1F5F9;
-  padding: 10px 16px;
+  border: 1px solid #E2E8F0;
   border-radius: 12px;
-  font-size: 0.9rem;
+  padding: 9px 14px;
+  margin: 12px 0;
+  font-size: 0.81rem;
   color: #334155;
-  margin-bottom: 16px;
 }
 
+.eval-suite-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid #E2E8F0;
+}
+
+.eval-tab-btn {
+  font-family: var(--font-adult);
+  font-size: 0.81rem;
+  font-weight: 700;
+  padding: 8px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #475569;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.eval-tab-btn:hover {
+  background: #EFF6FF;
+  color: var(--color-adult-primary);
+  border-color: #BFDBFE;
+}
+
+.eval-tab-btn.active {
+  background: var(--color-adult-primary);
+  color: #FFFFFF;
+  border-color: var(--color-adult-primary);
+  box-shadow: 0 3px 10px rgba(30, 58, 138, 0.22);
+}
+
+.eval-suite-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 14px 2px 10px;
+}
+
+.eval-suite-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1.5px solid #E2E8F0;
+}
+
+.eval-copy-toast {
+  margin-right: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #065F46;
+  background: #D1FAE5;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+}
+
+/* Tarjetas Superiores de Estadísticas Clave */
+.eval-highlight-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.eval-stat-card {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.eval-stat-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748B;
+}
+
+.eval-stat-val {
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: var(--color-adult-primary);
+}
+
+.eval-stat-meta {
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+/* Tablas de KPIs, Fonética Bosch & Melgar y Heurísticas de Nielsen */
 .report-kpi-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
-  margin-bottom: 20px;
+  font-size: 0.83rem;
+  margin-bottom: 14px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
 }
 
-.report-kpi-table th, .report-kpi-table td {
-  padding: 10px 14px;
+.report-kpi-table th,
+.report-kpi-table td {
+  padding: 9px 12px;
   text-align: left;
   border-bottom: 1px solid #E2E8F0;
+  vertical-align: middle;
 }
 
 .report-kpi-table th {
   background: #F8FAFC;
-  color: #475569;
+  color: #334155;
   font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.report-kpi-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.eval-row-highlight {
+  background: #FFFBEB;
+}
+
+.eval-row-highlight:hover {
+  background: #FEF3C7 !important;
 }
 
 .kpi-tag {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
-.tag-green { background: #DCFCE7; color: #166534; }
-.tag-yellow { background: #FEF9C3; color: #854D0E; }
-.tag-purple { background: #F3E8FF; color: #6B21A8; }
+.tag-green {
+  background: var(--color-adult-tag-green);
+  color: var(--color-adult-tag-green-text);
+}
 
-.eval-report-actions {
+.tag-yellow {
+  background: var(--color-adult-tag-yellow);
+  color: var(--color-adult-tag-yellow-text);
+}
+
+.tag-purple {
+  background: var(--color-adult-tag-purple);
+  color: var(--color-adult-tag-purple-text);
+}
+
+.eval-section-note {
+  background: #EFF6FF;
+  border-left: 4px solid var(--color-adult-primary);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #1E293B;
+  margin-bottom: 14px;
+}
+
+.eval-inline-select {
+  font-family: var(--font-adult);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0F172A;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.eval-inline-select:focus {
+  outline: none;
+  border-color: var(--color-adult-primary);
+}
+
+.eval-manual-sample-bar {
   display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+  align-items: center;
   flex-wrap: wrap;
-  padding-top: 14px;
-  border-top: 2px solid #E2E8F0;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+/* Pestaña 3: Escalas PSSUQ (Likert 1-7) y MARS (1-5) */
+.eval-subtitle-block {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 4px 0 10px;
+}
+
+.eval-likert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eval-likert-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 9px 12px;
+}
+
+.eval-likert-info {
+  flex: 1;
+}
+
+.eval-likert-info p {
+  font-size: 0.82rem;
+  color: #1E293B;
+  margin: 3px 0 0;
+  line-height: 1.35;
+}
+
+.eval-mini-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-adult-primary);
+  background: #DBEAFE;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.eval-likert-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.likert-num-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid #CBD5E1;
+  background: #FFFFFF;
+  color: #334155;
+  font-family: var(--font-adult);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.likert-num-btn:hover {
+  border-color: var(--color-adult-primary);
+  background: #EFF6FF;
+}
+
+.likert-num-btn.active {
+  background: var(--color-adult-primary);
+  color: #FFFFFF;
+  border-color: var(--color-adult-primary);
+}
+
+.eval-mars-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.eval-mars-card {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eval-mars-card p {
+  font-size: 0.79rem;
+  color: #475569;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.eval-mars-top,
+.eval-mars-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.eval-mars-top strong {
+  font-size: 0.84rem;
+  color: #0F172A;
+}
+
+.eval-mars-controls small {
+  font-size: 0.74rem;
+  color: #64748B;
+}
+
+.eval-teacher-notes-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eval-teacher-notes-box label {
+  font-size: 0.8rem;
+  color: #1E293B;
+}
+
+.eval-nielsen-summary-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.81rem;
+  color: #0F172A;
+}
+
+/* 6. Panel Embebido en el Dashboard Adulto (Tab 5: #adultScedEvalPanel) */
+.sced-dashboard-banner {
+  background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%);
+  border: 1.5px solid #BFDBFE;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sced-banner-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 7. Accesibilidad Modo Alto Contraste CVI (16.8:1 AAA) y Focus Visible */
+.eval-btn:focus-visible,
+.eval-chip:focus-visible,
+.eval-tab-btn:focus-visible,
+.likert-num-btn:focus-visible,
+.hud-btn:focus-visible,
+.psf-tag-btn:focus-visible,
+.emoji-choice-card:focus-visible {
+  outline: 3px solid #2563EB;
+  outline-offset: 2px;
+}
+
+body[data-theme="cvi"] .emoji-child-card {
+  background: var(--color-cvi-bg);
+  color: var(--color-cvi-text);
+  border-color: var(--color-cvi-highlight);
+}
+
+body[data-theme="cvi"] .emoji-ava-header {
+  background: var(--color-cvi-surface);
+  border-color: var(--color-cvi-highlight);
+}
+
+body[data-theme="cvi"] .emoji-q-badge {
+  background: var(--color-cvi-highlight);
+  color: #000000;
+}
+
+body[data-theme="cvi"] .emoji-q-title,
+body[data-theme="cvi"] .emoji-choice-label {
+  color: var(--color-cvi-highlight);
+}
+
+body[data-theme="cvi"] .emoji-speaker-btn {
+  background: #000000;
+  color: var(--color-cvi-highlight);
+  border-color: #00E5FF;
+}
+
+body[data-theme="cvi"] .emoji-choice-card {
+  background: var(--color-cvi-surface);
+  border-color: var(--color-cvi-highlight);
+}
+
+body[data-theme="cvi"] .emoji-choice-card.emoji-opt-high {
+  border-color: #00E5FF;
+}
+
+/* 8. Adaptabilidad Responsiva para Tabletas Apaisadas Compactas y Móviles */
+@media (max-width: 760px) {
+  .eval-config-grid,
+  .eval-mars-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .eval-likert-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .emoji-choices-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .emoji-choice-card {
+    min-height: 122px;
+    padding: 12px 8px;
+  }
+
+  .emoji-giant-face {
+    font-size: 2.8rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .emoji-child-card {
+    padding: 14px 18px 18px;
+  }
+
+  .emoji-ava-header {
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+
+  .emoji-choice-card {
+    min-height: 112px;
+    padding: 10px;
+  }
+
+  .emoji-giant-face {
+    font-size: 2.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-status-dot,
+  .eval-modal-overlay,
+  .emoji-choice-card {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 

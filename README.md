@@ -60,73 +60,168 @@ El prototipo cuenta con 13 interfaces de alta fidelidad documentadas con captura
 ## 💻 Ejecución del Prototipo Interactivo
 
 El proyecto cuenta con dos entornos de prototipado:
-1. **Nuevo Prototipo Móvil Refactorizado (Proyecto/Prototipo_Refactorización) [RECOMENDADO]**: Migrado a Vite 6 + Capacitor 6 para generación de APK Android, reconocimiento de voz dual (VAD + Web Speech / Plugin Nativo), avatar vectorial dinámico multicapa de Ava, praxias bucofaciales con metáforas visuales, telemetría clínica con triple toque y banco fonético pregrabado en norma culta de Lima.
+1. **Nuevo Prototipo Móvil Refactorizado (Proyecto/Prototipo_Refactorización) [RECOMENDADO]**: Migrado a Vite 6 + Capacitor 6 para generación de APK Android, reconocimiento de voz dual (VAD + Web Speech / Plugin Nativo), avatar vectorial dinámico multicapa de Ava, praxias bucofaciales con metáforas visuales, telemetría clínica con triple toque, consola remota de evaluación y banco fonético pregrabado en norma culta de Lima.
 2. **Prototipo Clásico de Referencia (Proyecto/Prototipo)**: Prototipo web original en Vanilla HTML5/CSS3 preservado intacto.
 
 ---
 
-### 🚀 Nuevo Prototipo Refactorizado (Vite + Capacitor / Android)
+### 🚀 Prototipo Refactorizado (Vite + Capacitor / Android)
 
 #### Requisitos Previos
 - [Node.js](https://nodejs.org/) (versión 18, 20 o superior recomendada).
 - Navegador moderno (Google Chrome, Microsoft Edge o Firefox) con permisos de micrófono habilitados.
-- *(Opcional para compilar APK)*: [Android Studio Hedgehog o superior](https://developer.android.com/studio) con Android SDK 34+.
+- *(Para compilar el APK Android)*: [Java Development Kit (JDK 17 o 21)](https://adoptium.net/) y Android SDK (o [Android Studio](https://developer.android.com/studio)).
 
 #### Pasos para Ejecutar Localmente en Web (Modo Desarrollo)
 
-1. **Abrir la terminal e ingresar a la carpeta del nuevo prototipo:**
-   `ash
+1. **Abrir la terminal e ingresar a la carpeta del prototipo:**
+   ```bash
    cd Proyecto/Prototipo_Refactorización
-   `
+   ```
 
 2. **Instalar dependencias de Node.js:**
-   `ash
+   ```bash
    npm install
-   `
+   ```
 
-3. **Iniciar el servidor local de desarrollo (Vite):**
-   `ash
+3. **Iniciar el servidor local de desarrollo (Vite con soporte de red local):**
+   ```bash
    npm run dev
-   `
+   ```
 
 4. **Abrir en el navegador:**
-   Accede a la URL indicada en la terminal (por defecto [http://localhost:5173](http://localhost:5173)).
-   > 💡 **Tip:** Asegúrate de conceder permisos de micrófono al navegador para probar el reconocimiento de voz en los minijuegos.
+   - **Aplicación del Niño:** [http://localhost:5173](http://localhost:5173) (o la IP LAN indicada en terminal).
+   - **Consola Remota del Evaluador:** [http://localhost:5173/evaluador.html](http://localhost:5173/evaluador.html).
+   > 💡 **Tip:** Concede permisos de micrófono en el navegador para habilitar la captación fonética en los minijuegos.
 
-#### Construcción y Sincronización Móvil (Capacitor / Android)
+---
 
-1. **Generar el build optimizado de producción:**
-   `ash
-   npm run build
-   `
+### 📱 Guía para Generar el Descargable / Instalable Móvil (APK Android)
 
-2. **Sincronizar activos web con el proyecto nativo de Android:**
-   `ash
-   npx cap sync
-   `
+Para que cualquier colaborador del equipo pueda empaquetar y generar el archivo instalable `.apk` para tablets o teléfonos Android, sigue los siguientes pasos:
 
-3. **Abrir en Android Studio para depurar o generar el APK:**
-   `ash
+#### 1. Preparar el build de producción y sincronizar con Capacitor:
+```bash
+cd Proyecto/Prototipo_Refactorización
+npm run build
+npx cap sync
+```
+> Esto compila los archivos web en `dist/` y los copia automáticamente al proyecto nativo en `android/app/src/main/assets/public`.
+
+#### 2. Compilar el archivo APK:
+
+##### Opción A: Por Línea de Comandos (Sin abrir Android Studio)
+*Requiere tener configurada la variable `JAVA_HOME` (JDK 17 o 21) y `ANDROID_HOME`.*
+
+- **En Windows (PowerShell / CMD):**
+  ```powershell
+  cd android
+  .\gradlew.bat assembleDebug
+  ```
+
+- **En Linux / macOS (Bash):**
+  ```bash
+  cd android
+  ./gradlew assembleDebug
+  ```
+
+- **Ubicación del APK generado listo para instalar:**
+  ```text
+  Proyecto/Prototipo_Refactorización/android/app/build/outputs/apk/debug/app-debug.apk
+  ```
+
+##### Opción B: Usando Android Studio (Interfaz Gráfica)
+1. Abre el proyecto Android con:
+   ```bash
    npm run cap:open:android
-   `
-   *(O abre la carpeta Proyecto/Prototipo_Refactorización/android directamente desde Android Studio).*
+   ```
+   *(O abre manualmente la carpeta `Proyecto/Prototipo_Refactorización/android` desde Android Studio).*
+2. Espera a que termine la sincronización de Gradle (*Gradle Sync*).
+3. En la barra superior, ve al menú:  
+   **Build** ➔ **Build Bundle(s) / APK(s)** ➔ **Build APK(s)**.
+4. Al finalizar la compilación, pulsa en la notificación emergente sobre el enlace **locate** para acceder al archivo `app-debug.apk`.
+5. Transfiere el archivo a la tablet o dispositivo Android mediante cable USB, Google Drive o WhatsApp, e instálalo habilitando *"Instalar aplicaciones de fuentes desconocidas"*.
+
+---
+
+### 🧪 Guía Rápida: Modo Evaluación Micro-SCED (Actividad 10)
+
+El sistema implementa una **Arquitectura Desacoplada Zero-HUD** (*Saeedi et al., 2024; Strömbergsson et al., 2025*): el infante juega en una pantalla **100% limpia** (sin cronómetros ni recuadros invasivos), mientras que el evaluador califica las emisiones vocales y controla la prueba en tiempo real desde su propio portátil o smartphone.
+
+```mermaid
+flowchart LR
+    subgraph Nino ["👶 Dispositivo del Niño (Tablet / index.html)"]
+        N1["Juego Fono-Lúdico 100% Limpio (Zero-HUD)"] --> N2["Telemetría en Segundo Plano (SCED)"]
+        N2 --> N3["Cierre: Cuestionario Pictórico de Emojis"]
+    end
+
+    subgraph Evaluador ["🧑‍💻 Dispositivo del Evaluador (Portátil / evaluador.html)"]
+        E1["Conexión en Vivo (Sala G7-P01 vía Wi-Fi)"] --> E2["Calificación PSF con el Pulgar (✔ / O / S / D)"]
+        E2 --> E3["Mando a Distancia (+1 Apoyo, Modo CVI, Emojis)"]
+        E3 --> E4["Cuestionarios PSSUQ / MARS y Exportación JSON"]
+    end
+
+    N2 <-->|"Relay en Tiempo Real (<10 ms)"| E1
+    E3 -->|"Disparo Remoto"| N3
+```
+
+#### 👶 1. En la Tablet o Dispositivo del Niño (`index.html`)
+
+1. **Abrir la aplicación del niño:**  
+   Ingresa a [http://localhost:5173](http://localhost:5173) (o abre la app instalada en la tablet apuntando a la IP del servidor).
+2. **Acceso discreto a la configuración de sesión (solo antes de empezar):**
+   - **En PC / Laptop:** Presiona `Ctrl + Alt + E`.
+   - **En Tablet táctil:** Haz un **triple toque rápido** sobre el medallón de Ava en la esquina superior izquierda (`#headerAppLogo`).
+   - *(Alternativa)*: Toca el candado de *MathGate* en la esquina superior derecha, resuelve la operación matemática y ve a la pestaña **`Modo Evaluación (Act. 10)`**.
+3. **Confirmar parámetros de prueba:**
+   - Selecciona el chip del participante (`P01` a `P04`, anónimo bajo Ley N.° 29733), la edad (`3–6 años`) y el modo visual (*Estándar Biofílico* o *Modo CVI*).
+   - Verifica el código de sala asignado (ej. `G7-P01`).
+   - Haz clic en **`🚀 Iniciar Prueba Infantil (Pantalla Limpia Zero-HUD)`**.
+4. **Durante la prueba:**  
+   Entrega la tablet al niño. La pantalla estará completamente despejada. El infante navegará libremente por los vagones y practicará los ejercicios fonéticos.
+5. **Cierre de sesión infantil:**  
+   Cuando concluyan los 12–15 minutos (o cuando el evaluador lo active remotamente), se desplegará el **Cuestionario Pictórico con Emojis** de 3 preguntas narradas oralmente por Ava. Al terminar, el modal se cerrará suavemente sin mostrar tablas clínicas al menor.
+
+#### 🧑‍💻 2. En el Portátil o Celular del Evaluador (`evaluador.html`)
+
+1. **Abrir la consola remota:**  
+   En tu portátil o teléfono móvil conectado a la misma red Wi-Fi, abre:  
+   `http://<IP-LAN-DEL-SERVIDOR>:5173/evaluador.html?room=G7-P01`  
+   *(O haz clic en el botón `📱 Abrir App Remota del Evaluador` desde el diálogo de configuración).*
+2. **Verificar estado de enlace:**  
+   En la cabecera superior se encenderá el indicador verde: `🟢 En Línea con Tablet`.
+3. **Pestaña 1 (🎛️ Mando en Vivo & PSF):**
+   - **Calificación en tiempo real:** Cada vez que el niño pronuncia una palabra en la tablet, el evaluador ve la palabra meta, el fonema y el veredicto del sistema (`⭐ Aprobó` vs. `🔄 Reintento/DDA`). Con un solo toque califica el juicio auditivo humano:
+     - `✔ Correcto`: Articulación adecuada sin errores.
+     - `O: Omisión`: El niño omitió el sonido (ej. *"pato"* por *"plato"*).
+     - `S: Sustitución`: El niño cambió el sonido (ej. *"pelo"* por *"pera"*).
+     - `D: Distorsión`: Emisión aproximada no pura (ej. `/rr/` fricativa).
+   - **Botón `🤝 +1 Apoyo Verbal (CA)`:** Registra apoyos moderados si el menor requiere guía oral tras >10 s de inactividad.
+   - **Botón `👁️ Alternar Modo CVI`:** Activa o desactiva a distancia el tema de alto contraste (16.8:1 AAA) en la tablet del niño.
+   - **Botón `🏁 Cerrar Prueba y Lanzar Emojis al Niño`:** Lanza a distancia el cuestionario infantil sin necesidad de tocar la tablet del niño.
+4. **Pestaña 2 (🗣️ Ficha Bosch & Melgar):**  
+   Revisa los intentos acumulados en posición Inicial, Medial y Final, y visualiza el porcentaje de *Target Accuracy* y de concordancia ASR vs. Humano.
+5. **Pestaña 3 (👩‍🏫 Mediador: PSSUQ & MARS):**  
+   Permite al docente de educación inicial o tutor completar los 8 ítems del cuestionario **PSSUQ** (Likert 1–7) y las 4 dimensiones de la escala **MARS** (1–5), además de anotar observaciones de aula.
+6. **Pestaña 4 (📊 Nielsen, 12 KPIs & Exportar):**  
+   Audita las **10 Heurísticas de Usabilidad de Nielsen** (escala de severidad 0–4), la pureza acústica (0% *schwa* `[ə]`) y permite **descargar en un clic los reportes en formatos `.json` (esquema SCED listo para Kruskal-Wallis / Mann-Whitney U) y `.csv`**.
 
 ---
 
 ### 🏛️ Prototipo Clásico Web (Proyecto/Prototipo)
 
-Si deseas ejecutar la versión clásica original:
+Si deseas ejecutar la versión clásica original de referencia:
 
 1. **Navegar a la carpeta:**
-   `ash
+   ```bash
    cd Proyecto/Prototipo
-   `
+   ```
 
 2. **Instalar dependencias y ejecutar:**
-   `ash
+   ```bash
    npm install
    npm run dev
-   `
+   ```
 
 3. **Abrir en:** [http://localhost:5173](http://localhost:5173).
 

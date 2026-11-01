@@ -828,7 +828,15 @@
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
               </svg>
-              <span>Trazabilidad Científica (10 Antecedentes)</span>
+              <span>Trazabilidad Científica</span>
+            </button>
+            <button class="dash-tab-btn" data-target="tab-sced-eval" role="tab">
+              <svg class="ui-icon-svg" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 3h6"/>
+                <path d="M10 3v4.4a2 2 0 0 1-.5 1.3L5 14a3 3 0 0 0 2.3 5h9.4A3 3 0 0 0 19 14l-4.5-5.3a2 2 0 0 1-.5-1.3V3"/>
+                <path d="M8.5 14h7"/>
+              </svg>
+              <span>Modo Evaluación (Act. 10)</span>
             </button>
             <button id="btnExitAdultPortal" class="dash-tab-btn btn-exit-tab" style="margin-left: auto; color: #DC2626;">
               <svg class="ui-icon-svg" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -946,30 +954,30 @@
                 </p>
                 <div class="psf-bars-container">
                   <!-- Grupo 1: Omisión -->
-                  <div>
+                  <div title="Omisión: El niño suprime un sonido o sílaba (Ej. dice 'pato' por 'plato' o 'atón' por 'ratón')">
                     <div class="psf-bar-group">
                       <div class="psf-bar bar-pre" style="height: 140px;" title="Pre: 52%"><span class="psf-bar-label">52%</span></div>
                       <div class="psf-bar bar-post" style="height: 32px;" title="Post: 12%"><span class="psf-bar-label">12%</span></div>
                     </div>
-                    <div class="psf-group-caption">Omisión (O)</div>
+                    <div class="psf-group-caption">Omisión (O)<br><small style="color:#64748B; font-weight:500;">Ej. "pato" por "plato"</small></div>
                   </div>
 
                   <!-- Grupo 2: Sustitución -->
-                  <div>
+                  <div title="Sustitución: Reemplaza un sonido difícil por otro más fácil (Ej. dice 'pelo' por 'pera')">
                     <div class="psf-bar-group">
                       <div class="psf-bar bar-pre" style="height: 120px;" title="Pre: 44%"><span class="psf-bar-label">44%</span></div>
                       <div class="psf-bar bar-post" style="height: 22px;" title="Post: 8%"><span class="psf-bar-label">8%</span></div>
                     </div>
-                    <div class="psf-group-caption">Sustitución (S)</div>
+                    <div class="psf-group-caption">Sustitución (S)<br><small style="color:#64748B; font-weight:500;">Ej. "pelo" por "pera"</small></div>
                   </div>
 
                   <!-- Grupo 3: Distorsión -->
-                  <div>
+                  <div title="Distorsión: Emite el sonido de forma aproximada o lateralizada (Ej. /s/ con escape de aire lateral)">
                     <div class="psf-bar-group">
                       <div class="psf-bar bar-pre" style="height: 100px;" title="Pre: 38%"><span class="psf-bar-label">38%</span></div>
                       <div class="psf-bar bar-post" style="height: 14px;" title="Post: 5%"><span class="psf-bar-label">5%</span></div>
                     </div>
-                    <div class="psf-group-caption">Distorsión (D)</div>
+                    <div class="psf-group-caption">Distorsión (D)<br><small style="color:#64748B; font-weight:500;">Ej. /rr/ sin vibrar</small></div>
                   </div>
                 </div>
 
@@ -1052,11 +1060,18 @@
                 </p>
               </div>
               <div style="padding: 12px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px;">
-                <strong>4. Strömbergsson et al. (2026) [IJLCD]:</strong>
+                <strong>4. Strömbergsson et al. (2025/2026) [IJLCD]:</strong>
                 <p style="font-size: 0.82rem; color: #475569; margin-top: 4px;">
-                  Ajuste dinámico DDA al 3.er fallo y recompensas por esfuerzo para prevenir el colapso de UX por bucles de ASR infantil.
+                  Diseño SCED, ajuste dinámico DDA al 3.er fallo y calibración de concordancia ASR vs. juicio humano.
                 </p>
               </div>
+            </div>
+          </div>
+
+          <!-- Tab 5: Modo Evaluación Micro-SCED (Actividad 10) -->
+          <div id="tab-sced-eval" class="dashboard-tab-content" role="tabpanel">
+            <div id="adultScedEvalPanel">
+              <!-- Renderizado dinámicamente por TelemetryEvalEngine v3.0 -->
             </div>
           </div>
         </div>
