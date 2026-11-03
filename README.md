@@ -96,22 +96,29 @@ El proyecto cuenta con dos entornos de prototipado:
 
 ---
 
-### 📱 Guía para Generar el Descargable / Instalable Móvil (APK Android)
+### 📱 Descargable / Instalable Móvil (APK Android) y Compilación
 
-Para que cualquier colaborador del equipo pueda empaquetar y generar el archivo instalable `.apk` para tablets o teléfonos Android, sigue los siguientes pasos:
+#### ⚡ Descarga Directa del APK Precompilado (Recomendado)
+Para instalar y probar directamente en cualquier tablet o teléfono Android sin necesidad de compilar código fuente ni instalar Android Studio:
+- **Archivo APK oficial listo para instalar:**  
+  📁 [**`Proyecto/Prototipo_Refactorización/Bosque_Sonoro.apk`**](Proyecto/Prototipo_Refactorización/Bosque_Sonoro.apk)  
+  *(~9.71 MB, arquitectura universal ARM/x86 con soporte de red local, conectividad Zero-HUD y locución neural de Ava).*
 
-#### 1. Preparar el build de producción y sincronizar con Capacitor:
+#### Guía para Compilar el APK desde el Código Fuente
+Si deseas realizar modificaciones en el código fuente o generar tu propio build:
+
+##### 1. Preparar el build de producción y sincronizar con Capacitor:
 ```bash
 cd Proyecto/Prototipo_Refactorización
 npm run build
-npx cap sync
+npm run cap:sync
 ```
-> Esto compila los archivos web en `dist/` y los copia automáticamente al proyecto nativo en `android/app/src/main/assets/public`.
+> Esto compila los assets web en `dist/` y los copia automáticamente al proyecto nativo en `android/app/src/main/assets/public`.
 
-#### 2. Compilar el archivo APK:
+##### 2. Compilar el archivo APK:
 
-##### Opción A: Por Línea de Comandos (Sin abrir Android Studio)
-*Requiere tener configurada la variable `JAVA_HOME` (JDK 17 o 21) y `ANDROID_HOME`.*
+###### Opción A: Por Línea de Comandos (Recomendado)
+*El proyecto se encuentra estandarizado con Gradle Wrapper 8.2.1, compatibilidad de rutas Windows (`android.overridePathCheck=true`) y tráfico local HTTP habilitado (`android:usesCleartextTraffic="true"`).*
 
 - **En Windows (PowerShell / CMD):**
   ```powershell
@@ -125,12 +132,13 @@ npx cap sync
   ./gradlew assembleDebug
   ```
 
-- **Ubicación del APK generado listo para instalar:**
+- **Ubicación del APK generado tras el build:**
   ```text
   Proyecto/Prototipo_Refactorización/android/app/build/outputs/apk/debug/app-debug.apk
   ```
+  *(Puedes copiarlo como `Bosque_Sonoro.apk` en la raíz de `Prototipo_Refactorización`).*
 
-##### Opción B: Usando Android Studio (Interfaz Gráfica)
+###### Opción B: Usando Android Studio (Interfaz Gráfica)
 1. Abre el proyecto Android con:
    ```bash
    npm run cap:open:android
@@ -165,46 +173,57 @@ flowchart LR
     E3 -->|"Disparo Remoto"| N3
 ```
 
-#### 👶 1. En la Tablet o Dispositivo del Niño (`index.html`)
+#### 👶 1. En la Tablet o Dispositivo del Niño (`index.html` o APK `Bosque_Sonoro.apk`)
 
 1. **Abrir la aplicación del niño:**  
-   Ingresa a [http://localhost:5173](http://localhost:5173) (o abre la app instalada en la tablet apuntando a la IP del servidor).
-2. **Acceso discreto a la configuración de sesión (solo antes de empezar):**
-   - **En PC / Laptop:** Presiona `Ctrl + Alt + E`.
-   - **En Tablet táctil:** Haz un **triple toque rápido** sobre el medallón de Ava en la esquina superior izquierda (`#headerAppLogo`).
+   - Si usas el **APK instalado en el celular/tablet:** Abre la aplicación *Bosque Sonoro*.
+   - Si usas el **navegador web:** Ingresa a [http://localhost:5173](http://localhost:5173) (o la IP LAN del servidor).
+2. **Acceso a la configuración de sesión (solo antes de empezar la prueba):**
+   - **En PC / Laptop:** Presiona el atajo `Ctrl + Alt + E`.
+   - **En Tablet / Celular táctil:** Realiza un **triple toque rápido** sobre el medallón de Ava en la esquina superior izquierda (`#headerAppLogo`).
    - *(Alternativa)*: Toca el candado de *MathGate* en la esquina superior derecha, resuelve la operación matemática y ve a la pestaña **`Modo Evaluación (Act. 10)`**.
-3. **Confirmar parámetros de prueba:**
+3. **Vincular el APK con la Laptop del Evaluador (si juegas desde el APK móvil):**
+   - Asegúrate de que el celular/tablet y la laptop estén conectados a la **misma red Wi-Fi** (puede ser la zona portátil del celular).
+   - En el campo **"💻 Vincular con Laptop del Evaluador"**, escribe la IP de la laptop (ejemplo: `10.44.87.221` o `10.44.87.221:5173`).
+   - Pulsa el botón **`⚡ Enlazar`**. Verás el estado en verde: *`🟢 Conectado con Laptop`*.
+4. **Confirmar parámetros de prueba e iniciar:**
    - Selecciona el chip del participante (`P01` a `P04`, anónimo bajo Ley N.° 29733), la edad (`3–6 años`) y el modo visual (*Estándar Biofílico* o *Modo CVI*).
-   - Verifica el código de sala asignado (ej. `G7-P01`).
    - Haz clic en **`🚀 Iniciar Prueba Infantil (Pantalla Limpia Zero-HUD)`**.
-4. **Durante la prueba:**  
-   Entrega la tablet al niño. La pantalla estará completamente despejada. El infante navegará libremente por los vagones y practicará los ejercicios fonéticos.
-5. **Cierre de sesión infantil:**  
-   Cuando concluyan los 12–15 minutos (o cuando el evaluador lo active remotamente), se desplegará el **Cuestionario Pictórico con Emojis** de 3 preguntas narradas oralmente por Ava. Al terminar, el modal se cerrará suavemente sin mostrar tablas clínicas al menor.
+5. **Durante la prueba:**  
+   Entrega el dispositivo al niño. La pantalla estará completamente despejada (Zero-HUD). Gracias al enfoque **Mobile-First adaptativo**, ningún botón ni tarjeta es ocluido por el césped inferior en celulares landscape (`max-height: 520px`).
+6. **Cierre de sesión infantil con Emojis y Voz Neural:**  
+   Al terminar la sesión (o al recibir el comando remoto del evaluador), se activa el **Cuestionario Pictórico de Emojis** (3 preguntas de usabilidad infantil). Ava narra cada pregunta con su **voz neural oficial (`es-PE-CamilaNeural`)** sin caídas en síntesis robótica, y despide al infante con una estrella dorada.
 
 #### 🧑‍💻 2. En el Portátil o Celular del Evaluador (`evaluador.html`)
 
+La consola de evaluación fue completamente refactorizada bajo las **3 Reglas de Oro de Theo Mandel** (Control del Usuario, Reducción de Carga de Memoria y Consistencia de Diseño):
+
 1. **Abrir la consola remota:**  
-   En tu portátil o teléfono móvil conectado a la misma red Wi-Fi, abre:  
-   `http://<IP-LAN-DEL-SERVIDOR>:5173/evaluador.html?room=G7-P01`  
-   *(O haz clic en el botón `📱 Abrir App Remota del Evaluador` desde el diálogo de configuración).*
-2. **Verificar estado de enlace:**  
-   En la cabecera superior se encenderá el indicador verde: `🟢 En Línea con Tablet`.
+   En la laptop conectada a la red Wi-Fi, abre en el navegador:  
+   `http://localhost:5173/evaluador.html?room=G7-P01`  
+   *(O si usas otro celular evaluador: `http://<IP-LAN-DE-LAPTOP>:5173/evaluador.html?room=G7-P01`).*
+2. **Atajos de Teclado Ergonómicos (Theo Mandel - Regla 1):**
+   El evaluador no necesita usar el ratón para calificar en vivo:
+   | Atajo | Acción Inmediata |
+   | :---: | :--- |
+   | `1` o `C` | Marca la emisión como **✔ Correcta**. |
+   | `2` o `O` | Registra Proceso de Simplificación Fonológica: **Omisión (O)**. |
+   | `3` o `S` | Registra Proceso de Simplificación Fonológica: **Sustitución (S)**. |
+   | `4` o `D` | Registra Proceso de Simplificación Fonológica: **Distorsión (D)**. |
+   | `A` | Registra **+1 Apoyo Verbal/Fonoaudiológico (CA)**. |
+   | `←` / `→` | Navega entre las últimas emisiones fonéticas registradas. |
+   | `Alt + 1..4` | Cambia al instante entre las 4 pestañas de la consola. |
+   | `?` | Despliega el cajón lateral con la ayuda interactiva de comandos. |
+   | `Esc` | Cierra cualquier diálogo modal activo. |
 3. **Pestaña 1 (🎛️ Mando en Vivo & PSF):**
-   - **Calificación en tiempo real:** Cada vez que el niño pronuncia una palabra en la tablet, el evaluador ve la palabra meta, el fonema y el veredicto del sistema (`⭐ Aprobó` vs. `🔄 Reintento/DDA`). Con un solo toque califica el juicio auditivo humano:
-     - `✔ Correcto`: Articulación adecuada sin errores.
-     - `O: Omisión`: El niño omitió el sonido (ej. *"pato"* por *"plato"*).
-     - `S: Sustitución`: El niño cambió el sonido (ej. *"pelo"* por *"pera"*).
-     - `D: Distorsión`: Emisión aproximada no pura (ej. `/rr/` fricativa).
-   - **Botón `🤝 +1 Apoyo Verbal (CA)`:** Registra apoyos moderados si el menor requiere guía oral tras >10 s de inactividad.
-   - **Botón `👁️ Alternar Modo CVI`:** Activa o desactiva a distancia el tema de alto contraste (16.8:1 AAA) en la tablet del niño.
-   - **Botón `🏁 Cerrar Prueba y Lanzar Emojis al Niño`:** Lanza a distancia el cuestionario infantil sin necesidad de tocar la tablet del niño.
+   - **Calificación fónica en tiempo real:** Muestra la palabra estímulo, el fonema blanco, el veredicto automático de la app (`⭐ Aprobó` vs. `🔄 Reintento/DDA`) y permite la calificación perceptiva humana con código semántico de colores (Verde=Correcto, Rojo=Omisión, Ámbar=Sustitución, Púrpura=Distorsión).
+   - **Botón `🏁 Cerrar Prueba y Lanzar Emojis al Niño`:** Cuenta con un modal de confirmación previa para evitar cierres accidentales (Theo Mandel / Prevención de Errores Nielsen H5).
 4. **Pestaña 2 (🗣️ Ficha Bosch & Melgar):**  
-   Revisa los intentos acumulados en posición Inicial, Medial y Final, y visualiza el porcentaje de *Target Accuracy* y de concordancia ASR vs. Humano.
+   Incorpora una **barra de filtros rápidos** (`Ver Todos`, `Solo PSF`, `Discrepancias ASR vs. Humano`) para auditar anomalías fonéticas sin sobrecarga de memoria de trabajo (Theo Mandel - Regla 2).
 5. **Pestaña 3 (👩‍🏫 Mediador: PSSUQ & MARS):**  
-   Permite al docente de educación inicial o tutor completar los 8 ítems del cuestionario **PSSUQ** (Likert 1–7) y las 4 dimensiones de la escala **MARS** (1–5), además de anotar observaciones de aula.
+   Cuestionarios estandarizados con **anclajes verbales explícitos** (*1: Totalmente en desacuerdo • 4: Neutral • 7: Totalmente de acuerdo*) para evaluación de mediadores (docentes de inicial y fonoaudiólogos).
 6. **Pestaña 4 (📊 Nielsen, 12 KPIs & Exportar):**  
-   Audita las **10 Heurísticas de Usabilidad de Nielsen** (escala de severidad 0–4), la pureza acústica (0% *schwa* `[ə]`) y permite **descargar en un clic los reportes en formatos `.json` (esquema SCED listo para Kruskal-Wallis / Mann-Whitney U) y `.csv`**.
+   Inspección heurística cruzada (severidades de 0: Sin problema a 4: Catastrófico), verificación de pureza acústica (0% *schwa* `[ə]`) y descarga en un clic de los datasets estructurados en `.json` (protocolo SCED) y `.csv`.
 
 ---
 

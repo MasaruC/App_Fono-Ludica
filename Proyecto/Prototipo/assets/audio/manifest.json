@@ -35,7 +35,11 @@
       { "id": "consigna_rimas", "text": "¿Qué palabra rima? Escucha el sonido y encuentra la palabra que suena igual." },
       { "id": "consigna_adivinanzas", "text": "¡Escucha mi acertijo y dime el nombre del animalito!" },
       { "id": "consigna_carrera", "text": "¡Pronuncia la palabra para que mis alitas vuelen de flor en flor hasta la colmena real!" },
-      { "id": "consigna_bingo", "text": "¡Bingo sonoro! Escucha el sonido y toca el dibujo que tiene ese sonido." }
+      { "id": "consigna_bingo", "text": "¡Bingo sonoro! Escucha el sonido y toca el dibujo que tiene ese sonido." },
+      { "id": "emoji_q1_visual", "text": "¡Qué lindo jugamos hoy! Dime amiguito: ¿Te gustaron los dibujos del bosque y de la abejita Ava? Toca una carita." },
+      { "id": "emoji_q2_emocional", "text": "¿Y cómo te sentiste hablando por el botón verde grande? Toca la carita que sientes." },
+      { "id": "emoji_q3_jugar", "text": "Última preguntita: ¿Quieres volver a jugar otro día con los vagones de Ava?" },
+      { "id": "emoji_cierre_estrella", "text": "¡Muchas gracias por jugar conmigo en el Bosque Sonoro! ¡Ganaste una estrella gigante!" }
     ],
     "fonemas_puros": [
       { "id": "fonema_k", "ipa": "[k]", "notes": "Oclusión velar sorda pura, burst de 20ms, cero vocal neutra [ə]" },

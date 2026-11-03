@@ -328,7 +328,8 @@ class TelemetryEvalEngine {
 
     // Autodescubrir IP LAN local del servidor Vite para mostrar URL exacta para celulares
     if (typeof fetch === 'function') {
-      fetch('/api/sced-info')
+      const base = this.getServerBaseUrl();
+      fetch(`${base}/api/sced-info`)
         .then(r => r.ok ? r.json() : null)
         .then(info => {
           if (info && Array.isArray(info.lanIps) && info.lanIps.length > 0) {
@@ -341,6 +342,27 @@ class TelemetryEvalEngine {
 
     // Canal 3: Stream SSE en tiempo real para conectar dispositivos físicos por Wi-Fi
     this.connectSseRoom(this.roomCode);
+
+    // Si ya existe un servidor guardado en el APK, avisar de inmediato que el dispositivo está online
+    if (this.hasCustomServer()) {
+      setTimeout(() => this.broadcastStateSnapshot('DEVICE_ONLINE'), 1200);
+    }
+  }
+
+  getCurrentServerOrigin() {
+    return localStorage.getItem('bosque_sced_server_origin') || (this.lanIp ? `http://${this.lanIp}:5173` : '');
+  }
+
+  hasCustomServer() {
+    return Boolean(localStorage.getItem('bosque_sced_server_origin'));
+  }
+
+  getServerBaseUrl() {
+    const saved = localStorage.getItem('bosque_sced_server_origin');
+    if (saved) return saved.replace(/\/$/, '');
+    if (window.location.port === '5173') return '';
+    if (this.lanIp) return `http://${this.lanIp}:5173`;
+    return '';
   }
 
   connectSseRoom(roomCode) {
@@ -355,7 +377,8 @@ class TelemetryEvalEngine {
     if (typeof EventSource === 'undefined') return;
 
     try {
-      const es = new EventSource(`/api/sced-sync?room=${encodeURIComponent(cleanRoom)}`);
+      const base = this.getServerBaseUrl();
+      const es = new EventSource(`${base}/api/sced-sync?room=${encodeURIComponent(cleanRoom)}`);
       this.sseSource = es;
 
       es.onmessage = (ev) => {
@@ -377,10 +400,14 @@ class TelemetryEvalEngine {
   }
 
   getRemoteEvaluatorUrl() {
-    const protocol = window.location.protocol || 'http:';
-    const port = window.location.port ? `:${window.location.port}` : '';
-    const host = this.lanIp || window.location.hostname || 'localhost';
-    const basePath = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/$/, '');
+    const custom = localStorage.getItem('bosque_sced_server_origin');
+    if (custom) {
+      return `${custom.replace(/\/$/, '')}/evaluador.html?room=${encodeURIComponent(this.roomCode)}`;
+    }
+    const protocol = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'http:';
+    const port = window.location.port ? `:${window.location.port}` : ':5173';
+    const host = this.lanIp || (window.location.hostname && window.location.hostname !== 'localhost' ? window.location.hostname : '192.168.18.10');
+    const basePath = (window.location.pathname || '').replace(/\/index\.html$/i, '').replace(/\/$/, '');
     return `${protocol}//${host}${port}${basePath}/evaluador.html?room=${encodeURIComponent(this.roomCode)}`;
   }
 
@@ -452,7 +479,8 @@ class TelemetryEvalEngine {
     } catch (e) {}
 
     if (typeof fetch === 'function') {
-      fetch(`/api/sced-sync?room=${encodeURIComponent(this.roomCode)}`, {
+      const base = this.getServerBaseUrl();
+      fetch(`${base}/api/sced-sync?room=${encodeURIComponent(this.roomCode)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(packet)
@@ -605,16 +633,39 @@ class TelemetryEvalEngine {
           <div class="eval-remote-top">
             <span id="evalRoomCodeBadge" class="eval-room-badge">🔑 Sala: ${this.roomCode}</span>
             <span id="evalPeerStatusBadge" class="eval-peer-status ${this.connectedPeers > 1 ? '' : 'waiting'}">
-              ${this.connectedPeers > 1 ? `🟢 App Remota Conectada (${this.connectedPeers} disp.)` : '📡 Lista para conectar desde tu dispositivo'}
+              ${this.connectedPeers > 1 ? `🟢 Conectado con Evaluador (${this.connectedPeers} disp.)` : '📡 Esperando conexión con Laptop'}
             </span>
           </div>
+
+          <!-- Bloque de Conexión Directa para el APK -->
+          <div class="eval-server-connection-group" style="margin: 12px 0 8px; padding: 10px 14px; background: rgba(46, 125, 50, 0.08); border: 2px solid var(--color-primary-forest, #2E7D32); border-radius: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label for="inpEvalServerOrigin" style="font-size: 0.82rem; font-weight: 700; color: #1B5E20; display: flex; align-items: center; gap: 6px;">
+                💻 Vincular con Laptop del Evaluador:
+              </label>
+              <span id="evalServerConnBadge" style="font-size: 0.74rem; font-weight: 700; color: ${this.hasCustomServer() ? '#2E7D32' : '#666'};">
+                ${this.hasCustomServer() ? '🟢 IP Guardada' : '⚪ Modo Local'}
+              </span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" id="inpEvalServerOrigin" class="eval-input" style="flex: 1; padding: 7px 12px; font-size: 0.88rem; font-family: monospace; border: 2px solid #A5D6A7; background: #FFF; border-radius: 8px;" placeholder="Ej: 10.44.87.221" value="${this.getCurrentServerOrigin()}">
+              <button type="button" id="btnTestAndSaveServer" class="eval-btn eval-btn-primary" style="padding: 7px 16px; min-height: 38px; font-size: 0.82rem; white-space: nowrap; font-weight: 700;">
+                ⚡ Enlazar
+              </button>
+            </div>
+            <div id="evalServerConnFeedback" style="font-size: 0.76rem; margin-top: 5px; font-weight: 600; min-height: 18px;">
+              ${this.hasCustomServer() ? `Enlace configurado a: ${this.getCurrentServerOrigin()}` : 'Escribe la IP de la laptop y pulsa Enlazar para telemetría en vivo.'}
+            </div>
+          </div>
+
           <div class="eval-remote-url-row">
-            <code id="evalRemoteUrlText" class="eval-lan-url-pill" title="Abre este enlace en el celular o laptop del evaluador">${remoteUrl}</code>
+            <span style="font-size: 0.75rem; color: #555; white-space: nowrap;">URL Evaluador:</span>
+            <code id="evalRemoteUrlText" class="eval-lan-url-pill" title="Abre este enlace en la laptop del evaluador">${remoteUrl}</code>
             <button type="button" id="btnCopyRemoteUrl" class="eval-btn eval-btn-outline" style="padding: 6px 12px; min-height: 34px; font-size: 0.78rem;">
-              📋 Copiar URL
+              📋 Copiar
             </button>
             <button type="button" id="btnLaunchRemoteWindow" class="eval-btn eval-btn-amber" style="padding: 6px 12px; min-height: 34px; font-size: 0.78rem;">
-              📱 Abrir App Remota del Evaluador
+              📱 Abrir
             </button>
           </div>
         </div>
@@ -730,8 +781,103 @@ class TelemetryEvalEngine {
       });
     }
 
-    document.getElementById('btnCloseEvalConfig').addEventListener('click', () => {
+    const btnTestServer = document.getElementById('btnTestAndSaveServer');
+    const inpServer = document.getElementById('inpEvalServerOrigin');
+    const fbServer = document.getElementById('evalServerConnFeedback');
+    const badgeServer = document.getElementById('evalServerConnBadge');
+
+    const linkServerAction = async () => {
+      let rawVal = (inpServer?.value || '').trim();
+      if (!rawVal) {
+        localStorage.removeItem('bosque_sced_server_origin');
+        if (fbServer) {
+          fbServer.style.color = '#555';
+          fbServer.textContent = '⚪ Enlace removido. Modo local activo.';
+        }
+        if (badgeServer) {
+          badgeServer.style.color = '#666';
+          badgeServer.textContent = '⚪ Modo Local';
+        }
+        this.connectSseRoom(this.roomCode);
+        this.updateRemoteUrlDisplay();
+        return;
+      }
+
+      let formatted = rawVal;
+      if (!/^https?:\/\//i.test(formatted)) {
+        formatted = `http://${formatted}`;
+      }
+      if (!/:\d+$/.test(formatted)) {
+        formatted = `${formatted}:5173`;
+      }
+      inpServer.value = formatted;
+
+      if (fbServer) {
+        fbServer.style.color = '#1565C0';
+        fbServer.textContent = `⏳ Verificando conexión con ${formatted}...`;
+      }
+
+      try {
+        const resp = await fetch(`${formatted}/api/sced-info`, { method: 'GET', mode: 'cors' });
+        if (resp.ok) {
+          localStorage.setItem('bosque_sced_server_origin', formatted);
+          if (fbServer) {
+            fbServer.style.color = '#2E7D32';
+            fbServer.textContent = `✅ ¡Enlazado exitosamente con la laptop! (${formatted})`;
+          }
+          if (badgeServer) {
+            badgeServer.style.color = '#2E7D32';
+            badgeServer.textContent = '🟢 Enlazado';
+          }
+          this.connectSseRoom(this.roomCode);
+          this.updateRemoteUrlDisplay();
+          this.broadcastStateSnapshot('EVALUATOR_LINKED_OK');
+        } else {
+          throw new Error(`HTTP ${resp.status}`);
+        }
+      } catch (err) {
+        localStorage.setItem('bosque_sced_server_origin', formatted);
+        if (fbServer) {
+          fbServer.style.color = '#E65100';
+          fbServer.textContent = `⚠️ Guardado ${formatted}, pero no hubo respuesta inmediata. Verifica que "npm run dev" esté activo en la laptop y en la misma red Wi-Fi.`;
+        }
+        this.connectSseRoom(this.roomCode);
+        this.updateRemoteUrlDisplay();
+      }
+    };
+
+    if (btnTestServer) {
+      btnTestServer.addEventListener('click', linkServerAction);
+    }
+    if (inpServer) {
+      inpServer.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          linkServerAction();
+        }
+      });
+    }
+
+    const closeConfigModal = () => {
       modal.classList.remove('active');
+      document.removeEventListener('keydown', handleEscConfig);
+    };
+
+    const handleEscConfig = (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeConfigModal();
+      }
+    };
+    document.addEventListener('keydown', handleEscConfig);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeConfigModal();
+      }
+    });
+
+    document.getElementById('btnCloseEvalConfig').addEventListener('click', () => {
+      closeConfigModal();
     });
 
     document.getElementById('btnOpenDirectSuite').addEventListener('click', () => {
@@ -749,6 +895,21 @@ class TelemetryEvalEngine {
 
       const activeChip = modal.querySelector('#evalParticipantChips .eval-chip.active');
       const pseudonym = (activeChip && activeChip.dataset.pid === pid) ? activeChip.dataset.name : `Participante ${pid}`;
+
+      const sOrigin = (document.getElementById('inpEvalServerOrigin')?.value || '').trim();
+      if (sOrigin) {
+        let formatted = sOrigin;
+        if (!/^https?:\/\//i.test(formatted)) {
+          formatted = `http://${formatted}`;
+        }
+        if (!/:\d+$/.test(formatted)) {
+          formatted = `${formatted}:5173`;
+        }
+        localStorage.setItem('bosque_sced_server_origin', formatted);
+      } else {
+        localStorage.removeItem('bosque_sced_server_origin');
+      }
+      this.connectSseRoom(this.roomCode);
 
       modal.classList.remove('active');
       this.startSession({
@@ -819,6 +980,13 @@ class TelemetryEvalEngine {
     this.startTask('T1_MENU_NAV', 'T1: Navegación Autónoma en Menú de Vagones');
     this.renderAdultDashboardPanel();
     this.broadcastStateSnapshot('SESSION_START');
+
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = setInterval(() => {
+      if (this.isActive) {
+        this.broadcastStateSnapshot('HEARTBEAT');
+      }
+    }, 4000);
   }
 
   logEvent(eventType, payload = {}) {
@@ -1150,11 +1318,24 @@ class TelemetryEvalEngine {
   renderCurrentEmojiStep(modal) {
     const q = EMOJI_QUESTIONS_CONFIG[this.currentEmojiStep];
     if (!q) {
-      modal.classList.remove('active');
-      this.calculateConsolidatedKPIs();
-      this.persistState();
-      this.renderAdultDashboardPanel();
-      this.broadcastStateSnapshot('SESSION_EMOJI_COMPLETED');
+      modal.innerHTML = `
+        <div class="emoji-child-card" data-eval-ui="true" style="text-align: center; padding: 28px 20px;">
+          <div id="emojiAvaMountFinal" class="emoji-ava-mount ava-container" style="margin: 0 auto 12px;" aria-hidden="true"></div>
+          <div style="font-size: 3.5rem; line-height: 1; margin-bottom: 8px;">⭐</div>
+          <h2 style="font-family: var(--font-display, 'Quicksand', sans-serif); color: #1B5E20; font-size: 1.5rem; margin-bottom: 6px;">¡Muchas Gracias!</h2>
+          <p style="font-size: 1.05rem; color: #334155; font-weight: 600;">¡Ganaste una estrella gigante por jugar con Ava!</p>
+        </div>
+      `;
+      if (window.avaEngine && typeof window.avaEngine.mount === 'function') {
+        window.avaEngine.mount('#emojiAvaMountFinal', { size: 80 });
+      }
+      setTimeout(() => {
+        modal.classList.remove('active');
+        this.calculateConsolidatedKPIs();
+        this.persistState();
+        this.renderAdultDashboardPanel();
+        this.broadcastStateSnapshot('SESSION_EMOJI_COMPLETED');
+      }, 2600);
       return;
     }
 
@@ -1403,12 +1584,28 @@ class TelemetryEvalEngine {
       </div>
     `;
 
-    // Eventos de cabecera y pestañas
-    document.getElementById('btnCloseEvalSuite').addEventListener('click', () => {
+    // Eventos de cabecera y pestañas (Theo Mandel Regla 1: Control del Usuario y salidas limpias)
+    const closeSuiteModal = () => {
       modal.classList.remove('active');
       this.persistState();
       this.renderAdultDashboardPanel();
-    });
+      document.removeEventListener('keydown', handleEscSuite);
+    };
+
+    const handleEscSuite = (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeSuiteModal();
+      }
+    };
+    document.addEventListener('keydown', handleEscSuite);
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        closeSuiteModal();
+      }
+    };
+
+    document.getElementById('btnCloseEvalSuite').addEventListener('click', closeSuiteModal);
 
     modal.querySelectorAll('.eval-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1694,7 +1891,12 @@ class TelemetryEvalEngine {
         Instrumentos estandarizados <strong>PSSUQ</strong> (escala 1 a 7, meta global ≥ 6.0 y Calidad de Interfaz ≥ 6.25; <em>Saeedi et al., 2024</em>) y <strong>Escala MARS</strong> (escala 1 a 5, meta ≥ 4.20; <em>Furlong et al., 2018</em>).
       </div>
 
-      <h3 class="eval-subtitle-block">A. Cuestionario PSSUQ (1 = Totalmente en desacuerdo • 7 = Totalmente de acuerdo)</h3>
+      <h3 class="eval-subtitle-block">A. Cuestionario PSSUQ (Post-Study System Usability Questionnaire)</h3>
+      <div class="eval-likert-anchors-legend" style="display: flex; justify-content: space-between; align-items: center; background: #F1F8E9; border: 1px solid #C8E6C9; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: #2E7D32; margin-bottom: 10px;">
+        <span>1 = Totalmente en desacuerdo</span>
+        <span>4 = Neutral / Aceptable</span>
+        <span>7 = Totalmente de acuerdo</span>
+      </div>
       <div class="eval-likert-list">
         ${this.pssuqItems.map((item, idx) => `
           <div class="eval-likert-row">

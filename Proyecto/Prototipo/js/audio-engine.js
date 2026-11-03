@@ -177,6 +177,12 @@ class PhonoAudioEngine {
       "bota": basePath + "estimulos/bota.mp3",
       "dedo": basePath + "estimulos/dedo.mp3",
       "foca": basePath + "estimulos/foca.mp3",
+      // 11. Cuestionario Infantil de Cierre con Emojis (Actividad 10 - Micro-SCED)
+      "¡qué lindo jugamos hoy! dime amiguito: ¿te gustaron los dibujos del bosque y de la abejita ava? toca una carita.": basePath + "consignas/emoji_q1_visual.mp3",
+      "¿y cómo te sentiste hablando por el botón verde grande? toca la carita que sientes.": basePath + "consignas/emoji_q2_emocional.mp3",
+      "última preguntita: ¿quieres volver a jugar otro día con los vagones de ava?": basePath + "consignas/emoji_q3_jugar.mp3",
+      "¡muchas gracias por jugar conmigo en el bosque sonoro! ¡ganaste una estrella gigante!": basePath + "consignas/emoji_cierre_estrella.mp3",
+
       "cama": basePath + "estimulos/cama.mp3",
       "pera": basePath + "estimulos/pera.mp3",
       "perro": basePath + "estimulos/perro.mp3",
@@ -235,7 +241,21 @@ class PhonoAudioEngine {
       return 'assets/audio/consignas/praxia_p.mp3';
     }
 
-    // 2. Búsqueda difusa para consignas que contengan la frase clave (mínimo 6 caracteres)
+    // 2. Detección semántica para cuestionario infantil con emojis de Ava (Actividad 10)
+    if (clean.includes('te gustaron los dibujos del bosque') || clean.includes('dibujos del bosque y de la abejita ava')) {
+      return 'assets/audio/consignas/emoji_q1_visual.mp3';
+    }
+    if (clean.includes('como te sentiste hablando por el boton') || clean.includes('boton verde grande')) {
+      return 'assets/audio/consignas/emoji_q2_emocional.mp3';
+    }
+    if (clean.includes('quieres volver a jugar otro dia') || clean.includes('vagones de ava')) {
+      return 'assets/audio/consignas/emoji_q3_jugar.mp3';
+    }
+    if (clean.includes('muchas gracias por jugar conmigo en el bosque sonoro') || clean.includes('ganaste una estrella gigante')) {
+      return 'assets/audio/consignas/emoji_cierre_estrella.mp3';
+    }
+
+    // 3. Búsqueda difusa para consignas que contengan la frase clave (mínimo 6 caracteres)
     for (const [key, path] of Object.entries(this.normalizedSoundbank)) {
       if (key.length >= 6 && (clean.includes(key) || key.includes(clean))) {
         return path;

@@ -3,30 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
-  <meta name="theme-color" content="#0F172A" />
-  <title>Bosque Sonoro • Consola Remota del Evaluador (Micro-SCED)</title>
+  <meta name="theme-color" content="#1B5E20" />
+  <title>Bosque Sonoro • Consola del Evaluador Micro-SCED</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
   <style>
+    /* ==========================================================================
+       CONSOLA DEL EVALUADOR • DESIGN SYSTEM BASADO EN THEO MANDEL & ISO 9241
+       Regla 1: Colocar al Usuario en Control (Atajos, Confirmaciones, Escape)
+       Regla 2: Reducir Carga de Memoria (Reconocimiento > Recuerdo, Anclajes Likert)
+       Regla 3: Hacer la Interfaz Consistente (Tokens Bosque Sonoro, Código Cromático PSF)
+       ========================================================================== */
     :root {
-      --bg-app: #0F172A;
-      --bg-surface: #1E293B;
+      /* Tokens Cromáticos Canónicos (Actividad 7 & 10) */
+      --color-primary-forest: #1B5E20;
+      --color-primary-medium: #2E7D32;
+      --color-primary-light: #E8F5E9;
+      --color-accent-amber: #F59E0B;
+      --color-accent-amber-light: #FFFBEB;
+      --color-accent-amber-border: #FCD34D;
+      --color-accent-amber-dark: #92400E;
+
+      /* Código Semántico de Procesos de Simplificación Fonológica (PSF / TEPROSIF-R) */
+      --psf-ok-bg: #ECFDF5;
+      --psf-ok-border: #6EE7B7;
+      --psf-ok-text: #065F46;
+      --psf-ok-glow: rgba(16, 185, 129, 0.25);
+
+      --psf-omision-bg: #FEF2F2;
+      --psf-omision-border: #FCA5A5;
+      --psf-omision-text: #991B1B;
+      --psf-omision-glow: rgba(239, 68, 68, 0.22);
+
+      --psf-sustitucion-bg: #FFFBEB;
+      --psf-sustitucion-border: #FDE68A;
+      --psf-sustitucion-text: #B45309;
+      --psf-sustitucion-glow: rgba(245, 158, 11, 0.25);
+
+      --psf-distorsion-bg: #F5F3FF;
+      --psf-distorsion-border: #DDD6FE;
+      --psf-distorsion-text: #5B21B6;
+      --psf-distorsion-glow: rgba(139, 92, 246, 0.25);
+
+      /* Superficies Neutras y Tipografía */
+      --bg-dark: #0F172A;
+      --bg-surface-dark: #1E293B;
+      --bg-body: #F8FAFC;
       --bg-card: #FFFFFF;
+      --border-card: #E2E8F0;
+      --border-card-hover: #CBD5E1;
       --text-main: #0F172A;
       --text-muted: #475569;
-      --border-light: #E2E8F0;
-      --primary-blue: #1E3A8A;
-      --accent-blue: #2563EB;
-      --forest-green: #166534;
-      --emerald: #10B981;
-      --amber: #F59E0B;
-      --purple: #7C3AED;
-      --danger: #EF4444;
-      --radius-lg: 16px;
+      --text-subtle: #64748B;
+
+      --radius-lg: 18px;
       --radius-md: 12px;
+      --radius-sm: 8px;
       --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+      --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 10px 28px rgba(15, 23, 42, 0.12);
+
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-display: 'Quicksand', 'Inter', sans-serif;
     }
 
     *, *::before, *::after {
@@ -38,155 +79,196 @@
 
     body {
       font-family: var(--font-sans);
-      background: #F1F5F9;
+      background-color: var(--bg-body);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      line-height: 1.45;
     }
 
     [hidden] {
       display: none !important;
     }
 
-    /* Header Superior Oscuro de Telemetría Remota */
-    .remote-header {
-      background: var(--bg-app);
+    /* Enfoque accesible consistente (WCAG 2.2 SC 2.4.7 Focus Visible) */
+    button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
+      outline: 2.5px solid #2563EB;
+      outline-offset: 2px;
+    }
+
+    /* ==========================================================================
+       CABECERA SUPERIOR (VISIBILIDAD DEL ESTADO DEL SISTEMA - NIELSEN H1)
+       ========================================================================== */
+    .eval-header {
+      background: var(--bg-dark);
       color: #FFFFFF;
-      padding: 12px 16px;
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.25);
+      border-bottom: 2px solid #1E293B;
+      box-shadow: var(--shadow-md);
     }
 
-    .remote-header-top {
-      max-width: 1040px;
+    .eval-header-top {
+      max-width: 1180px;
       margin: 0 auto;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
     }
 
-    .brand-block {
+    .eval-brand-box {
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .brand-icon {
-      width: 38px;
-      height: 38px;
+    .eval-brand-avatar {
+      width: 40px;
+      height: 40px;
       border-radius: 10px;
-      background: linear-gradient(135deg, #2E7D32, #10B981);
+      background: linear-gradient(135deg, var(--color-primary-forest), #10B981);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
-      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+      font-size: 1.35rem;
+      border: 2px solid var(--color-accent-amber);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
     }
 
-    .brand-title {
-      font-size: 0.98rem;
+    .eval-brand-text h1 {
+      font-size: 1.02rem;
       font-weight: 800;
-      letter-spacing: -0.01em;
-    }
-
-    .brand-sub {
-      font-size: 0.72rem;
-      color: #94A3B8;
-      display: block;
-    }
-
-    .room-controls {
+      letter-spacing: -0.2px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+    }
+
+    .eval-brand-text p {
+      font-size: 0.72rem;
+      color: #94A3B8;
+    }
+
+    .eval-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
-    .room-input-group {
+    /* Conexión de Sala */
+    .room-selector-pill {
       display: inline-flex;
       align-items: center;
-      background: var(--bg-surface);
-      border: 1px solid #334155;
+      background: var(--bg-surface-dark);
+      border: 1.5px solid #334155;
       border-radius: var(--radius-full);
       padding: 3px 6px 3px 12px;
       gap: 6px;
     }
 
-    .room-input-group label {
+    .room-selector-pill label {
       font-size: 0.72rem;
       font-weight: 700;
       color: #94A3B8;
       text-transform: uppercase;
     }
 
-    .room-input {
+    .room-selector-pill input {
       background: transparent;
       border: none;
       color: #F8FAFC;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.85rem;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 0.88rem;
       font-weight: 800;
       width: 78px;
       text-transform: uppercase;
     }
 
-    .room-input:focus {
+    .room-selector-pill input:focus {
       outline: none;
     }
 
-    .btn-sync-now {
-      background: var(--accent-blue);
+    .btn-room-sync {
+      background: #2563EB;
       color: #FFFFFF;
       border: none;
+      border-radius: var(--radius-full);
+      padding: 5px 12px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 150ms ease;
+    }
+
+    .btn-room-sync:hover {
+      background: #1D4ED8;
+    }
+
+    /* Estado de Enlace en Tiempo Real */
+    .connection-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: var(--radius-full);
+      background: rgba(16, 185, 129, 0.16);
+      color: #6EE7B7;
+      border: 1.5px solid rgba(16, 185, 129, 0.4);
+      transition: all 200ms ease;
+    }
+
+    .connection-status-badge.waiting {
+      background: rgba(245, 158, 11, 0.16);
+      color: #FCD34D;
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    .live-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulseGlow 1.6s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.55; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.25); }
+    }
+
+    /* Botón de Ayuda con Atajos de Teclado */
+    .btn-keyboard-shortcuts-pill {
+      background: #334155;
+      color: #F8FAFC;
+      border: 1px solid #475569;
       border-radius: var(--radius-full);
       padding: 5px 11px;
       font-size: 0.74rem;
       font-weight: 700;
       cursor: pointer;
-    }
-
-    .conn-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 5px 11px;
-      border-radius: var(--radius-full);
-      background: rgba(16, 185, 129, 0.18);
-      color: #6EE7B7;
-      border: 1px solid rgba(16, 185, 129, 0.4);
+      gap: 5px;
+      transition: background 150ms ease;
     }
 
-    .conn-pill.waiting {
-      background: rgba(245, 158, 11, 0.18);
-      color: #FCD34D;
-      border-color: rgba(245, 158, 11, 0.4);
+    .btn-keyboard-shortcuts-pill:hover {
+      background: #475569;
     }
 
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: currentColor;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.55; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1.25); }
-    }
-
-    /* Barra de Estado de Sesión en Vivo */
-    .session-status-strip {
-      max-width: 1040px;
-      margin: 10px auto 0;
-      padding-top: 9px;
+    /* Franja de Trazabilidad Activa */
+    .session-telemetry-strip {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 8px 16px 10px;
       border-top: 1px solid #1E293B;
       display: flex;
       align-items: center;
@@ -197,223 +279,307 @@
       color: #CBD5E1;
     }
 
-    .status-tag-active {
+    .session-telemetry-strip strong {
+      color: #FFFFFF;
+    }
+
+    .badge-task-active {
       color: #FDE68A;
       font-weight: 700;
+      background: rgba(245, 158, 11, 0.16);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
     }
 
-    /* Pestañas de Navegación del Evaluador */
-    .remote-tabs-bar {
+    /* ==========================================================================
+       BARRA DE NAVEGACIÓN ENTRE INSTRUMENTOS (PESTAÑAS CON ACELERADORES)
+       ========================================================================== */
+    .nav-tabs-bar {
       background: #FFFFFF;
-      border-bottom: 1.5px solid var(--border-light);
+      border-bottom: 2px solid var(--border-card);
       position: sticky;
-      top: 86px;
+      top: 88px;
       z-index: 90;
+      box-shadow: var(--shadow-sm);
     }
 
-    .remote-tabs-inner {
-      max-width: 1040px;
+    .nav-tabs-inner {
+      max-width: 1180px;
       margin: 0 auto;
       display: flex;
       overflow-x: auto;
-      gap: 4px;
-      padding: 8px 12px;
+      gap: 6px;
+      padding: 8px 16px;
     }
 
     .rtab-btn {
       flex: 1 0 auto;
       font-family: var(--font-sans);
-      font-size: 0.81rem;
+      font-size: 0.82rem;
       font-weight: 700;
       color: var(--text-muted);
       background: #F8FAFC;
-      border: 1.5px solid var(--border-light);
-      border-radius: 10px;
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--radius-md);
       padding: 9px 14px;
       cursor: pointer;
-      white-space: nowrap;
-      transition: all 140ms ease;
-    }
-
-    .rtab-btn.active {
-      background: var(--primary-blue);
-      color: #FFFFFF;
-      border-color: var(--primary-blue);
-      box-shadow: 0 3px 10px rgba(30, 58, 138, 0.22);
-    }
-
-    /* Contenedor Principal */
-    .remote-main {
-      flex: 1;
-      max-width: 1040px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 16px 14px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .rcard {
-      background: var(--bg-card);
-      border: 1.5px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: 16px 18px;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
-    }
-
-    .rcard-highlight {
-      border: 2px solid #3B82F6;
-      background: linear-gradient(180deg, #EFF6FF 0%, #FFFFFF 48%);
-    }
-
-    .rcard-header {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 150ms ease;
     }
 
-    .rcard-eyebrow {
-      font-size: 0.7rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--accent-blue);
-      background: #DBEAFE;
-      padding: 3px 9px;
-      border-radius: var(--radius-full);
-    }
-
-    .rcard-title {
-      font-size: 1.05rem;
-      font-weight: 800;
+    .rtab-btn:hover {
+      background: #F1F5F9;
+      border-color: var(--border-card-hover);
       color: var(--text-main);
     }
 
-    /* Panel de Calificación Perceptual PSF con el Pulgar */
-    .phonation-live-banner {
-      background: #0F172A;
+    .rtab-btn.active {
+      background: var(--color-primary-forest);
       color: #FFFFFF;
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 14px;
+      border-color: var(--color-primary-forest);
+      box-shadow: 0 3px 10px rgba(27, 94, 32, 0.28);
+    }
+
+    .rtab-btn .kbd-hint {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.1);
+      color: inherit;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .rtab-btn.active .kbd-hint {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    /* ==========================================================================
+       CONTENEDOR PRINCIPAL Y TARJETAS (JERARQUÍA VISUAL CLARA)
+       ========================================================================== */
+    .eval-main-container {
+      flex: 1;
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 18px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .eval-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 150ms ease, border-color 150ms ease;
+    }
+
+    .eval-card:hover {
+      border-color: var(--border-card-hover);
+      box-shadow: var(--shadow-md);
+    }
+
+    .eval-card-primary {
+      border: 2px solid #93C5FD;
+      background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 40%);
+    }
+
+    .eval-card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
-    .phonation-word-big {
-      font-size: 1.4rem;
+    .eval-pill-source {
+      font-size: 0.7rem;
       font-weight: 800;
-      color: #FDE68A;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-primary-forest);
+      background: var(--color-primary-light);
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      display: inline-block;
+      margin-bottom: 4px;
     }
 
-    .phonation-meta-sub {
-      font-size: 0.8rem;
+    .eval-card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ==========================================================================
+       PANEL DE CALIFICACIÓN PERCEPTUAL CON EL PULGAR (REGLA 1 & 3: CONTROL & CONSISTENCIA)
+       ========================================================================== */
+    .phonation-spotlight-box {
+      background: var(--bg-dark);
+      color: #FFFFFF;
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .phonation-word-hero {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #FDE68A;
+      letter-spacing: -0.3px;
+    }
+
+    .phonation-meta-detail {
+      font-size: 0.82rem;
       color: #CBD5E1;
       margin-top: 2px;
     }
 
-    .asr-verdict-pill {
-      padding: 6px 12px;
+    .asr-judgment-tag {
+      padding: 6px 14px;
       border-radius: var(--radius-full);
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
 
-    .asr-verdict-pill.ok {
+    .asr-judgment-tag.approved {
       background: rgba(16, 185, 129, 0.22);
       color: #6EE7B7;
-      border: 1px solid #10B981;
+      border: 1.5px solid #10B981;
     }
 
-    .asr-verdict-pill.retry {
+    .asr-judgment-tag.retry {
       background: rgba(168, 85, 247, 0.25);
       color: #E9D5FF;
-      border: 1px solid #C084FC;
+      border: 1.5px solid #C084FC;
     }
 
-    .psf-thumb-grid {
+    /* Grilla de Botones Gigantes de Calificación PSF */
+    .psf-interactive-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 10px;
     }
 
-    .psf-giant-btn {
-      min-height: 62px;
+    .psf-choice-card {
+      min-height: 68px;
       padding: 12px 14px;
-      border-radius: 14px;
-      border: 2px solid var(--border-light);
-      background: #F8FAFC;
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      font-size: 0.92rem;
-      font-weight: 800;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--border-card);
+      background: #FFFFFF;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       justify-content: center;
       gap: 3px;
-      transition: all 140ms ease;
+      position: relative;
+      transition: all 140ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .psf-giant-btn small {
-      font-size: 0.73rem;
+    .psf-choice-card .psf-key-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.06);
+      color: var(--text-muted);
+      border: 1px solid rgba(0,0,0,0.12);
+    }
+
+    .psf-choice-card .psf-title {
+      font-size: 0.96rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .psf-choice-card .psf-desc {
+      font-size: 0.74rem;
       font-weight: 500;
-      opacity: 0.85;
+      color: var(--text-muted);
     }
 
-    .psf-giant-btn.btn-ok {
-      background: #ECFDF5;
-      border-color: #6EE7B7;
-      color: #065F46;
+    /* Variantes Cromáticas Oficiales PSF */
+    .psf-choice-card.choice-correct {
+      background: var(--psf-ok-bg);
+      border-color: var(--psf-ok-border);
+      color: var(--psf-ok-text);
     }
 
-    .psf-giant-btn.btn-o {
-      background: #FFFBEB;
-      border-color: #FCD34D;
-      color: #92400E;
+    .psf-choice-card.choice-o {
+      background: var(--psf-omision-bg);
+      border-color: var(--psf-omision-border);
+      color: var(--psf-omision-text);
     }
 
-    .psf-giant-btn.btn-s {
-      background: #EFF6FF;
-      border-color: #93C5FD;
-      color: #1E3A8A;
+    .psf-choice-card.choice-s {
+      background: var(--psf-sustitucion-bg);
+      border-color: var(--psf-sustitucion-border);
+      color: var(--psf-sustitucion-text);
     }
 
-    .psf-giant-btn.btn-d {
-      background: #F5F3FF;
-      border-color: #C4B5FD;
-      color: #5B21B6;
+    .psf-choice-card.choice-d {
+      background: var(--psf-distorsion-bg);
+      border-color: var(--psf-distorsion-border);
+      color: var(--psf-distorsion-text);
     }
 
-    .psf-giant-btn.selected {
+    .psf-choice-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+
+    .psf-choice-card.selected {
       transform: scale(1.02);
-      box-shadow: 0 0 0 3px var(--text-main);
+      box-shadow: 0 0 0 3px var(--text-main), 0 8px 20px rgba(0,0,0,0.12);
+      border-width: 2.5px;
     }
 
-    .psf-giant-btn:active {
+    .psf-choice-card:active {
       transform: scale(0.97);
     }
 
-    /* Botones de Control Remoto sobre la Tablet del Niño */
-    .remote-actions-grid {
+    /* ==========================================================================
+       MANDO A DISTANCIA Y ACCIONES REMOTAS SEGURAS (MANDEL 1: PREVENCIÓN DE ERRORES)
+       ========================================================================== */
+    .remote-actions-flex {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
     }
 
-    .raction-btn {
+    .btn-action-remote {
       min-height: 52px;
-      padding: 11px 15px;
-      border-radius: 12px;
-      border: 1.5px solid transparent;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
       font-family: var(--font-sans);
       font-size: 0.86rem;
       font-weight: 800;
@@ -422,107 +588,148 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      border: 1.5px solid transparent;
       transition: all 140ms ease;
     }
 
-    .raction-btn:active {
+    .btn-action-remote:active {
       transform: scale(0.97);
     }
 
-    .raction-amber {
+    .btn-action-amber {
+      background: var(--color-accent-amber-light);
+      color: var(--color-accent-amber-dark);
+      border-color: var(--color-accent-amber-border);
+    }
+
+    .btn-action-amber:hover {
       background: #FEF3C7;
-      color: #92400E;
       border-color: #F59E0B;
     }
 
-    .raction-emerald {
+    .btn-action-emerald {
       background: #10B981;
       color: #FFFFFF;
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.28);
     }
 
-    .raction-blue {
-      background: var(--primary-blue);
-      color: #FFFFFF;
+    .btn-action-emerald:hover {
+      background: #059669;
     }
 
-    .raction-outline {
+    .btn-action-outline {
       background: #F8FAFC;
       color: #1E293B;
-      border-color: #CBD5E1;
+      border-color: var(--border-card);
     }
 
-    /* KPIs en Vivo */
-    .live-kpi-grid {
+    .btn-action-outline:hover {
+      background: #F1F5F9;
+      border-color: var(--border-card-hover);
+    }
+
+    /* ==========================================================================
+       KPIS Y TABLAS DE TELEMETRÍA (DIVULGACIÓN PROGRESIVA & RECONOCIMIENTO)
+       ========================================================================== */
+    .kpi-metric-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 10px;
     }
 
-    .mini-kpi-box {
+    .kpi-tile {
       background: #F8FAFC;
-      border: 1.5px solid var(--border-light);
-      border-radius: 12px;
-      padding: 10px 12px;
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
     }
 
-    .mini-kpi-label {
+    .kpi-tile-label {
       font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--text-subtle);
+      letter-spacing: 0.03em;
     }
 
-    .mini-kpi-val {
-      font-size: 1.2rem;
+    .kpi-tile-value {
+      font-size: 1.25rem;
       font-weight: 800;
-      color: var(--primary-blue);
+      color: var(--color-primary-forest);
     }
 
-    .mini-kpi-sub {
+    .kpi-tile-sub {
       font-size: 0.72rem;
       color: var(--text-muted);
     }
 
-    /* Tablas y Controles de Escalas */
-    .rtable-wrap {
-      overflow-x: auto;
+    /* Tablas con Filtros Progresivos */
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
 
-    .rtable {
+    .filter-chip {
+      background: #F8FAFC;
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--radius-full);
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+
+    .filter-chip:hover {
+      background: #F1F5F9;
+      color: var(--text-main);
+    }
+
+    .filter-chip.active {
+      background: var(--color-primary-forest);
+      color: #FFFFFF;
+      border-color: var(--color-primary-forest);
+    }
+
+    .table-container-responsive {
+      overflow-x: auto;
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--radius-md);
+    }
+
+    .data-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.82rem;
     }
 
-    .rtable th, .rtable td {
-      padding: 9px 11px;
+    .data-table th, .data-table td {
+      padding: 10px 12px;
       text-align: left;
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-card);
     }
 
-    .rtable th {
+    .data-table th {
       background: #F8FAFC;
       font-size: 0.74rem;
+      font-weight: 700;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--text-subtle);
     }
 
-    .rselect, .rinput {
-      font-family: var(--font-sans);
-      font-size: 0.82rem;
-      font-weight: 600;
-      padding: 6px 10px;
-      border-radius: 8px;
-      border: 1.5px solid #CBD5E1;
-      background: #FFFFFF;
-      color: var(--text-main);
+    .data-table tr:last-child td {
+      border-bottom: none;
     }
 
-    .badge {
+    /* Badges Semánticos */
+    .semantic-badge {
       display: inline-block;
       padding: 3px 9px;
       border-radius: var(--radius-full);
@@ -533,125 +740,320 @@
     .badge-green { background: #D1FAE5; color: #065F46; }
     .badge-yellow { background: #FEF3C7; color: #92400E; }
     .badge-purple { background: #EDE9FE; color: #5B21B6; }
+    .badge-red { background: #FEE2E2; color: #991B1B; }
 
-    .likert-row {
+    /* Escalas Likert con Anclajes Descriptivos (Regla 2: Reconocimiento > Recuerdo) */
+    .likert-anchor-legend {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px;
-      background: #F8FAFC;
-      border: 1px solid var(--border-light);
-      border-radius: 12px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-subtle);
+      margin-bottom: 6px;
+      padding: 0 4px;
     }
 
-    .likert-btns {
+    .likert-question-card {
+      background: #F8FAFC;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .likert-question-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .likert-scale-buttons {
       display: flex;
       gap: 4px;
+      justify-content: space-between;
     }
 
-    .lbtn {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
+    .btn-likert-choice {
+      flex: 1;
+      min-height: 38px;
+      border-radius: var(--radius-sm);
       border: 1.5px solid #CBD5E1;
       background: #FFFFFF;
-      font-weight: 700;
+      font-size: 0.85rem;
+      font-weight: 800;
       cursor: pointer;
+      transition: all 120ms ease;
     }
 
-    .lbtn.active {
-      background: var(--primary-blue);
+    .btn-likert-choice:hover {
+      background: #F1F5F9;
+      border-color: #94A3B8;
+    }
+
+    .btn-likert-choice.active {
+      background: var(--color-primary-forest);
       color: #FFFFFF;
-      border-color: var(--primary-blue);
+      border-color: var(--color-primary-forest);
+      box-shadow: 0 2px 6px rgba(27, 94, 32, 0.3);
     }
 
-    .event-feed {
-      max-height: 170px;
-      overflow-y: auto;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.75rem;
-      background: #0F172A;
-      color: #E2E8F0;
-      border-radius: 10px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .toast-banner {
+    /* Modal de Confirmación Crítica (Regla 1: Prevención de Errores) */
+    .eval-modal-backdrop {
       position: fixed;
-      bottom: 18px;
-      right: 18px;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .eval-dialog-card {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      animation: popInDialog 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popInDialog {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .eval-dialog-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .eval-dialog-body {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .eval-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Toast Flotante Accesible */
+    .eval-toast-alert {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
       background: #065F46;
       color: #FFFFFF;
-      padding: 10px 16px;
+      padding: 11px 18px;
       border-radius: var(--radius-full);
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       font-weight: 700;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      box-shadow: var(--shadow-lg);
       z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
     }
 
-    @media (max-width: 640px) {
-      .psf-thumb-grid {
-        grid-template-columns: 1fr;
-      }
+    /* Drawer de Atajos de Teclado */
+    .shortcuts-help-overlay {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      max-width: 380px;
+      background: #FFFFFF;
+      box-shadow: -6px 0 24px rgba(0,0,0,0.2);
+      z-index: 1010;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: slideLeft 200ms ease;
+    }
+
+    @keyframes slideLeft {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .shortcut-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-card);
+      font-size: 0.82rem;
+    }
+
+    .shortcut-kbd {
+      font-family: ui-monospace, monospace;
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
     }
   </style>
 </head>
 <body>
 
-  <header class="remote-header">
-    <div class="remote-header-top">
-      <div class="brand-block">
-        <div class="brand-icon" aria-hidden="true">🐝</div>
-        <div>
-          <h1 class="brand-title">Consola Remota del Evaluador • Micro-SCED</h1>
-          <span class="brand-sub">Actividad 10 (Equipo G7 - UNMSM) • Cero Intervención en Pantalla del Niño</span>
+  <!-- ========================================================================
+       1. CABECERA PERSISTENTE (VISIBILIDAD DEL SISTEMA - MANDEL 2 & NIELSEN H1)
+       ======================================================================== -->
+  <header class="eval-header" role="banner">
+    <div class="eval-header-top">
+      <div class="eval-brand-box">
+        <div class="eval-brand-avatar" aria-hidden="true">🐝</div>
+        <div class="eval-brand-text">
+          <h1>Bosque Sonoro • Consola del Evaluador</h1>
+          <p>Protocolo Micro-SCED • Evaluación Tripartita Asimétrica (FISI - UNMSM)</p>
         </div>
       </div>
 
-      <div class="room-controls">
-        <div class="room-input-group">
+      <div class="eval-header-controls">
+        <div class="room-selector-pill">
           <label for="inpRemoteRoom">Sala:</label>
-          <input type="text" id="inpRemoteRoom" class="room-input" value="G7-P01" aria-label="Código de sala" />
-          <button type="button" id="btnConnectRoom" class="btn-sync-now">Conectar</button>
+          <input type="text" id="inpRemoteRoom" value="G7-P01" aria-label="Código de sala" title="Código de sala compartida con el dispositivo del niño" />
+          <button type="button" id="btnConnectRoom" class="btn-room-sync">Conectar</button>
         </div>
-        <span id="connStatusPill" class="conn-pill waiting">
-          <span class="live-dot"></span>
+
+        <span id="connStatusPill" class="connection-status-badge waiting" title="Estado de la sincronización en tiempo real">
+          <span class="live-pulse-dot"></span>
           <span id="connStatusText">Sincronizando...</span>
         </span>
+
+        <button type="button" id="btnToggleHelp" class="btn-keyboard-shortcuts-pill" title="Ver atajos de teclado rápidos (Regla 1 de Mandel)">
+          ⌨️ Atajos <span class="shortcut-kbd">?</span>
+        </button>
       </div>
     </div>
 
-    <div class="session-status-strip" id="remoteSessionStrip">
-      <span><strong>Participante:</strong> <span id="lblParticipant">P01 (Mateo, 4 años)</span></span>
-      <span><strong>Tarea en Tablet del Niño:</strong> <span id="lblCurrentTask" class="status-tag-active">Esperando inicio...</span></span>
-      <span><strong>Emojis Niño:</strong> <span id="lblEmojiProgress">Pendiente</span></span>
+    <!-- Franja de Trazabilidad Activa -->
+    <div class="session-telemetry-strip" id="remoteSessionStrip">
+      <span><strong>Participante:</strong> <span id="lblParticipant">P01 (Mateo, 4a • Rotacismo /r/)</span></span>
+      <span><strong>Tarea Infantil en Vivo:</strong> <span id="lblCurrentTask" class="badge-task-active">Esperando inicio...</span></span>
+      <span><strong>Satisfacción Emojis:</strong> <span id="lblEmojiProgress">Pendiente</span></span>
     </div>
   </header>
 
-  <nav class="remote-tabs-bar" role="tablist">
-    <div class="remote-tabs-inner">
-      <button type="button" class="rtab-btn active" data-rtab="live">🎛️ 1. Mando en Vivo &amp; PSF</button>
-      <button type="button" class="rtab-btn" data-rtab="bosch">🗣️ 2. Ficha Bosch &amp; Melgar (<span id="tabCountPhono">0</span>)</button>
-      <button type="button" class="rtab-btn" data-rtab="pssuq">👩‍🏫 3. Mediador: PSSUQ &amp; MARS</button>
-      <button type="button" class="rtab-btn" data-rtab="nielsen">📊 4. Nielsen, 12 KPIs &amp; Exportar</button>
+  <!-- ========================================================================
+       2. NAVEGACIÓN ENTRE INSTRUMENTOS (RECONOCIMIENTO & CONTROL - MANDEL 1 & 2)
+       ======================================================================== -->
+  <nav class="nav-tabs-bar" role="tablist" aria-label="Instrumentos de Evaluación">
+    <div class="nav-tabs-inner">
+      <button type="button" class="rtab-btn active" data-rtab="live" role="tab" aria-selected="true">
+        🎛️ 1. Mando en Vivo &amp; PSF <span class="kbd-hint">Alt+1</span>
+      </button>
+      <button type="button" class="rtab-btn" data-rtab="bosch" role="tab" aria-selected="false">
+        🗣️ 2. Ficha Fonética (<span id="tabCountPhono">0</span>) <span class="kbd-hint">Alt+2</span>
+      </button>
+      <button type="button" class="rtab-btn" data-rtab="pssuq" role="tab" aria-selected="false">
+        👩‍🏫 3. Mediador: PSSUQ &amp; MARS <span class="kbd-hint">Alt+3</span>
+      </button>
+      <button type="button" class="rtab-btn" data-rtab="nielsen" role="tab" aria-selected="false">
+        📊 4. Nielsen, KPIs &amp; Reportes <span class="kbd-hint">Alt+4</span>
+      </button>
     </div>
   </nav>
 
-  <main class="remote-main" id="remoteMainContainer">
-    <!-- Renderizado dinámico por js/remote-evaluator-app.js -->
+  <!-- ========================================================================
+       3. CONTENIDO PRINCIPAL DINÁMICO (RENDERIZADO POR JS)
+       ======================================================================== -->
+  <main class="eval-main-container" id="remoteMainContainer" role="main">
+    <!-- El contenido se inyecta dinámicamente mediante remote-evaluator-app.js -->
   </main>
 
-  <div id="remoteToast" class="toast-banner" hidden>✓ Acción enviada a la tablet del niño</div>
+  <!-- ========================================================================
+       4. COMPONENTES DE CONTROL Y SEGURIDAD (MODALES Y FEEDBACK)
+       ======================================================================== -->
+  <!-- Toast de Notificación Contingente -->
+  <div id="remoteToast" class="eval-toast-alert" hidden role="status" aria-live="polite">
+    ✓ Acción confirmada
+  </div>
+
+  <!-- Modal de Confirmación para Acciones Críticas (Prevención de Errores - Mandel 1.5) -->
+  <div id="confirmActionModal" class="eval-modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle">
+    <div class="eval-dialog-card">
+      <h2 id="confirmDialogTitle" class="eval-dialog-title">⚠️ Confirmar Acción Remota</h2>
+      <p id="confirmDialogBody" class="eval-dialog-body">¿Estás seguro de ejecutar esta acción sobre la pantalla del niño?</p>
+      <div class="eval-dialog-actions">
+        <button type="button" id="btnCancelConfirmAction" class="btn-action-remote btn-action-outline">
+          Cancelar [Esc]
+        </button>
+        <button type="button" id="btnAcceptConfirmAction" class="btn-action-remote btn-action-emerald">
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Lateral de Atajos de Teclado (Regla 1 de Mandel: Aceleradores) -->
+  <div id="keyboardHelpDrawer" class="shortcuts-help-overlay" hidden role="region" aria-label="Atajos de Teclado">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-size: 1rem; font-weight: 800;">⌨️ Atajos de Teclado Rápidos</h3>
+      <button type="button" id="btnCloseHelpDrawer" class="btn-room-sync" style="padding: 3px 8px; background: #64748B;">✕</button>
+    </div>
+    <p style="font-size: 0.78rem; color: var(--text-muted);">
+      Diseñado para que califiques con una mano mientras observas al niño sin desviar la mirada al ratón:
+    </p>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <div class="shortcut-row">
+        <span>Calificar: <strong>✔ Correcto</strong></span>
+        <span class="shortcut-kbd">1</span>
+      </div>
+      <div class="shortcut-row">
+        <span>Calificar: <strong>O: Omisión</strong></span>
+        <span class="shortcut-kbd">2</span>
+      </div>
+      <div class="shortcut-row">
+        <span>Calificar: <strong>S: Sustitución</strong></span>
+        <span class="shortcut-kbd">3</span>
+      </div>
+      <div class="shortcut-row">
+        <span>Calificar: <strong>D: Distorsión</strong></span>
+        <span class="shortcut-kbd">4</span>
+      </div>
+      <div class="shortcut-row">
+        <span>Registrar: <strong>+1 Apoyo Verbal (CA)</strong></span>
+        <span class="shortcut-kbd">A</span>
+      </div>
+      <div class="shortcut-row">
+        <span>Emisión anterior / siguiente</span>
+        <span class="shortcut-kbd">← / →</span>
+      </div>
+      <div class="shortcut-row">
+        <span>Cambiar a Pestañas 1, 2, 3, 4</span>
+        <span class="shortcut-kbd">Alt + 1..4</span>
+      </div>
+      <div class="shortcut-row">
+        <span>Cerrar modal / ayuda</span>
+        <span class="shortcut-kbd">Esc</span>
+      </div>
+    </div>
+  </div>
 
   <script src="js/telemetry-eval-engine.js"></script>
   <script src="js/remote-evaluator-app.js"></script>
 </body>
 </html>
-

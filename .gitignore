@@ -10,6 +10,11 @@ yarn-error.log*
 Thumbs.db
 *.tmp
 *.log
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
 
 # Obsidian y extensiones internas
 .obsidian/workspace*

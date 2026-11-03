@@ -183,6 +183,12 @@ class PhonoAudioEngine {
       "¡atento amiguito! abre tu boquita, sube la parte de atrás de tu lengua y suelta el aire de golpe como en casa. ¡inténtalo tú solo!": basePath + "consignas/praxia_k.mp3",
       "¡juguemos con los labios! junta tus dos labios bien apretaditos, guarda un poquito de aire y suéltalos rápido como en pato. ¡muy bien!": basePath + "consignas/praxia_p.mp3",
 
+      // 11. Cuestionario Infantil de Cierre con Emojis (Actividad 10 - Micro-SCED)
+      "¡qué lindo jugamos hoy! dime amiguito: ¿te gustaron los dibujos del bosque y de la abejita ava? toca una carita.": basePath + "consignas/emoji_q1_visual.mp3",
+      "¿y cómo te sentiste hablando por el botón verde grande? toca la carita que sientes.": basePath + "consignas/emoji_q2_emocional.mp3",
+      "última preguntita: ¿quieres volver a jugar otro día con los vagones de ava?": basePath + "consignas/emoji_q3_jugar.mp3",
+      "¡muchas gracias por jugar conmigo en el bosque sonoro! ¡ganaste una estrella gigante!": basePath + "consignas/emoji_cierre_estrella.mp3",
+
       // 12. Estímulos Bosch & Melgar y Juegos
       "guitarra": basePath + "estimulos/guitarra.mp3",
       "ratón": basePath + "estimulos/raton.mp3",
@@ -260,7 +266,21 @@ class PhonoAudioEngine {
       return 'assets/audio/consignas/praxia_p.mp3';
     }
 
-    // 2. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
+    // 2. Detección semántica para cuestionario infantil con emojis de Ava (Actividad 10)
+    if (clean.includes('te gustaron los dibujos del bosque') || clean.includes('dibujos del bosque y de la abejita ava')) {
+      return 'assets/audio/consignas/emoji_q1_visual.mp3';
+    }
+    if (clean.includes('como te sentiste hablando por el boton') || clean.includes('boton verde grande')) {
+      return 'assets/audio/consignas/emoji_q2_emocional.mp3';
+    }
+    if (clean.includes('quieres volver a jugar otro dia') || clean.includes('vagones de ava')) {
+      return 'assets/audio/consignas/emoji_q3_jugar.mp3';
+    }
+    if (clean.includes('muchas gracias por jugar conmigo en el bosque sonoro') || clean.includes('ganaste una estrella gigante')) {
+      return 'assets/audio/consignas/emoji_cierre_estrella.mp3';
+    }
+
+    // 3. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
     for (const [key, path] of Object.entries(this.normalizedSoundbank)) {
       if (key.includes(' ') && key.length >= 14 && (clean.includes(key) || (clean.length >= 14 && key.includes(clean)))) {
         return path;
