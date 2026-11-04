@@ -178,14 +178,16 @@ flowchart LR
 1. **Abrir la aplicación del niño:**  
    - Si usas el **APK instalado en el celular/tablet:** Abre la aplicación *Bosque Sonoro*.
    - Si usas el **navegador web:** Ingresa a [http://localhost:5173](http://localhost:5173) (o la IP LAN del servidor).
-2. **Acceso a la configuración de sesión (solo antes de empezar la prueba):**
+2. **Acceso a la configuración de sesión y vinculación IP (antes de empezar la prueba):**
+   - **Acceso rápido directo (1 toque):** Toca el botón de matraz/laboratorio (`🧪`) ubicado en la barra de controles superior.
    - **En PC / Laptop:** Presiona el atajo `Ctrl + Alt + E`.
-   - **En Tablet / Celular táctil:** Realiza un **triple toque rápido** sobre el medallón de Ava en la esquina superior izquierda (`#headerAppLogo`).
-   - *(Alternativa)*: Toca el candado de *MathGate* en la esquina superior derecha, resuelve la operación matemática y ve a la pestaña **`Modo Evaluación (Act. 10)`**.
+   - **En Tablet / Celular táctil:** Realiza un **triple toque** sobre el medallón de Ava en la esquina superior izquierda (`#headerAppLogo`).
+   - **Alternativa desde el Portal Adulto:** Toca el candado de *MathGate* en la esquina superior derecha, resuelve la operación matemática y ve a la pestaña **`Modo Evaluación (Act. 10)`**.
 3. **Vincular el APK con la Laptop del Evaluador (si juegas desde el APK móvil):**
-   - Asegúrate de que el celular/tablet y la laptop estén conectados a la **misma red Wi-Fi** (puede ser la zona portátil del celular).
-   - En el campo **"💻 Vincular con Laptop del Evaluador"**, escribe la IP de la laptop (ejemplo: `10.44.87.221` o `10.44.87.221:5173`).
-   - Pulsa el botón **`⚡ Enlazar`**. Verás el estado en verde: *`🟢 Conectado con Laptop`*.
+   - Asegúrate de que el celular/tablet y la laptop estén conectados a la **misma red Wi-Fi** (o a la zona portátil/hotspot del celular).
+   - En el panel que se abre (o dentro de la pestaña *Modo Evaluación* de MathGate), escribe la IP LAN de la laptop en el campo **"💻 Vincular con Laptop del Evaluador (IP LAN)"** (ejemplo: `192.168.1.15` o `10.44.87.221`).
+   - Pulsa el botón **`⚡ Enlazar Laptop`**. Verás la confirmación inmediata en verde: *`🟢 ¡Enlazado exitosamente con la laptop!`*.
+   - *(Nota: Si dejas el campo vacío o sin IP, el juego opera en modo local independiente sin sincronización SSE).*
 4. **Confirmar parámetros de prueba e iniciar:**
    - Selecciona el chip del participante (`P01` a `P04`, anónimo bajo Ley N.° 29733), la edad (`3–6 años`) y el modo visual (*Estándar Biofílico* o *Modo CVI*).
    - Haz clic en **`🚀 Iniciar Prueba Infantil (Pantalla Limpia Zero-HUD)`**.

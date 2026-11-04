@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "cap:sync": "cap sync",
     "cap:copy": "cap copy",
-    "cap:open:android": "cap open android"
+    "cap:open:android": "cap open android",
+    "postinstall": "node scripts/patch-speech-plugin.js"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.0",

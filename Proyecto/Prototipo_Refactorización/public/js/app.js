@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     headerScreenTag: document.getElementById('headerScreenTag'),
     btnBackMenu: document.getElementById('btnBackMenu'),
     btnSoundToggle: document.getElementById('btnSoundToggle'),
+    btnHeaderEvalLink: document.getElementById('btnHeaderEvalLink'),
     btnParentalGate: document.getElementById('btnParentalGate'),
     dosingFill: document.getElementById('dosingFill'),
     dosingLabel: document.getElementById('dosingLabel'),
@@ -197,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.telemetryEval.startTask(screenId, tagText || screenId);
     }
   }
+  window.showScreen = showScreen;
 
   function updateStars(amount = 0) {
     state.effortStars = Math.max(0, state.effortStars + amount);
@@ -388,8 +390,16 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.btnMic.classList.add('state-processing');
       elements.micCaption.textContent = "Procesando...";
 
-      const { blob, url } = await audioEngine.stopRecording();
-      elements.btnMic.classList.remove('state-processing');
+      let recorded = { blob: null, url: null };
+      try {
+        recorded = await audioEngine.stopRecording();
+      } catch (err) {
+        console.warn('[App] Error seguro capturado en stopRecording:', err);
+      } finally {
+        elements.btnMic.classList.remove('state-processing');
+      }
+
+      const { blob, url } = recorded || {};
 
       // 1. SELF-PLAYBACK CONTINGENTE (< 300 ms - Peña et al. 2024 / RNF-DES-001)
       elements.btnSelfPlayback.disabled = false;
@@ -1313,6 +1323,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.telemetryEval) {
       window.telemetryEval.recordMathGateOpen();
     }
+  }
+
+  if (elements.btnHeaderEvalLink) {
+    elements.btnHeaderEvalLink.addEventListener('click', () => {
+      if (!canTouch()) return;
+      if (window.telemetryEval) {
+        window.telemetryEval.openConfigModal();
+      }
+    });
   }
 
   elements.btnParentalGate.addEventListener('click', () => {

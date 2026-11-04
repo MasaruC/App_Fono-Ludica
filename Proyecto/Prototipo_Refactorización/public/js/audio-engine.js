@@ -1000,10 +1000,13 @@ class PhonoAudioEngine {
   async stopRecording() {
     this.isRecording = false;
 
-    // Detener Speech Service y consolidar transcripción
+    // Detener Speech Service y consolidar transcripción con límite de tiempo seguro
     if (this.speechService) {
       try {
-        await this.speechService.stopListening();
+        await Promise.race([
+          this.speechService.stopListening(),
+          new Promise(r => setTimeout(r, 500))
+        ]);
         if (this.speechService.currentTranscript) {
           this.lastTranscript = this.speechService.currentTranscript;
         }
@@ -1017,19 +1020,46 @@ class PhonoAudioEngine {
     }
 
     return new Promise((resolve) => {
+      let resolved = false;
+      const safeResolve = (res) => {
+        if (!resolved) {
+          resolved = true;
+          resolve(res);
+        }
+      };
+
+      // Salvaguarda absoluta contra cuelgues de MediaRecorder en dispositivos móviles (máx 1000ms)
+      const timer = setTimeout(() => {
+        console.warn('[AudioEngine] Timeout en mediaRecorder.onstop, forzando resolución.');
+        safeResolve({ blob: this.lastRecordedBlob, url: this.lastRecordedUrl });
+      }, 1000);
+
       if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
         this.mediaRecorder.onstop = () => {
-          this.lastRecordedBlob = new Blob(this.audioChunks, { type: 'audio/webm;codecs=opus' });
-          if (this.lastRecordedUrl) {
-            URL.revokeObjectURL(this.lastRecordedUrl);
+          clearTimeout(timer);
+          try {
+            const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
+            this.lastRecordedBlob = new Blob(this.audioChunks, { type: mimeType });
+            if (this.lastRecordedUrl) {
+              URL.revokeObjectURL(this.lastRecordedUrl);
+            }
+            this.lastRecordedUrl = URL.createObjectURL(this.lastRecordedBlob);
+            safeResolve({ blob: this.lastRecordedBlob, url: this.lastRecordedUrl });
+          } catch (e) {
+            console.warn('[AudioEngine] Error creando Blob de grabación:', e);
+            safeResolve({ blob: null, url: null });
           }
-          this.lastRecordedUrl = URL.createObjectURL(this.lastRecordedBlob);
-          resolve({ blob: this.lastRecordedBlob, url: this.lastRecordedUrl });
         };
-        this.mediaRecorder.stop();
+        try {
+          this.mediaRecorder.stop();
+        } catch (e) {
+          clearTimeout(timer);
+          console.warn('[AudioEngine] Error llamando mediaRecorder.stop():', e);
+          safeResolve({ blob: null, url: null });
+        }
       } else {
-        // Fallback simulado
-        resolve({ blob: null, url: null });
+        clearTimeout(timer);
+        safeResolve({ blob: null, url: null });
       }
     });
   }

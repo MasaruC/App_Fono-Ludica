@@ -573,20 +573,27 @@ class TelemetryEvalEngine {
 
   attachHeaderLogoTrigger(element) {
     if (!element) return;
-    element.addEventListener('click', () => {
+    const registerTap = (e) => {
       const now = performance.now();
-      if (now - this.lastHeaderTapTime < 750) {
+      // Permitir hasta 1600ms entre toques para pantallas táctiles en dispositivos móviles
+      if (now - this.lastHeaderTapTime < 1600) {
         this.headerTapCount++;
       } else {
         this.headerTapCount = 1;
       }
       this.lastHeaderTapTime = now;
 
+      element.classList.add('eval-tap-pulse');
+      setTimeout(() => element.classList.remove('eval-tap-pulse'), 300);
+
       if (this.headerTapCount >= 3) {
         this.headerTapCount = 0;
         this.handleTriggerAction();
       }
-    });
+    };
+
+    element.addEventListener('click', registerTap);
+    element.addEventListener('touchend', registerTap, { passive: true });
   }
 
   handleTriggerAction() {
@@ -2084,6 +2091,30 @@ class TelemetryEvalEngine {
     const remoteUrl = this.getRemoteEvaluatorUrl();
 
     container.innerHTML = `
+      <!-- Tarjeta Destacada de Enlace con Laptop del Evaluador (IP LAN) -->
+      <div class="eval-dash-pairing-card" style="margin: 0 0 16px; padding: 16px 20px; background: rgba(46, 125, 50, 0.08); border: 2px solid #2E7D32; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+          <h4 style="margin: 0; font-size: 1rem; color: #1B5E20; display: flex; align-items: center; gap: 8px;">
+            💻 Vincular este APK con la Laptop del Evaluador:
+          </h4>
+          <span id="dashServerConnBadge" style="font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: ${this.hasCustomServer() ? '#E8F5E9' : '#F5F5F5'}; color: ${this.hasCustomServer() ? '#2E7D32' : '#666'}; border: 1px solid ${this.hasCustomServer() ? '#A5D6A7' : '#CCC'};">
+            ${this.hasCustomServer() ? `🟢 Enlazado: ${this.getCurrentServerOrigin()}` : '⚪ Modo Local (Sin Laptop)'}
+          </span>
+        </div>
+        <p style="font-size: 0.82rem; color: #475569; margin: 0 0 10px 0;">
+          Asegúrate de que este teléfono/tablet y la laptop del evaluador estén en la <strong>misma red Wi-Fi</strong>. Escribe la IPv4 de la laptop (ej: <code>192.168.1.15</code> o <code>10.44.87.221</code>) para conectar el APK con <code>evaluador.html</code> en tiempo real.
+        </p>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="inpDashServerOrigin" class="eval-input" style="flex: 1; min-width: 220px; padding: 10px 14px; font-size: 0.95rem; font-family: monospace; border: 2px solid #81C784; background: #FFF; border-radius: 10px;" placeholder="Ej: 192.168.1.15" value="${this.getCurrentServerOrigin()}">
+          <button type="button" id="btnDashSaveServer" class="touch-btn btn-primary" style="padding: 10px 20px; font-size: 0.9rem; font-weight: 700; white-space: nowrap;">
+            ⚡ Enlazar Laptop
+          </button>
+        </div>
+        <div id="dashServerConnFeedback" style="font-size: 0.8rem; margin-top: 8px; font-weight: 600; min-height: 20px; color: ${this.hasCustomServer() ? '#2E7D32' : '#555'};">
+          ${this.hasCustomServer() ? `✅ Enlace activo: ${this.getCurrentServerOrigin()}` : 'Escribe la IP de la laptop y pulsa "Enlazar Laptop".'}
+        </div>
+      </div>
+
       <div class="sced-dashboard-banner">
         <div>
           <span class="eval-pill-eyebrow">Actividad 10 • Diseño Micro-SCED Acotado (Equipo G7 - UNMSM)</span>
@@ -2097,7 +2128,7 @@ class TelemetryEvalEngine {
             📱 Abrir App Remota (evaluador.html)
           </button>
           <button type="button" id="btnDashStartSced" class="touch-btn btn-primary" style="font-size: 0.85rem; padding: 10px 16px;">
-            ${this.isActive ? '🏁 Cerrar Sesión Activa y Abrir Emojis' : '🚀 Configurar e Iniciar Sesión'}
+            ${this.isActive ? '🏁 Cerrar Sesión Activa y Abrir Emojis' : '🚀 Iniciar Modo Evaluación Infantil'}
           </button>
           <button type="button" id="btnDashOpenSuite" class="touch-btn btn-secondary" style="font-size: 0.85rem; padding: 10px 16px;">
             📊 Suite Local PSSUQ / MARS / Nielsen
@@ -2131,6 +2162,90 @@ class TelemetryEvalEngine {
         </div>
       </div>
     `;
+
+    // Vincular lógica de enlace IP directo en el panel
+    const inpDashServer = document.getElementById('inpDashServerOrigin');
+    const btnDashServer = document.getElementById('btnDashSaveServer');
+    const fbDashServer = document.getElementById('dashServerConnFeedback');
+    const badgeDashServer = document.getElementById('dashServerConnBadge');
+
+    const handleDashLink = async () => {
+      let rawVal = (inpDashServer?.value || '').trim();
+      if (!rawVal) {
+        localStorage.removeItem('bosque_sced_server_origin');
+        if (fbDashServer) {
+          fbDashServer.style.color = '#555';
+          fbDashServer.textContent = '⚪ Enlace removido. Modo local activo.';
+        }
+        if (badgeDashServer) {
+          badgeDashServer.style.color = '#666';
+          badgeDashServer.textContent = '⚪ Modo Local';
+        }
+        this.connectSseRoom(this.roomCode);
+        return;
+      }
+
+      let formatted = rawVal;
+      if (!/^https?:\/\//i.test(formatted)) {
+        formatted = `http://${formatted}`;
+      }
+      if (!/:\d+$/.test(formatted)) {
+        formatted = `${formatted}:5173`;
+      }
+      inpDashServer.value = formatted;
+
+      if (fbDashServer) {
+        fbDashServer.style.color = '#1565C0';
+        fbDashServer.textContent = `⏳ Verificando conexión con ${formatted}...`;
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const resp = await fetch(`${formatted}/api/sced-info`, { method: 'GET', mode: 'cors', signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          localStorage.setItem('bosque_sced_server_origin', formatted);
+          if (fbDashServer) {
+            fbDashServer.style.color = '#2E7D32';
+            fbDashServer.textContent = `✅ ¡Enlazado exitosamente con la laptop! (${formatted})`;
+          }
+          if (badgeDashServer) {
+            badgeDashServer.style.color = '#2E7D32';
+            badgeDashServer.style.background = '#E8F5E9';
+            badgeDashServer.textContent = `🟢 Enlazado: ${formatted}`;
+          }
+          this.connectSseRoom(this.roomCode);
+          this.broadcastStateSnapshot('EVALUATOR_LINKED_OK');
+        } else {
+          throw new Error(`HTTP ${resp.status}`);
+        }
+      } catch (err) {
+        localStorage.setItem('bosque_sced_server_origin', formatted);
+        if (fbDashServer) {
+          fbDashServer.style.color = '#E65100';
+          fbDashServer.textContent = `⚠️ IP guardada (${formatted}). Si la laptop ya corre "npm run dev" en la misma Wi-Fi, la telemetría se enviará automáticamente.`;
+        }
+        if (badgeDashServer) {
+          badgeDashServer.style.color = '#E65100';
+          badgeDashServer.textContent = `🟡 Guardado: ${formatted}`;
+        }
+        this.connectSseRoom(this.roomCode);
+      }
+    };
+
+    if (btnDashServer) {
+      btnDashServer.addEventListener('click', handleDashLink);
+    }
+    if (inpDashServer) {
+      inpDashServer.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleDashLink();
+        }
+      });
+    }
 
     const btnRemote = document.getElementById('btnDashOpenRemoteApp');
     if (btnRemote) {

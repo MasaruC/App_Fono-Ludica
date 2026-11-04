@@ -158,19 +158,40 @@ class SpeechRecognitionService {
     // 3. Iniciar ASR léxico (Capacitor Nativo o Web Speech)
     if (this.isNative && this.nativePlugin) {
       try {
-        await this.nativePlugin.start({
+        // Escuchar tanto partialResults (Android dictation) como speechResults para máxima compatibilidad
+        if (!this.nativeListenersAttached) {
+          this.nativeListenersAttached = true;
+          this.nativePlugin.addListener('partialResults', (data) => {
+            if (data && data.matches && data.matches.length > 0) {
+              this.currentTranscript = data.matches[0];
+              console.log('[SpeechService Native ASR Partial]:', this.currentTranscript);
+            }
+          });
+          this.nativePlugin.addListener('speechResults', (data) => {
+            if (data && data.matches && data.matches.length > 0) {
+              this.currentTranscript = data.matches[0];
+              console.log('[SpeechService Native ASR Match]:', this.currentTranscript);
+            }
+          });
+        }
+
+        const startPromise = this.nativePlugin.start({
           language: 'es-PE',
           maxResults: 5,
           prompt: '¡Dilo fuerte y claro, amiguito!',
           partialResults: true,
           popup: false
         });
-        this.nativePlugin.addListener('speechResults', (data) => {
-          if (data && data.matches && data.matches.length > 0) {
-            this.currentTranscript = data.matches[0];
-            console.log('[SpeechService Native ASR]:', this.currentTranscript);
+
+        startPromise.then((res) => {
+          if (res && res.matches && res.matches.length > 0) {
+            this.currentTranscript = res.matches[0];
+            console.log('[SpeechService Native ASR Final]:', this.currentTranscript);
           }
+        }).catch(err => {
+          console.warn('[SpeechService Native ASR Error]:', err);
         });
+
       } catch (err) {
         console.warn('[SpeechService] Error iniciando Capacitor ASR:', err);
       }
@@ -236,10 +257,13 @@ class SpeechRecognitionService {
       this.activeStream = null;
     }
 
-    // Detener motores de reconocimiento
+    // Detener motores de reconocimiento con salvaguarda contra cuelgues
     if (this.isNative && this.nativePlugin) {
       try {
-        await this.nativePlugin.stop();
+        await Promise.race([
+          this.nativePlugin.stop().catch(() => {}),
+          new Promise(r => setTimeout(r, 250))
+        ]);
       } catch (e) {}
     } else if (this.webSpeechRec) {
       try {
