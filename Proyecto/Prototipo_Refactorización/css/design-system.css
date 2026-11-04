@@ -909,6 +909,13 @@ html, body {
   object-fit: contain;
 }
 
+.exercise-stimulus-emoji {
+  font-size: clamp(3.2rem, 14vmin, 5.5rem);
+  line-height: 1;
+  display: inline-block;
+  user-select: none;
+}
+
 .card-stimulus-word {
   font-family: var(--font-display-infant);
   font-size: 3.4rem;
@@ -5380,31 +5387,31 @@ body[data-theme="cvi"] .cave-woodland-stage {
 
   /* 5. Pantalla 2: Ejercicio Fono-Lúdico (CUS-01 / Rimas / Trabalenguas) */
   .exercise-landscape-grid {
-    grid-template-columns: minmax(130px, 185px) 1.25fr minmax(130px, 175px) !important;
-    gap: 8px !important;
-    padding: 3px 6px !important;
+    grid-template-columns: minmax(105px, 145px) 1fr minmax(105px, 150px) !important;
+    gap: 6px !important;
+    padding: 2px 6px !important;
     height: 100% !important;
     align-items: stretch !important;
   }
 
   .zone-avatar-guide {
     max-height: 100% !important;
-    padding: 5px 6px !important;
-    gap: 5px !important;
+    padding: 4px 6px !important;
+    gap: 4px !important;
     justify-content: space-evenly !important;
     border-radius: 14px !important;
     border-width: 2px !important;
   }
 
   .avatar-mascot-img {
-    width: 58px !important;
-    height: 58px !important;
+    width: 52px !important;
+    height: 52px !important;
     border-width: 2.5px !important;
   }
 
   .avatar-speech-balloon {
     padding: 2px 6px !important;
-    font-size: 0.72rem !important;
+    font-size: 0.7rem !important;
     line-height: 1.15 !important;
     border-radius: 8px !important;
   }
@@ -5412,27 +5419,32 @@ body[data-theme="cvi"] .cave-woodland-stage {
   .mini-praxia-card {
     padding: 3px 6px !important;
     border-radius: 8px !important;
-    gap: 5px !important;
+    gap: 4px !important;
   }
 
   .mini-praxia-icon {
-    font-size: 1.15rem !important;
+    font-size: 1rem !important;
+  }
+
+  .mini-praxia-icon svg {
+    width: 20px !important;
+    height: 20px !important;
   }
 
   .mini-praxia-title {
-    font-size: 0.7rem !important;
+    font-size: 0.68rem !important;
     line-height: 1.1 !important;
   }
 
   .mini-praxia-subtitle {
-    font-size: 0.6rem !important;
+    font-size: 0.58rem !important;
   }
 
   .ui-card-fon {
     height: 100% !important;
-    max-height: calc(100vh - 78px) !important;
-    max-height: calc(100dvh - 78px) !important;
-    padding: 5px 10px !important;
+    max-height: calc(100vh - 74px) !important;
+    max-height: calc(100dvh - 74px) !important;
+    padding: 4px 10px !important;
     border-radius: 16px !important;
     justify-content: space-evenly !important;
     border-width: 2.5px !important;
@@ -5441,63 +5453,108 @@ body[data-theme="cvi"] .cave-woodland-stage {
   .card-illustration-box {
     width: auto !important;
     max-width: 90% !important;
-    height: clamp(70px, 24vh, 110px) !important;
+    height: clamp(55px, 20vh, 95px) !important;
     margin-bottom: 2px !important;
     border-radius: 10px !important;
   }
 
+  #exerciseIcon, .exercise-stimulus-emoji {
+    font-size: clamp(2.4rem, 10vh, 3.8rem) !important;
+    line-height: 1 !important;
+  }
+
   .card-stimulus-word {
-    font-size: clamp(1.3rem, 5vh, 1.95rem) !important;
+    font-size: clamp(1.2rem, 4.6vh, 1.7rem) !important;
     line-height: 1.05 !important;
     margin-bottom: 0 !important;
   }
 
   .card-phoneme-badge {
-    font-size: 0.72rem !important;
+    font-size: 0.7rem !important;
     padding: 2px 8px !important;
   }
 
+  .syllable-rhythm-strip,
   .syllable-segmented-strip {
-    margin-top: 2px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-top: 3px !important;
     gap: 4px !important;
+    max-width: 100% !important;
   }
 
+  .syllable-chip,
   .syllable-capsule {
-    padding: 2px 6px !important;
-    font-size: 0.76rem !important;
+    padding: 2px 7px !important;
+    font-size: clamp(0.7rem, 2.6vh, 0.85rem) !important;
+    border-radius: 8px !important;
+    border-width: 1.5px !important;
+    line-height: 1.1 !important;
+    font-weight: 700 !important;
+  }
+
+  .syllable-chip.active-highlight {
+    transform: scale(1.08) !important;
+    box-shadow: 0 2px 8px rgba(255, 179, 0, 0.4) !important;
   }
 
   .zone-mic-biofeedback {
     max-height: 100% !important;
-    padding: 5px 6px !important;
-    gap: 5px !important;
+    padding: 4px 6px !important;
+    gap: 4px !important;
     justify-content: space-evenly !important;
     border-radius: 14px !important;
     border-width: 2px !important;
   }
 
+  .ui-btn-mic-wrapper {
+    width: 68px !important;
+    height: 68px !important;
+  }
+
   #btnMic {
-    width: 66px !important;
-    height: 66px !important;
-    min-width: 66px !important;
-    min-height: 66px !important;
+    width: 62px !important;
+    height: 62px !important;
+    min-width: 62px !important;
+    min-height: 62px !important;
     box-shadow: 0 4px 14px rgba(46, 125, 50, 0.3) !important;
   }
 
+  .mic-svg-icon,
   .mic-btn-icon-svg {
-    width: 30px !important;
-    height: 30px !important;
+    width: 26px !important;
+    height: 26px !important;
   }
 
+  .mic-caption-label,
   .mic-action-caption {
-    font-size: 0.72rem !important;
-    margin-top: 2px !important;
+    font-size: 0.7rem !important;
+    margin-top: 1px !important;
+    margin-bottom: 1px !important;
+    min-height: 18px !important;
   }
 
-  .secondary-biofeedback-actions .touch-btn {
-    min-height: 32px !important;
+  .self-playback-box {
+    gap: 4px !important;
+    width: 100% !important;
+  }
+
+  .self-playback-box .btn-playback,
+  .secondary-biofeedback-actions .touch-btn,
+  .btn-playback {
+    min-height: 30px !important;
     padding: 2px 6px !important;
-    font-size: 0.72rem !important;
+    font-size: 0.7rem !important;
+    border-radius: 8px !important;
+    gap: 4px !important;
+  }
+
+  .self-playback-box .btn-playback .ui-icon-svg,
+  .btn-playback .ui-icon-svg {
+    width: 14px !important;
+    height: 14px !important;
   }
 
   /* 6. Pantalla Bingo Sonoro (Cartón 2x2 Sin Desborde) */
@@ -5656,5 +5713,381 @@ body[data-theme="cvi"] .cave-woodland-stage {
   .eval-chip {
     padding: 3px 6px !important;
     font-size: 0.72rem !important;
+  }
+}
+
+/* ==========================================================================
+   SMARTPHONES EN LANDSCAPE ULTRA-COMPACTO (IHC / CCI: H <= 410px)
+   Dispositivos con Altura Reducida (320px-400px: Samsung, Xiaomi, Motorola, etc.)
+   Fundamentado en Du et al. (2023), Liu et al. (2026), Peña et al. (2024 - Nature)
+   Garantiza Cero Desbordes y Touch Targets Pediátricos >= 48dp
+   ========================================================================== */
+@media (orientation: landscape) and (max-height: 410px) {
+  :root {
+    --header-height: 36px;
+    --footer-height: 16px;
+  }
+
+  .app-header {
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding: 0 8px !important;
+  }
+
+  .header-app-logo {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .header-app-title {
+    font-size: 0.9rem !important;
+    letter-spacing: -0.2px !important;
+  }
+
+  .header-screen-tag {
+    font-size: 0.64rem !important;
+    padding: 1px 6px !important;
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .timer-badge, .star-counter-pill {
+    padding: 1px 6px !important;
+    font-size: 0.66rem !important;
+    min-height: 22px !important;
+    gap: 3px !important;
+  }
+
+  .timer-progress-track {
+    width: 26px !important;
+    height: 5px !important;
+  }
+
+  .touch-btn.header-icon-btn,
+  #btnHeaderHome,
+  #btnHeaderEvalLink,
+  #btnParentalGate,
+  #headerAdultGate {
+    min-width: 30px !important;
+    min-height: 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    padding: 2px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .touch-btn.header-icon-btn .ui-icon-svg,
+  #btnHeaderEvalLink .ui-icon-svg,
+  #btnParentalGate .ui-icon-svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Footer con Césped Botánico Ultrabajísimo */
+  .app-footer-cushion {
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    padding: 0 6px !important;
+  }
+
+  .forest-floor-vector-layer {
+    top: -6px !important;
+    height: calc(100% + 6px) !important;
+  }
+
+  .grass-botanical-svg {
+    transform: scaleY(0.35) !important;
+  }
+
+  /* Body Central en Pantallas Bajas */
+  .app-body {
+    height: calc(100vh - 52px) !important;
+    height: calc(100dvh - 52px) !important;
+    padding: 1px 4px !important;
+  }
+
+  /* Menú de Vagones Fónicos (Tren) */
+  .menu-hub-layout {
+    padding: 1px 2px !important;
+    gap: 2px !important;
+  }
+
+  .train-wagon-card {
+    max-height: calc(100vh - 58px) !important;
+    max-height: calc(100dvh - 58px) !important;
+    padding: 3px 2px 5px !important;
+    border-radius: 10px 10px 6px 6px !important;
+  }
+
+  .wagon-roof-canopy {
+    height: 9px !important;
+  }
+
+  .wagon-icon-box {
+    width: 38px !important;
+    height: 38px !important;
+    margin: 1px auto !important;
+  }
+
+  .wagon-svg-icon {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .wagon-title {
+    font-size: 0.68rem !important;
+    line-height: 1.05 !important;
+    margin: 1px 0 !important;
+  }
+
+  .wagon-badge {
+    font-size: 0.56rem !important;
+    padding: 1px 4px !important;
+  }
+
+  .wagon-wheel {
+    width: 10px !important;
+    height: 10px !important;
+    bottom: -5px !important;
+  }
+
+  /* Pantalla de Ejercicios (Trabalenguas, Rimas, Adivinanzas) */
+  .exercise-landscape-grid {
+    grid-template-columns: minmax(88px, 120px) 1fr minmax(88px, 125px) !important;
+    gap: 4px !important;
+    padding: 1px 4px !important;
+  }
+
+  .zone-avatar-guide {
+    padding: 3px 4px !important;
+    gap: 3px !important;
+    border-radius: 10px !important;
+  }
+
+  .avatar-mascot-img {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .avatar-speech-balloon {
+    padding: 1px 4px !important;
+    font-size: 0.62rem !important;
+    line-height: 1.1 !important;
+    border-radius: 6px !important;
+    max-height: 42px !important;
+    overflow: hidden !important;
+  }
+
+  .mini-praxia-card {
+    padding: 2px 4px !important;
+    border-radius: 6px !important;
+    gap: 3px !important;
+  }
+
+  .mini-praxia-icon {
+    font-size: 0.85rem !important;
+  }
+
+  .mini-praxia-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .mini-praxia-title {
+    font-size: 0.62rem !important;
+    line-height: 1 !important;
+  }
+
+  .mini-praxia-subtitle {
+    display: none !important;
+  }
+
+  /* Tarjeta Central del Estímulo */
+  .ui-card-fon {
+    max-height: calc(100vh - 56px) !important;
+    max-height: calc(100dvh - 56px) !important;
+    padding: 3px 6px !important;
+    border-radius: 12px !important;
+    border-width: 2px !important;
+  }
+
+  .card-illustration-box {
+    height: clamp(38px, 15vh, 60px) !important;
+    margin-bottom: 1px !important;
+    border-radius: 8px !important;
+  }
+
+  #exerciseIcon, .exercise-stimulus-emoji {
+    font-size: clamp(1.9rem, 8.5vh, 2.7rem) !important;
+    line-height: 1 !important;
+  }
+
+  .card-stimulus-word {
+    font-size: clamp(0.95rem, 3.8vh, 1.25rem) !important;
+    line-height: 1 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .card-phoneme-badge {
+    font-size: 0.62rem !important;
+    padding: 1px 6px !important;
+  }
+
+  .syllable-rhythm-strip,
+  .syllable-segmented-strip {
+    margin-top: 2px !important;
+    gap: 2.5px !important;
+  }
+
+  .syllable-chip,
+  .syllable-capsule {
+    padding: 1.5px 5px !important;
+    font-size: 0.64rem !important;
+    border-radius: 6px !important;
+    border-width: 1px !important;
+  }
+
+  .syllable-chip.active-highlight {
+    transform: scale(1.05) !important;
+  }
+
+  /* Zona Derecha de Fonación y Micrófono */
+  .zone-mic-biofeedback {
+    padding: 3px 4px !important;
+    gap: 3px !important;
+    border-radius: 10px !important;
+  }
+
+  .ui-btn-mic-wrapper {
+    width: 54px !important;
+    height: 54px !important;
+  }
+
+  #btnMic {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.25) !important;
+  }
+
+  .mic-svg-icon,
+  .mic-btn-icon-svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .mic-caption-label,
+  .mic-action-caption {
+    font-size: 0.62rem !important;
+    min-height: 14px !important;
+    margin: 1px 0 !important;
+  }
+
+  .self-playback-box {
+    gap: 2px !important;
+  }
+
+  .self-playback-box .btn-playback,
+  .secondary-biofeedback-actions .touch-btn,
+  .btn-playback {
+    min-height: 26px !important;
+    padding: 1px 4px !important;
+    font-size: 0.62rem !important;
+    border-radius: 6px !important;
+    gap: 2px !important;
+  }
+
+  .self-playback-box .btn-playback .ui-icon-svg,
+  .btn-playback .ui-icon-svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  /* Pares Mínimos Ultra-Compacto */
+  .pairs-landscape-grid {
+    gap: 4px !important;
+    padding: 2px 4px !important;
+  }
+
+  .pair-card {
+    padding: 3px 6px !important;
+    border-radius: 12px !important;
+    max-height: calc(100vh - 56px) !important;
+    max-height: calc(100dvh - 56px) !important;
+  }
+
+  .pair-icon-box {
+    height: clamp(45px, 15vh, 65px) !important;
+  }
+
+  .pair-word {
+    font-size: clamp(0.9rem, 3.6vh, 1.15rem) !important;
+  }
+
+  /* Bingo Sonoro Ultra-Compacto */
+  .bingo-layout {
+    padding: 1px 4px !important;
+    gap: 2px !important;
+  }
+
+  .bingo-caller-banner {
+    min-height: 24px !important;
+    padding: 1px 6px !important;
+  }
+
+  .bingo-caller-text {
+    font-size: 0.72rem !important;
+  }
+
+  .bingo-caller-ava-img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .bingo-grid {
+    gap: 4px !important;
+    height: calc(100% - 28px) !important;
+    max-height: calc(100% - 28px) !important;
+  }
+
+  .bingo-card-item {
+    padding: 2px 4px !important;
+    border-radius: 8px !important;
+  }
+
+  .bingo-card-icon {
+    font-size: clamp(1.2rem, 5.5vh, 1.6rem) !important;
+  }
+
+  .bingo-card-word {
+    font-size: clamp(0.72rem, 2.8vh, 0.88rem) !important;
+  }
+
+  /* Modal Praxia Sagital 2D Adaptativo */
+  .praxia-canvas-wrapper {
+    height: clamp(115px, 38vh, 160px) !important;
+    width: auto !important;
+    aspect-ratio: 360 / 260 !important;
+    margin: 0 auto !important;
+  }
+
+  .praxia-modal-card {
+    padding: 4px 8px !important;
+  }
+
+  .praxia-modal-title {
+    font-size: 0.9rem !important;
+  }
+
+  .praxia-modal-header #btnClosePraxia {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
   }
 }

@@ -27,3 +27,4 @@ if (fs.existsSync(targetFile)) {
 } else {
   console.log('[Patch] Archivo SpeechRecognition.java no encontrado (aún no se ejecuta npm install).');
 }
+
