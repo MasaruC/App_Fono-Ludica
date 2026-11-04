@@ -454,32 +454,75 @@ document.addEventListener('DOMContentLoaded', () => {
           // Registra en bóveda de audio clínica
           telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "APROBADO", url, "tag-green");
 
-        } else if (state.consecutiveFailures < 3) {
-          // ESCENARIO 2: REINTENTO SUAVE (SIN CASTIGO NI ROJO PUNITIVO - RN-GAM-001)
+        } else if (state.consecutiveFailures === 1) {
+          // ==============================================================
+          // ESCENARIO 2A: FALLO 1 - PISTA EMPÁTICA Y MODELADO AUDITIVO DE AVA
+          // (Intento 1 No Logrado: Ava alienta con afecto y repite el modelado fónico)
+          // ==============================================================
           audioEngine.playGentleEncouragement();
           elements.feedbackBadge.className = 'feedback-status-badge status-retry active';
-          elements.feedbackBadge.textContent = `💜 ¡Buen intento! (${state.consecutiveFailures}/3) Vamos a intentarlo otra vez.`;
-          elements.micCaption.textContent = "Toca para reintentar";
-          audioEngine.speak("¡Excelente intento, diste lo mejor de ti! ¡Dilo fuerte! Escuchemos juntos y vuelve a tocar el botón.");
+          elements.feedbackBadge.textContent = `💜 ¡Buen intento! (1/3) Escucha cómo suena la palabra.`;
+          elements.micCaption.textContent = "Escuchando a Ava...";
 
-          telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, `REINTENTO (${state.consecutiveFailures})`, url, "tag-yellow");
+          telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "REINTENTO (1)", url, "tag-yellow");
+
+          // Mensaje cálido y modelado auditivo real de la palabra objetivo
+          elements.avatarBalloon.textContent = `¡Casi lo tienes! Escucha cómo lo digo: "${currentTargetWord}".`;
+          const promptSpeech = `¡Casi lo tienes amiguito! Escucha cómo suena mi vocecita: ${currentTargetWord}. ¡Ahora inténtalo tú, vuelve a tocar el botón!`;
+
+          audioEngine.speak(promptSpeech, () => {
+            elements.micCaption.textContent = "Toca para reintentar";
+            elements.avatarBalloon.textContent = `¡Ahora dilo tú! Toca el botón y di "${currentTargetWord}".`;
+          });
+
+        } else if (state.consecutiveFailures === 2) {
+          // ==============================================================
+          // ESCENARIO 2B: FALLO 2 - ANDAMIAJE VISUAL (CANVAS 2D DE PRAXIA)
+          // (Intento 2 Consecutivo: Despliega la animación en pantalla y
+          // luego permite al niño volver a intentarlo para el Intento 3)
+          // ==============================================================
+          audioEngine.playGentleEncouragement();
+          elements.feedbackBadge.className = 'feedback-status-badge status-retry active';
+          elements.feedbackBadge.textContent = `👀 ¡Mira la animación! (2/3) Observa cómo movemos la lengua.`;
+          elements.micCaption.textContent = "Observa la pantalla...";
+
+          telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "ANDAMIAJE VISUAL (2)", url, "tag-yellow");
+
+          elements.avatarBalloon.textContent = `¡Mira en la pantalla cómo movemos la boca para decir "${currentTargetWord}"!`;
+          const promptVisual = `¡Buen esfuerzo amiguito! Mira en la pantalla cómo colocamos la lengua y los labios para el sonido de ${currentTargetWord}.`;
+
+          audioEngine.speak(promptVisual, () => {
+            // Abre el modal con el Canvas 2D de Praxia anatómica
+            openPraxiaModal(state.activePhoneme, () => {
+              // AL CERRAR LA ANIMACIÓN: PERMITIR AL NIÑO VOLVER A INTENTARLO (INTENTO 3)
+              // (Mantiene state.consecutiveFailures = 2 para que el próximo intento sea evaluado)
+              elements.feedbackBadge.className = 'feedback-status-badge status-retry active';
+              elements.feedbackBadge.textContent = `🎯 ¡Ahora inténtalo tú! (2/3) Toca el botón para hablar.`;
+              elements.micCaption.textContent = "Toca para hablar";
+              elements.avatarBalloon.textContent = `¡Muy bien! Ahora que viste cómo se mueve la lengua, ¡dilo tú fuerte: "${currentTargetWord}"!`;
+              audioEngine.speak(`¡Excelente! Ahora que viste cómo movemos la lengua, ¡toca el botón y di ${currentTargetWord}!`);
+            }, "¡Listo! Quiero intentarlo ✨");
+          });
 
         } else {
-          // ESCENARIO 3: INTERVENCIÓN MANDATORIA DDA TRAS 3ER FALLO (RN-DDA-001)
+          // ==============================================================
+          // ESCENARIO 3: FALLO 3 DE RESCATE - INTERVENCIÓN DDA Y AVANCE ASISTIDO
+          // (Intento 3 de Rescate: Despliega Praxia DDA, otorga 1 estrella de persistencia y avanza)
+          // ==============================================================
           audioEngine.playChime();
-          updateStars(1); // Estrella por esfuerzo GL-005
+          updateStars(1); // Estrella por persistencia / esfuerzo GL-005
           elements.feedbackBadge.className = 'feedback-status-badge status-dda active';
-          elements.feedbackBadge.textContent = "🌟 ¡Estrella por esfuerzo otorgada! Mira cómo colocamos la lengua.";
+          elements.feedbackBadge.textContent = "🌟 ¡Estrella por persistencia otorgada! Avanzamos juntos.";
           elements.micCaption.textContent = "¡Gran esfuerzo!";
 
           telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "DDA ASISTIDO", url, "tag-purple");
 
-          // Despliega automáticamente la Praxia 2D y avanza asistido
-          audioEngine.speak("¡Qué gran esfuerzo amigo! Mira en la pantalla cómo colocamos la lengua para que sea más fácil.", () => {
+          // Despliega automáticamente la Praxia 2D y avanza asistido sin bloquear al menor
+          audioEngine.speak("¡Qué gran esfuerzo amigo! Te ganaste una estrella gigante por tu perseverancia. Mira la pantalla y pasemos al siguiente vagón.", () => {
             openPraxiaModal(state.activePhoneme, () => {
-              // Al cerrar praxia avanza asistido
+              // Al cerrar praxia avanza asistido al siguiente ejercicio
               loadExercise(state.currentActivity, state.activityIndex + 1);
-            });
+            }, "¡Siguiente vagón! 🚂");
           });
         }
       }, 1000);
@@ -881,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.playCurrentPraxiaNarration = playCurrentPraxiaNarration;
 
-  function openPraxiaModal(soundKey = 'r', onCloseCallback = null) {
+  function openPraxiaModal(soundKey = 'r', onCloseCallback = null, customExitLabel = null) {
     audioEngine.stopSpeaking();
     praxiaCallbackOnClose = onCloseCallback;
     const key = (soundKey || 'r').toLowerCase();
@@ -891,6 +934,11 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.praxiaPhonemeSelect.value = key;
     elements.praxiaTitle.textContent = narration.title;
     elements.praxiaDesc.textContent = narration.display;
+
+    const exitBtnSpan = elements.btnClosePraxiaBottom ? elements.btnClosePraxiaBottom.querySelector('span') : null;
+    if (exitBtnSpan) {
+      exitBtnSpan.textContent = customExitLabel || "Volver al Juego";
+    }
 
     elements.praxiaModal.classList.add('active');
 
