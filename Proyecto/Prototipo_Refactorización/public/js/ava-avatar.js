@@ -207,36 +207,96 @@ class AvaVectorAvatarEngine {
       size: 80,
       mood: this.currentMood,
       animated: true,
-      allowPreview: el.id === 'caveAvaPedestal'
+      allowPreview: el.id === 'caveAvaPedestal',
+      onTap: null
     };
 
     const finalOptions = { ...defaultOptions, ...options };
     this.instances.set(el, { options: finalOptions });
     this.renderInto(el, finalOptions);
 
-    el.addEventListener('click', () => {
+    el.addEventListener('click', (e) => {
       if (el.id === 'headerAppLogo') return;
 
       el.classList.add('ava-touch-wiggle');
       setTimeout(() => el.classList.remove('ava-touch-wiggle'), 620);
 
+      // Si se definió una función onTap contextual explícita (A.10 - H10)
+      if (typeof finalOptions.onTap === 'function') {
+        finalOptions.onTap(el, e);
+        return;
+      }
+
+      // Despachar evento para que cualquier módulo responda contextualmente
+      const customTapEvent = new CustomEvent('ava-avatar-tap', {
+        detail: { targetId: el.id, element: el },
+        bubbles: true,
+        cancelable: true
+      });
+      const allowed = el.dispatchEvent(customTapEvent);
+      if (!allowed) return;
+
       if (window.audioEngine) {
         window.audioEngine.playClick();
         if (!this.isSpeaking && !this.isListening) {
-          const equippedTotal = this.getEquippedCount();
-          const greetings = equippedTotal > 0
-            ? [
-                '¡Mira qué linda me veo con mis tesoros del bosque!',
-                '¡Qué alegría! ¡Gracias por vestirme con tus estrellas!',
-                '¡Me encanta mi traje para volar por el bosque!'
-              ]
-            : [
-                '¡Hola amiguito! ¡Vamos a jugar!',
-                '¡Jajaja, qué cosquillas me haces!',
-                '¡Me encanta practicar palabras contigo!',
-                '¡A volar por el Bosque Sonoro!'
-              ];
-          const phrase = greetings[Math.floor(Math.random() * greetings.length)];
+          // 1. Exclusivamente en la Cueva del Avatar / Pedestal de Premios
+          if (el.id === 'caveAvaPedestal' || el.closest('#screen-avatar')) {
+            const equippedTotal = this.getEquippedCount();
+            const cavePhrases = equippedTotal > 0
+              ? [
+                  '¡Mira qué linda me veo con mis tesoros del bosque!',
+                  '¡Qué alegría! ¡Gracias por vestirme con tus estrellas!',
+                  '¡Me encanta mi traje para volar por el bosque!'
+                ]
+              : [
+                  '¡Hola amiguito! Prueba ponerme un sombrerito o alitas brillantes.',
+                  '¡Qué linda cueva! Elige tus tesoros favoritos para vestirme.'
+                ];
+            const phrase = cavePhrases[Math.floor(Math.random() * cavePhrases.length)];
+            window.audioEngine.speak(phrase);
+            return;
+          }
+
+          // 2. Pantalla de Ejercicios (Trabalenguas, Rimas, Adivinanzas)
+          if (el.id === 'exerciseAvaAvatar' || el.closest('#screen-exercise')) {
+            if (typeof window.repeatCurrentExercisePrompt === 'function') {
+              window.repeatCurrentExercisePrompt();
+              return;
+            }
+          }
+
+          // 3. Pantalla de Pares Mínimos
+          if (el.id === 'pairsAvaAvatar' || el.closest('#screen-pairs')) {
+            if (typeof window.repeatCurrentPairsPrompt === 'function') {
+              window.repeatCurrentPairsPrompt();
+              return;
+            }
+          }
+
+          // 4. Pantalla de Bingo Sonoro
+          if (el.id === 'bingoAvaAvatar' || el.closest('#screen-bingo')) {
+            if (typeof window.repeatCurrentBingoPrompt === 'function') {
+              window.repeatCurrentBingoPrompt();
+              return;
+            }
+          }
+
+          // 5. Modal de Praxias Anatómicas 2D
+          if (el.id === 'praxiaAvaAvatar' || el.closest('#praxiaModal')) {
+            if (typeof window.playCurrentPraxiaNarration === 'function') {
+              window.playCurrentPraxiaNarration();
+              return;
+            }
+          }
+
+          // 6. Menú Principal o Saludos Amigables
+          const generalGreetings = [
+            '¡Hola amiguito! Bienvenido al Bosque Sonoro. ¡Toca un vagón para empezar a jugar!',
+            '¡Chu chú! Elige un juego para volar juntos por el bosque.',
+            '¡Jajaja, qué cosquillas me haces! ¿A qué jugamos hoy?',
+            '¡A volar por el Bosque Sonoro! Toca un vagón.'
+          ];
+          const phrase = generalGreetings[Math.floor(Math.random() * generalGreetings.length)];
           window.audioEngine.speak(phrase);
         }
       }

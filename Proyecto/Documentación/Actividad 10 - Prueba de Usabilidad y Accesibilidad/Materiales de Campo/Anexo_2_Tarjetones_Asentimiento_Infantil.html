@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tarjetones de Asentimiento Continuo Infantil - Bosque Sonoro</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@700;800;900&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #ECEFF1;
+      font-family: 'Nunito', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      color: #263238;
+    }
+
+    .print-instructions {
+      background: #FFFFFF;
+      padding: 16px 24px;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      max-width: 900px;
+      width: 100%;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .print-instructions h1 {
+      font-family: 'Fredoka', cursive;
+      color: #2E7D32;
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+
+    .print-instructions p {
+      font-size: 0.95rem;
+      color: #546E7A;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .btn-print {
+      background: #2E7D32;
+      color: white;
+      border: none;
+      padding: 10px 26px;
+      border-radius: 9999px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(46,125,50,0.32);
+      transition: all 0.2s;
+    }
+
+    .btn-print:hover {
+      background: #1B5E20;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(46,125,50,0.4);
+    }
+
+    /* Hoja A4 Horizontal para impresión de los 2 tarjetones */
+    .sheet-a4 {
+      width: 297mm;
+      min-height: 200mm;
+      background: #FFFFFF;
+      padding: 10mm;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12mm;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+      border-radius: 12px;
+    }
+
+    /* Tarjeta individual recortable */
+    .assent-card {
+      border-radius: 32px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+      position: relative;
+      background: #FFFFFF;
+      border-style: solid;
+      border-width: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    .card-cutline {
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      right: -8px;
+      bottom: -8px;
+      border: 2.5px dashed #B0BEC5;
+      border-radius: 38px;
+      pointer-events: none;
+    }
+
+    .cut-badge {
+      position: absolute;
+      top: -13px;
+      left: 36px;
+      background: #FFFFFF;
+      padding: 2px 12px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #607D8B;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 6px;
+      border: 1px solid #CFD8DC;
+    }
+
+    /* Tarjeta Verde: JUGAR */
+    .card-play {
+      border-color: #2E7D32;
+      background: linear-gradient(180deg, #F1F8E9 0%, #FFFFFF 65%);
+    }
+
+    .card-play .card-title {
+      color: #1B5E20;
+    }
+
+    .card-play .card-badge-status {
+      background: #2E7D32;
+      color: #FFFFFF;
+    }
+
+    /* Tarjeta Naranja: PAUSA / DESCANSAR */
+    .card-pause {
+      border-color: #E65100;
+      background: linear-gradient(180deg, #FFF3E0 0%, #FFFFFF 65%);
+    }
+
+    .card-pause .card-title {
+      color: #BF360C;
+    }
+
+    .card-pause .card-badge-status {
+      background: #E65100;
+      color: #FFFFFF;
+    }
+
+    .card-header-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .card-badge-status {
+      font-family: 'Fredoka', cursive;
+      font-size: 1.15rem;
+      font-weight: 700;
+      padding: 6px 22px;
+      border-radius: 9999px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+
+    .avatar-illustration-box {
+      width: 190px;
+      height: 195px;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .avatar-halo-play {
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      background: radial-gradient(circle, #DCEDC8 0%, rgba(220, 237, 200, 0) 72%);
+      border-radius: 50%;
+      z-index: 0;
+    }
+
+    .avatar-halo-pause {
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      background: radial-gradient(circle, #FFE0B2 0%, rgba(255, 224, 178, 0) 72%);
+      border-radius: 50%;
+      z-index: 0;
+    }
+
+    .ava-vector {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));
+    }
+
+    .card-title {
+      font-family: 'Fredoka', cursive;
+      font-size: 2.1rem;
+      line-height: 1.1;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .card-tagline {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #37474F;
+      margin-bottom: 6px;
+    }
+
+    .card-footer-tip {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #607D8B;
+      border-top: 1.5px dashed #CFD8DC;
+      padding-top: 8px;
+      width: 100%;
+      line-height: 1.35;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .print-instructions {
+        display: none !important;
+      }
+      .sheet-a4 {
+        box-shadow: none;
+        padding: 6mm;
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+        page-break-after: avoid;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 5mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-instructions">
+    <h1>🐝 Tarjetones Oficiales de Asentimiento Continuo Infantil (UNMSM - IHC)</h1>
+    <p>Plantilla oficial del proyecto <strong>"Bosque Sonoro"</strong> con la mascota vectorial canónica <strong>Ava</strong>. Imprime en <strong>A4 Horizontal</strong> sobre cartulina y recorta por la línea punteada.</p>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir Tarjetones en A4 / Guardar en PDF</button>
+  </div>
+
+  <div class="sheet-a4">
+
+    <!-- TARJETA 1: SÍ, QUIERO JUGAR -->
+    <div class="assent-card card-play">
+      <div class="card-cutline">
+        <span class="cut-badge">✂️ Recortar por aquí</span>
+      </div>
+
+      <div class="card-header-badge">
+        <span class="card-badge-status">🟢 ¡Sí, quiero jugar!</span>
+      </div>
+
+      <div class="avatar-illustration-box">
+        <div class="avatar-halo-play"></div>
+        
+        <!-- AVATAR CANÓNICO DE AVA: MODO FELIZ Y SALUDANDO -->
+        <svg class="ava-vector" viewBox="0 0 180 186" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Degradados de Cabeza y Cuerpo de Peluche Melífero -->
+            <radialGradient id="play-headGrad" cx="42%" cy="34%" r="64%">
+              <stop offset="0%" stop-color="#FFFDE7"/>
+              <stop offset="45%" stop-color="#FFE082"/>
+              <stop offset="82%" stop-color="#FFC107"/>
+              <stop offset="100%" stop-color="#F57F17"/>
+            </radialGradient>
+            <radialGradient id="play-torsoGrad" cx="40%" cy="35%" r="68%">
+              <stop offset="0%" stop-color="#FFF59D"/>
+              <stop offset="55%" stop-color="#FFD54F"/>
+              <stop offset="100%" stop-color="#F9A825"/>
+            </radialGradient>
+            <!-- Rubor Coral Infantil -->
+            <radialGradient id="play-blushGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FF7043" stop-opacity="0.6"/>
+              <stop offset="65%" stop-color="#FF8A65" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#FF8A65" stop-opacity="0"/>
+            </radialGradient>
+            <!-- Alas Iridiscentes Celestes -->
+            <linearGradient id="play-wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+              <stop offset="55%" stop-color="#E1F5FE" stop-opacity="0.88"/>
+              <stop offset="100%" stop-color="#B3E5FC" stop-opacity="0.75"/>
+            </linearGradient>
+            <!-- Recorte exacto del abdomen para las franjas -->
+            <clipPath id="play-torsoClip">
+              <path d="M64,113 C58,131 64,154 90,155 C116,154 122,131 116,113 C111,101 69,101 64,113 Z"/>
+            </clipPath>
+          </defs>
+
+          <!-- Sombra de Apoyo -->
+          <ellipse cx="90" cy="174" rx="28" ry="4" fill="rgba(62, 39, 35, 0.22)"/>
+
+          <!-- ALAS DOBLES NATURALES -->
+          <!-- Ala Izquierda -->
+          <g>
+            <path d="M64,108 C42,74 11,76 14,100 C17,115 41,117 64,112 Z"
+                  fill="url(#play-wingGrad)" stroke="#64B5F6" stroke-width="2.2"/>
+            <path d="M64,112 C42,115 24,125 29,138 C35,148 53,136 64,119 Z"
+                  fill="url(#play-wingGrad)" stroke="#64B5F6" stroke-width="1.8"/>
+            <path d="M60,108 Q38,94 21,95 M59,115 Q42,124 34,133" stroke="#90CAF9" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </g>
+          <!-- Ala Derecha -->
+          <g>
+            <path d="M116,108 C138,74 169,76 166,100 C163,115 139,117 116,112 Z"
+                  fill="url(#play-wingGrad)" stroke="#64B5F6" stroke-width="2.2"/>
+            <path d="M116,112 C138,115 156,125 151,138 C145,148 127,136 116,119 Z"
+                  fill="url(#play-wingGrad)" stroke="#64B5F6" stroke-width="1.8"/>
+            <path d="M120,108 Q142,94 159,95 M121,115 Q138,124 146,133" stroke="#90CAF9" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </g>
+
+          <!-- CUERPO Y PATITAS -->
+          <!-- Aguijón redondeado amigable -->
+          <path d="M86.5,153 Q90,162 93.5,153 Z" fill="#3E2723"/>
+
+          <!-- Patitas con botitas -->
+          <path d="M79,151 L77,168" stroke="#3E2723" stroke-width="5.2" stroke-linecap="round"/>
+          <ellipse cx="74.5" cy="170.5" rx="7" ry="4" fill="#4E342E" stroke="#2A1810" stroke-width="1.3"/>
+          <path d="M101,151 L103,168" stroke="#3E2723" stroke-width="5.2" stroke-linecap="round"/>
+          <ellipse cx="105.5" cy="170.5" rx="7" ry="4" fill="#4E342E" stroke="#2A1810" stroke-width="1.3"/>
+
+          <!-- Abdomen rayado de abeja -->
+          <g clip-path="url(#play-torsoClip)">
+            <path d="M64,113 C58,131 64,154 90,155 C116,154 122,131 116,113 C111,101 69,101 64,113 Z"
+                  fill="url(#play-torsoGrad)"/>
+            <!-- Franjas chocolate aterciopeladas -->
+            <path d="M56,100 Q90,111 124,100 L124,113 Q90,122 56,113 Z" fill="#3E2723"/>
+            <path d="M56,125 Q90,136 124,125 L124,139 Q90,149 56,139 Z" fill="#3E2723"/>
+            <ellipse cx="74" cy="128" rx="9" ry="18" fill="rgba(255,255,255,0.2)"/>
+          </g>
+          <path d="M64,113 C58,131 64,154 90,155 C116,154 122,131 116,113 C111,101 69,101 64,113 Z"
+                fill="none" stroke="#E68A00" stroke-width="2"/>
+
+          <!-- Manitas saludando alegremente -->
+          <path d="M64,115 Q46,110 38,94" fill="none" stroke="#3E2723" stroke-width="4.8" stroke-linecap="round"/>
+          <circle cx="37" cy="93" r="5.2" fill="#4E342E"/>
+          <path d="M116,115 Q134,110 142,94" fill="none" stroke="#3E2723" stroke-width="4.8" stroke-linecap="round"/>
+          <circle cx="143" cy="93" r="5.2" fill="#4E342E"/>
+
+          <!-- CABEZA DE PELUCHE Y MECHONCITOS -->
+          <path d="M55,72 L51,70 L54,75 L50,77 L55,79 Z" fill="#FFC107"/>
+          <path d="M125,72 L129,70 L126,75 L130,77 L125,79 Z" fill="#FFC107"/>
+          <ellipse cx="90" cy="74" rx="35.5" ry="29.5" fill="url(#play-headGrad)" stroke="#F59E0B" stroke-width="2.2"/>
+
+          <!-- Copete peludito chocolate en la frente (Sello Ava) -->
+          <path d="M70,48 Q81,42 90,56 Q99,42 110,48 Q101,43 90,44 Q79,43 70,48 Z" fill="#3E2723"/>
+
+          <!-- Mejillas sonrosadas de rubor coral -->
+          <circle cx="61" cy="82" r="8.5" fill="url(#play-blushGrad)"/>
+          <circle cx="119" cy="82" r="8.5" fill="url(#play-blushGrad)"/>
+
+          <!-- Cejas amigables levantadas -->
+          <path d="M66,58 Q73,53.5 80,57.5" fill="none" stroke="#4E342E" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M100,57.5 Q107,53.5 114,58" fill="none" stroke="#4E342E" stroke-width="2.4" stroke-linecap="round"/>
+
+          <!-- OJOS GRANDES EXPRESIVOS BRILLANTES -->
+          <g>
+            <!-- Pestañitas tiernas -->
+            <path d="M65.5,68.5 Q62,66 62.8,63.8" fill="none" stroke="#2A1810" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M114.5,68.5 Q118,66 117.2,63.8" fill="none" stroke="#2A1810" stroke-width="1.8" stroke-linecap="round"/>
+
+            <!-- Ojo Izquierdo -->
+            <ellipse cx="73" cy="72.5" rx="8" ry="9" fill="#2A1810"/>
+            <ellipse cx="73" cy="75.2" rx="5.8" ry="4.5" fill="#8D4E2A"/>
+            <circle cx="73" cy="72" r="4.5" fill="#1E110B"/>
+            <circle cx="70.2" cy="68.8" r="3" fill="#FFFFFF"/>
+            <circle cx="75.8" cy="75.8" r="1.4" fill="#FFFFFF"/>
+
+            <!-- Ojo Derecho -->
+            <ellipse cx="107" cy="72.5" rx="8" ry="9" fill="#2A1810"/>
+            <ellipse cx="107" cy="75.2" rx="5.8" ry="4.5" fill="#8D4E2A"/>
+            <circle cx="107" cy="72" r="4.5" fill="#1E110B"/>
+            <circle cx="104.2" cy="68.8" r="3" fill="#FFFFFF"/>
+            <circle cx="109.8" cy="75.8" r="1.4" fill="#FFFFFF"/>
+          </g>
+
+          <!-- Naricita durazno -->
+          <ellipse cx="90" cy="79" rx="3.6" ry="2.4" fill="#FF8A65" stroke="#BF360C" stroke-width="0.9"/>
+          <ellipse cx="89" cy="78.2" rx="1.3" ry="0.7" fill="rgba(255,255,255,0.7)"/>
+
+          <!-- Sonrisa abierta alegre con lengüita rosa -->
+          <path d="M80,84 C82.5,94.5 97.5,94.5 100,84 Q90,87.5 80,84 Z" fill="#6D1B2A" stroke="#3E2723" stroke-width="1.6" stroke-linejoin="round"/>
+          <ellipse cx="90" cy="90.5" rx="5" ry="2.5" fill="#FF8A80"/>
+          <path d="M78.5,83.5 Q79.5,85.5 81,84.5 M101.5,83.5 Q100.5,85.5 99,84.5" fill="none" stroke="#3E2723" stroke-width="1.5" stroke-linecap="round"/>
+
+          <!-- ANTENAS CON POMPÓN DORADO -->
+          <path d="M75,46 C69,28 59,21 52,21" fill="none" stroke="#3E2723" stroke-width="2.8" stroke-linecap="round"/>
+          <circle cx="51" cy="21" r="6.5" fill="#FFD54F" stroke="#F57F17" stroke-width="1.6"/>
+          <circle cx="49" cy="19" r="2.2" fill="#FFF9C4"/>
+
+          <path d="M105,46 C111,28 121,21 128,21" fill="none" stroke="#3E2723" stroke-width="2.8" stroke-linecap="round"/>
+          <circle cx="129" cy="21" r="6.5" fill="#FFD54F" stroke="#F57F17" stroke-width="1.6"/>
+          <circle cx="127" cy="19" r="2.2" fill="#FFF9C4"/>
+        </svg>
+      </div>
+
+      <h2 class="card-title">¡SÍ, QUIERO JUGAR!</h2>
+      <p class="card-tagline">"Estoy contento y listo para hablar con Ava"</p>
+      
+      <div class="card-footer-tip">
+        Toca o señala esta tarjeta verde cuando quieras seguir jugando y practicando palabras.
+      </div>
+    </div>
+
+    <!-- TARJETA 2: QUIERO DESCANSAR / PAUSA -->
+    <div class="assent-card card-pause">
+      <div class="card-cutline">
+        <span class="cut-badge">✂️ Recortar por aquí</span>
+      </div>
+
+      <div class="card-header-badge">
+        <span class="card-badge-status">🟠 Quiero descansar / Pausa</span>
+      </div>
+
+      <div class="avatar-illustration-box">
+        <div class="avatar-halo-pause"></div>
+
+        <!-- AVATAR CANÓNICO DE AVA: MODO PAUSA / DURMIENDO PLÁCIDAMENTE -->
+        <svg class="ava-vector" viewBox="0 0 180 186" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="pause-headGrad" cx="42%" cy="34%" r="64%">
+              <stop offset="0%" stop-color="#FFFDE7"/>
+              <stop offset="45%" stop-color="#FFE082"/>
+              <stop offset="82%" stop-color="#FFC107"/>
+              <stop offset="100%" stop-color="#F57F17"/>
+            </radialGradient>
+            <radialGradient id="pause-torsoGrad" cx="40%" cy="35%" r="68%">
+              <stop offset="0%" stop-color="#FFF59D"/>
+              <stop offset="55%" stop-color="#FFD54F"/>
+              <stop offset="100%" stop-color="#F9A825"/>
+            </radialGradient>
+            <radialGradient id="pause-blushGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FF8A65" stop-opacity="0.6"/>
+              <stop offset="65%" stop-color="#FFA726" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#FFA726" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="pause-wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+              <stop offset="55%" stop-color="#E1F5FE" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="#B3E5FC" stop-opacity="0.65"/>
+            </linearGradient>
+            <clipPath id="pause-torsoClip">
+              <path d="M64,113 C58,131 64,154 90,155 C116,154 122,131 116,113 C111,101 69,101 64,113 Z"/>
+            </clipPath>
+          </defs>
+
+          <!-- Sombra de Apoyo -->
+          <ellipse cx="90" cy="174" rx="28" ry="4" fill="rgba(62, 39, 35, 0.22)"/>
+
+          <!-- Letras Zzz tiernas flotantes -->
+          <g font-family="'Fredoka', cursive" font-weight="bold">
+            <text x="135" y="46" font-size="22" fill="#E65100">Z</text>
+            <text x="148" y="28" font-size="16" fill="#FB8C00">z</text>
+            <text x="156" y="16" font-size="12" fill="#FFA726">z</text>
+          </g>
+
+          <!-- ALAS EN REPOSO CÁLIDO -->
+          <!-- Ala Izquierda Plegada Suave -->
+          <g>
+            <path d="M64,108 C46,80 18,84 20,105 C22,118 43,120 64,114 Z"
+                  fill="url(#pause-wingGrad)" stroke="#64B5F6" stroke-width="2"/>
+            <path d="M64,114 C46,117 30,126 34,137 C39,146 54,136 64,120 Z"
+                  fill="url(#pause-wingGrad)" stroke="#64B5F6" stroke-width="1.6"/>
+          </g>
+          <!-- Ala Derecha Plegada Suave -->
+          <g>
+            <path d="M116,108 C134,80 162,84 160,105 C158,118 137,120 116,114 Z"
+                  fill="url(#pause-wingGrad)" stroke="#64B5F6" stroke-width="2"/>
+            <path d="M116,114 C134,117 150,126 146,137 C141,146 126,136 116,120 Z"
+                  fill="url(#pause-wingGrad)" stroke="#64B5F6" stroke-width="1.6"/>
+          </g>
+
+          <!-- CUERPO Y PATITAS EN DESCANSO -->
+          <path d="M86.5,153 Q90,162 93.5,153 Z" fill="#3E2723"/>
+
+          <!-- Patitas cruzaditas o en calma -->
+          <path d="M79,151 L77,168" stroke="#3E2723" stroke-width="5.2" stroke-linecap="round"/>
+          <ellipse cx="74.5" cy="170.5" rx="7" ry="4" fill="#4E342E" stroke="#2A1810" stroke-width="1.3"/>
+          <path d="M101,151 L103,168" stroke="#3E2723" stroke-width="5.2" stroke-linecap="round"/>
+          <ellipse cx="105.5" cy="170.5" rx="7" ry="4" fill="#4E342E" stroke="#2A1810" stroke-width="1.3"/>
+
+          <!-- Abdomen rayado de abeja -->
+          <g clip-path="url(#pause-torsoClip)">
+            <path d="M64,113 C58,131 64,154 90,155 C116,154 122,131 116,113 C111,101 69,101 64,113 Z"
+                  fill="url(#pause-torsoGrad)"/>
+            <path d="M56,100 Q90,111 124,100 L124,113 Q90,122 56,113 Z" fill="#3E2723"/>
+            <path d="M56,125 Q90,136 124,125 L124,139 Q90,149 56,139 Z" fill="#3E2723"/>
+            <ellipse cx="74" cy="128" rx="9" ry="18" fill="rgba(255,255,255,0.18)"/>
+          </g>
+          <path d="M64,113 C58,131 64,154 90,155 C116,154 122,131 116,113 C111,101 69,101 64,113 Z"
+                fill="none" stroke="#E68A00" stroke-width="2"/>
+
+          <!-- Manitas apoyadas relajadas en la barriguita -->
+          <path d="M64,115 Q75,124 82,126" fill="none" stroke="#3E2723" stroke-width="4.8" stroke-linecap="round"/>
+          <circle cx="83" cy="126" r="4.8" fill="#4E342E"/>
+          <path d="M116,115 Q105,124 98,126" fill="none" stroke="#3E2723" stroke-width="4.8" stroke-linecap="round"/>
+          <circle cx="97" cy="126" r="4.8" fill="#4E342E"/>
+
+          <!-- CABEZA DE PELUCHE LIGERAMENTE INCLINADA DE SUEÑO -->
+          <path d="M55,72 L51,70 L54,75 L50,77 L55,79 Z" fill="#FFC107"/>
+          <path d="M125,72 L129,70 L126,75 L130,77 L125,79 Z" fill="#FFC107"/>
+          <ellipse cx="90" cy="74" rx="35.5" ry="29.5" fill="url(#pause-headGrad)" stroke="#F59E0B" stroke-width="2.2"/>
+
+          <!-- Copete peludito chocolate en la frente -->
+          <path d="M70,48 Q81,42 90,56 Q99,42 110,48 Q101,43 90,44 Q79,43 70,48 Z" fill="#3E2723"/>
+
+          <!-- Mejillas sonrosadas de relajación -->
+          <circle cx="61" cy="82" r="8.5" fill="url(#pause-blushGrad)"/>
+          <circle cx="119" cy="82" r="8.5" fill="url(#pause-blushGrad)"/>
+
+          <!-- Cejitas serenas -->
+          <path d="M66,61 Q73,58 80,60" fill="none" stroke="#4E342E" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M100,60 Q107,58 114,61" fill="none" stroke="#4E342E" stroke-width="2.2" stroke-linecap="round"/>
+
+          <!-- OJITOS CERRADOS DURMIENDO DULCEMENTE (ARCOS FELICES TIPO ˘◡˘) -->
+          <g>
+            <!-- Ojo Izquierdo en reposo -->
+            <path d="M65,74 Q73,82 81,74" fill="none" stroke="#2A1810" stroke-width="3.6" stroke-linecap="round"/>
+            <path d="M63,72 L65,74 M83,72 L81,74" stroke="#2A1810" stroke-width="1.8" stroke-linecap="round"/>
+
+            <!-- Ojo Derecho en reposo -->
+            <path d="M99,74 Q107,82 115,74" fill="none" stroke="#2A1810" stroke-width="3.6" stroke-linecap="round"/>
+            <path d="M97,72 L99,74 M117,72 L115,74" stroke="#2A1810" stroke-width="1.8" stroke-linecap="round"/>
+          </g>
+
+          <!-- Naricita tierna -->
+          <ellipse cx="90" cy="80" rx="3.4" ry="2.2" fill="#FF8A65" stroke="#BF360C" stroke-width="0.9"/>
+
+          <!-- Sonrisa suave descansada y apacible -->
+          <path d="M83,87 Q90,92.5 97,87" fill="none" stroke="#3E2723" stroke-width="2.6" stroke-linecap="round"/>
+
+          <!-- ANTENAS RELAJADAS CURVADAS -->
+          <path d="M75,46 C68,32 58,26 50,28" fill="none" stroke="#3E2723" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="49" cy="28" r="6" fill="#FFD54F" stroke="#F57F17" stroke-width="1.6"/>
+          <circle cx="47.5" cy="26.5" r="2" fill="#FFF9C4"/>
+
+          <path d="M105,46 C112,32 122,26 130,28" fill="none" stroke="#3E2723" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="131" cy="28" r="6" fill="#FFD54F" stroke="#F57F17" stroke-width="1.6"/>
+          <circle cx="129.5" cy="26.5" r="2" fill="#FFF9C4"/>
+        </svg>
+      </div>
+
+      <h2 class="card-title">QUIERO DESCANSAR</h2>
+      <p class="card-tagline">"Hacemos una pausa o terminamos por hoy"</p>
+      
+      <div class="card-footer-tip">
+        Toca o señala esta tarjeta naranja si sientes cansancio; tu esfuerzo siempre es valioso.
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

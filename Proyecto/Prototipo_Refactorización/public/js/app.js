@@ -148,15 +148,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btnExitAdultPortal: document.getElementById('btnExitAdultPortal')
   };
 
-  // Montaje del Avatar Vectorial Dinámico Ava en todos los contextos (CUS-05)
+  // Montaje del Avatar Vectorial Dinámico Ava en todos los contextos (CUS-05 / A.10 - H10)
   avaEngine.mount('#headerAppLogo', { size: 40 });
   avaEngine.mount('#menuAvaAvatar', { size: 70 });
   avaEngine.mount('#locomotiveAvaAvatar', { size: 64 });
-  avaEngine.mount('#exerciseAvaAvatar', { size: 122 });
-  avaEngine.mount('#pairsAvaAvatar', { size: 54 });
-  avaEngine.mount('#bingoAvaAvatar', { size: 58 });
+  avaEngine.mount('#exerciseAvaAvatar', { size: 122, onTap: () => window.repeatCurrentExercisePrompt && window.repeatCurrentExercisePrompt() });
+  avaEngine.mount('#pairsAvaAvatar', { size: 54, onTap: () => window.repeatCurrentPairsPrompt && window.repeatCurrentPairsPrompt() });
+  avaEngine.mount('#bingoAvaAvatar', { size: 58, onTap: () => window.repeatCurrentBingoPrompt && window.repeatCurrentBingoPrompt() });
   avaEngine.mount('#caveAvaPedestal', { size: 152 });
-  avaEngine.mount('#praxiaAvaAvatar', { size: 52 });
+  avaEngine.mount('#praxiaAvaAvatar', { size: 52, onTap: () => window.playCurrentPraxiaNarration && window.playCurrentPraxiaNarration() });
 
   /* --- CONTROL DE DEBOUNCE TÁCTIL (< 80ms) Y GESTIÓN DE PANTALLAS --- */
   function canTouch() {
@@ -170,6 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showScreen(screenId, tagText = "") {
+    // REGLA CLÍNICA UNIVERSAL: Al cambiar de pantalla o abandonar un espacio, detener de inmediato cualquier locución de Ava
+    audioEngine.stopSpeaking();
+
     if (screenId !== 'screen-avatar') {
       avaEngine.clearPedestalPreview();
       const previewBadge = document.getElementById('cavePreviewBadge');
@@ -301,9 +304,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Repetición contextual de consigna por voz guiada por Ava (A.10 - H10)
+  function repeatCurrentExercisePrompt() {
+    audioEngine.playClick();
+    if (state.currentActivity === 'trabalenguas') {
+      const data = SpeechGamesData.TRABALENGUAS_DATA[state.activityIndex % SpeechGamesData.TRABALENGUAS_DATA.length];
+      if (data) {
+        audioEngine.speak(`Vamos a jugar con el trabalenguas de la palabra ${data.word}. Toca el botón y di la palabra.`);
+      }
+    } else if (state.currentActivity === 'rimas') {
+      const data = SpeechGamesData.RIMAS_DATA[state.activityIndex % SpeechGamesData.RIMAS_DATA.length];
+      if (data) {
+        audioEngine.speak(`¿Qué palabra rima con ${data.baseWord}?`);
+      }
+    } else if (state.currentActivity === 'adivinanzas') {
+      const data = SpeechGamesData.ADIVINANZAS_DATA[state.activityIndex % SpeechGamesData.ADIVINANZAS_DATA.length];
+      if (data) {
+        audioEngine.speak(data.riddleText);
+      }
+    }
+  }
+  window.repeatCurrentExercisePrompt = repeatCurrentExercisePrompt;
+
+  if (elements.avatarBalloon) {
+    elements.avatarBalloon.addEventListener('click', repeatCurrentExercisePrompt);
+    elements.avatarBalloon.style.cursor = 'pointer';
+    elements.avatarBalloon.title = 'Toca para escuchar a Ava otra vez';
+  }
+
   /* --- CUS-01: CAPTURA DE MICRÓFONO Y CICLO ASR / DDA --- */
   elements.btnMic.addEventListener('click', async () => {
     if (!canTouch()) return;
+
+    // REGLA CLÍNICA: Detener cualquier audio o locución de Ava para que no interfiera con el habla del niño
+    audioEngine.stopSpeaking();
 
     if (!state.isRecording) {
       // INICIAR GRABACIÓN
@@ -366,13 +400,36 @@ document.addEventListener('DOMContentLoaded', () => {
       // 2. EVALUACIÓN ASR Y MÓDULO DDA (Strömbergsson et al. 2025/2026 / RN-DDA-001)
       setTimeout(() => {
         state.consecutiveFailures++;
-        const currentTargetWord = state.currentActivity === 'adivinanzas'
-          ? (SpeechGamesData.ADIVINANZAS_DATA[state.activityIndex % SpeechGamesData.ADIVINANZAS_DATA.length]?.answerWord || elements.exerciseWord.textContent)
-          : elements.exerciseWord.textContent;
+        let currentTargetWord = elements.exerciseWord ? elements.exerciseWord.textContent : '';
+        let acceptableTargets = [currentTargetWord];
+
+        if (state.currentActivity === 'adivinanzas') {
+          const adivData = SpeechGamesData.ADIVINANZAS_DATA[state.activityIndex % SpeechGamesData.ADIVINANZAS_DATA.length];
+          if (adivData && adivData.answerWord) {
+            currentTargetWord = adivData.answerWord;
+            acceptableTargets = [adivData.answerWord];
+          }
+        } else if (state.currentActivity === 'rimas') {
+          const rimaData = SpeechGamesData.RIMAS_DATA[state.activityIndex % SpeechGamesData.RIMAS_DATA.length];
+          if (rimaData) {
+            const correctOpt = rimaData.options.find(o => o.correct);
+            acceptableTargets = [rimaData.baseWord];
+            if (correctOpt) acceptableTargets.push(correctOpt.word);
+            currentTargetWord = correctOpt ? correctOpt.word : rimaData.baseWord;
+          }
+        } else if (state.currentActivity === 'trabalenguas') {
+          const trabData = SpeechGamesData.TRABALENGUAS_DATA[state.activityIndex % SpeechGamesData.TRABALENGUAS_DATA.length];
+          if (trabData) {
+            currentTargetWord = trabData.word;
+            acceptableTargets = [trabData.word];
+          }
+        }
+
         const evalContext = {
           context: state.currentActivity === 'trabalenguas' ? 'continuous' : 'isolated',
           phoneme: state.activePhoneme,
-          activity: state.currentActivity
+          activity: state.currentActivity,
+          acceptableTargets: acceptableTargets
         };
         const evaluation = audioEngine.evaluateSpeech(currentTargetWord, state.consecutiveFailures, evalContext);
 
@@ -446,6 +503,15 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- PANTALLA CUS-02: PARES MÍNIMOS --- */
   let currentPairIndex = 0;
 
+  function repeatCurrentPairsPrompt() {
+    audioEngine.playClick();
+    const pair = MinimalPairsData[currentPairIndex];
+    if (pair && pair.question) {
+      audioEngine.speak(pair.question);
+    }
+  }
+  window.repeatCurrentPairsPrompt = repeatCurrentPairsPrompt;
+
   function loadMinimalPair(index) {
     currentPairIndex = index % MinimalPairsData.length;
     const pair = MinimalPairsData[currentPairIndex];
@@ -468,6 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   elements.pairCardCorrect.addEventListener('click', () => {
     if (!canTouch()) return;
+    audioEngine.stopSpeaking();
     const pair = MinimalPairsData[currentPairIndex];
     elements.pairCardCorrect.classList.add('selected-correct');
     audioEngine.playSuccessFanfare();
@@ -484,6 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   elements.pairCardFoil.addEventListener('click', () => {
     if (!canTouch()) return;
+    audioEngine.stopSpeaking();
     const pair = MinimalPairsData[currentPairIndex];
     elements.pairCardFoil.classList.add('selected-comic');
     audioEngine.playGentleEncouragement();
@@ -619,6 +687,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canTouch()) return;
     const currentData = SpeechGamesData.CARRERA_DATA[carreraCurrentStep];
 
+    // REGLA CLÍNICA: Detener cualquier audio o locución de Ava de inmediato
+    audioEngine.stopSpeaking();
+
     if (!state.isRecording) {
       state.isRecording = true;
       elements.btnCarreraMic.classList.add('state-recording');
@@ -677,6 +748,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- PANTALLA: BINGO FONOLÓGICO VISUAL-AUDITIVO (RF-LUD-005 - Mora et al., 2024) --- */
   let bingoRoundIndex = 0;
+
+  function repeatCurrentBingoPrompt() {
+    audioEngine.playClick();
+    const round = BINGO_ROUNDS[bingoRoundIndex];
+    if (round && round.prompt) {
+      audioEngine.speak(round.prompt);
+    }
+  }
+  window.repeatCurrentBingoPrompt = repeatCurrentBingoPrompt;
   const BINGO_ROUNDS = [
     { targetSound: "s", targetWord: "Sol", prompt: "¡Encuentra y toca la tarjeta que empieza con el sonido de Sol! ☀️" },
     { targetSound: "l", targetWord: "Luna", prompt: "¡Ahora busca y toca la tarjeta que empieza con el sonido de Luna! 🌙" },
@@ -799,8 +879,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const narration = SOUND_NARRATIONS[currentKey] || SOUND_NARRATIONS['r'];
     audioEngine.speak(narration.spoken);
   }
+  window.playCurrentPraxiaNarration = playCurrentPraxiaNarration;
 
   function openPraxiaModal(soundKey = 'r', onCloseCallback = null) {
+    audioEngine.stopSpeaking();
     praxiaCallbackOnClose = onCloseCallback;
     const key = (soundKey || 'r').toLowerCase();
     const narration = SOUND_NARRATIONS[key] || SOUND_NARRATIONS['r'];
@@ -818,6 +900,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function closePraxia() {
     if (!canTouch()) return;
+    // REGLA CLÍNICA: Al cerrar o abandonar las praxias, Ava DEBE callar de inmediato
+    audioEngine.stopSpeaking();
     elements.praxiaModal.classList.remove('active');
     if (praxiaCallbackOnClose) {
       praxiaCallbackOnClose();
@@ -1208,6 +1292,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (elements.btnMathgateCancel) {
     elements.btnMathgateCancel.addEventListener('click', () => {
       if (!canTouch()) return;
+      audioEngine.stopSpeaking();
       elements.mathgateModal.classList.remove('active');
     });
   }
@@ -1289,6 +1374,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- NAVEGACIÓN Y EVENTOS DEL MENÚ PRINCIPAL --- */
   elements.btnBackMenu.addEventListener('click', () => {
     if (!canTouch()) return;
+    audioEngine.stopSpeaking();
     audioEngine.playClick();
     showScreen('screen-menu', 'Bosque Sonoro Amigable');
   });

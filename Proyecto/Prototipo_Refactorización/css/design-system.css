@@ -1336,6 +1336,52 @@ html, body {
   padding-bottom: 8px;
 }
 
+/* Botón de cierre colosal de Praxias con alta visibilidad y contraste (A.3 - H03) */
+.praxia-modal-header #btnClosePraxia {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  background: var(--color-primary-forest, #2E7D32) !important;
+  color: #FFFFFF !important;
+  border: 2.5px solid #1B5E20 !important;
+  border-radius: var(--radius-full, 9999px) !important;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.35) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: transform var(--transition-fast, 0.15s), background-color var(--transition-fast, 0.15s), box-shadow var(--transition-fast, 0.15s) !important;
+}
+
+.praxia-modal-header #btnClosePraxia .ui-icon-svg {
+  stroke: #FFFFFF !important;
+  stroke-width: 3.2 !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.praxia-modal-header #btnClosePraxia:hover {
+  background: #1B5E20 !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 6px 16px rgba(27, 94, 32, 0.45) !important;
+}
+
+.praxia-modal-header #btnClosePraxia:active {
+  transform: scale(0.94) !important;
+}
+
+body.cvi-mode .praxia-modal-header #btnClosePraxia {
+  background: #000000 !important;
+  color: #FFD600 !important;
+  border: 3.5px solid #FFD600 !important;
+  box-shadow: 0 0 14px rgba(255, 214, 0, 0.6) !important;
+}
+
+body.cvi-mode .praxia-modal-header #btnClosePraxia .ui-icon-svg {
+  stroke: #FFD600 !important;
+}
+
 .praxia-modal-title {
   font-family: var(--font-display-infant);
   font-size: 1.35rem;

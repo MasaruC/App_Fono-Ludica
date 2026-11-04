@@ -183,6 +183,12 @@ class PhonoAudioEngine {
       "¡atento amiguito! abre tu boquita, sube la parte de atrás de tu lengua y suelta el aire de golpe como en casa. ¡inténtalo tú solo!": basePath + "consignas/praxia_k.mp3",
       "¡juguemos con los labios! junta tus dos labios bien apretaditos, guarda un poquito de aire y suéltalos rápido como en pato. ¡muy bien!": basePath + "consignas/praxia_p.mp3",
 
+      // 11. Cuestionario Infantil de Cierre con Emojis (Actividad 10 - Micro-SCED)
+      "¡qué lindo jugamos hoy! dime amiguito: ¿te gustaron los dibujos del bosque y de la abejita ava? toca una carita.": basePath + "consignas/emoji_q1_visual.mp3",
+      "¿y cómo te sentiste hablando por el botón verde grande? toca la carita que sientes.": basePath + "consignas/emoji_q2_emocional.mp3",
+      "última preguntita: ¿quieres volver a jugar otro día con los vagones de ava?": basePath + "consignas/emoji_q3_jugar.mp3",
+      "¡muchas gracias por jugar conmigo en el bosque sonoro! ¡ganaste una estrella gigante!": basePath + "consignas/emoji_cierre_estrella.mp3",
+
       // 12. Estímulos Bosch & Melgar y Juegos
       "guitarra": basePath + "estimulos/guitarra.mp3",
       "ratón": basePath + "estimulos/raton.mp3",
@@ -260,7 +266,21 @@ class PhonoAudioEngine {
       return 'assets/audio/consignas/praxia_p.mp3';
     }
 
-    // 2. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
+    // 2. Detección semántica para cuestionario infantil con emojis de Ava (Actividad 10)
+    if (clean.includes('te gustaron los dibujos del bosque') || clean.includes('dibujos del bosque y de la abejita ava')) {
+      return 'assets/audio/consignas/emoji_q1_visual.mp3';
+    }
+    if (clean.includes('como te sentiste hablando por el boton') || clean.includes('boton verde grande')) {
+      return 'assets/audio/consignas/emoji_q2_emocional.mp3';
+    }
+    if (clean.includes('quieres volver a jugar otro dia') || clean.includes('vagones de ava')) {
+      return 'assets/audio/consignas/emoji_q3_jugar.mp3';
+    }
+    if (clean.includes('muchas gracias por jugar conmigo en el bosque sonoro') || clean.includes('ganaste una estrella gigante')) {
+      return 'assets/audio/consignas/emoji_cierre_estrella.mp3';
+    }
+
+    // 3. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
     for (const [key, path] of Object.entries(this.normalizedSoundbank)) {
       if (key.includes(' ') && key.length >= 14 && (clean.includes(key) || (clean.length >= 14 && key.includes(clean)))) {
         return path;
@@ -646,6 +666,35 @@ class PhonoAudioEngine {
   }
 
   /**
+   * Detiene inmediatamente cualquier locución en curso de Ava (audio grabado o síntesis de voz),
+   * resetea el estado vocal y restaura el avatar al reposo (cierra la boca/cancela lip-sync).
+   * Obligatorio cuando el niño pulsa el micrófono para hablar, o cuando se cierra/cambia de espacio o modal.
+   */
+  stopSpeaking() {
+    // 1. Detener audio pregrabado de estudio en curso
+    if (this.currentPlayingAudio) {
+      try {
+        this.currentPlayingAudio.pause();
+        this.currentPlayingAudio.currentTime = 0;
+      } catch (err) {}
+      this.currentPlayingAudio = null;
+    }
+
+    // 2. Detener síntesis TTS comercial en curso
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+
+    // 3. Resetear flags y notificar al avatar Ava para que finalice lip-sync de inmediato
+    this.isSpeakingVoice = false;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ava-speech-end'));
+    }
+  }
+
+  /**
    * Emite la voz de Ava.
    * Si es un fonema aislado, emite síntesis pura SIN schwa.
    * Si existe un archivo pregrabado de estudio 44.1 kHz, lo reproduce prioritariamente.
@@ -664,16 +713,7 @@ class PhonoAudioEngine {
     }
 
     // 0. Detener cualquier audio de locución o TTS sintético previo para evitar traslapes
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try { window.speechSynthesis.cancel(); } catch (e) {}
-    }
-    if (this.currentPlayingAudio) {
-      try {
-        this.currentPlayingAudio.pause();
-        this.currentPlayingAudio.currentTime = 0;
-      } catch (err) {}
-      this.currentPlayingAudio = null;
-    }
+    this.stopSpeaking();
 
     // Callback unificado con eventos para el Avatar Vectorial Ava (Lip-sync reactivo)
     const handleEnd = () => {
@@ -796,16 +836,12 @@ class PhonoAudioEngine {
   /* --- CAPTURA DE AUDIO POR MICRÓFONO Y CONTINGENTE SELF-PLAYBACK (<300ms) --- */
 
   async startRecording(onAmplitudeUpdate = null) {
+    // REGLA CLÍNICA DE INTERACCIÓN: Detener inmediatamente cualquier locución de Ava
+    // para evitar interferencias acústicas, acoples en el micrófono y contaminación del biofeedback fonoaudiológico.
+    this.stopSpeaking();
+
     this.audioChunks = [];
     this.lastTranscript = '';
-
-    if (this.recognition) {
-      try {
-        this.recognition.start();
-      } catch (err) {
-        // En caso de estar ya en ejecución
-      }
-    }
 
     try {
       if (!this.stream) {
@@ -834,6 +870,7 @@ class PhonoAudioEngine {
         }
       }
 
+      // Iniciar captura para self-playback
       this.mediaRecorder = new MediaRecorder(this.stream);
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
@@ -843,10 +880,26 @@ class PhonoAudioEngine {
 
       this.mediaRecorder.start();
       this.isRecording = true;
+
+      // Iniciar Speech Recognition Service y VAD pediátrico compartiendo stream y audioCtx
+      if (this.speechService) {
+        this.speechService.setAudioContext(this.audioCtx);
+        await this.speechService.startListening((amp) => {
+          // VAD secundario
+        }, this.stream, this.audioCtx);
+      } else if (this.recognition) {
+        try {
+          this.recognition.start();
+        } catch (err) {}
+      }
+
       return true;
     } catch (e) {
       console.warn("Micrófono real no disponible o bloqueado. Se activará simulación acústica:", e);
       this.isRecording = true;
+      if (this.speechService) {
+        this.speechService.startListeningSimulated();
+      }
       // Simula amplitud para retroalimentación visual reactiva
       if (onAmplitudeUpdate) {
         let simCount = 0;
@@ -867,7 +920,17 @@ class PhonoAudioEngine {
   async stopRecording() {
     this.isRecording = false;
 
-    if (this.recognition) {
+    // Detener Speech Service y consolidar transcripción
+    if (this.speechService) {
+      try {
+        await this.speechService.stopListening();
+        if (this.speechService.currentTranscript) {
+          this.lastTranscript = this.speechService.currentTranscript;
+        }
+      } catch (err) {
+        console.warn('[AudioEngine] Error deteniendo speechService:', err);
+      }
+    } else if (this.recognition) {
       try {
         this.recognition.stop();
       } catch (err) {}
@@ -924,10 +987,14 @@ class PhonoAudioEngine {
   evaluateSpeech(targetWord, attemptCount = 1, contextHint = {}) {
     let result;
     if (this.speechService) {
-      result = this.speechService.evaluateSpeechPediatric(targetWord, attemptCount);
+      // Asegurar sincronía de transcripción si estuviera en lastTranscript
+      if (!this.speechService.currentTranscript && this.lastTranscript) {
+        this.speechService.currentTranscript = this.lastTranscript;
+      }
+      result = this.speechService.evaluateSpeechPediatric(targetWord, attemptCount, contextHint);
     } else {
-      const cleanTarget = (targetWord || '').toLowerCase().trim();
-      const cleanRec = (this.lastTranscript || '').toLowerCase().trim();
+      const cleanTarget = this.cleanTextKey(targetWord);
+      const cleanRec = this.cleanTextKey(this.lastTranscript);
 
       // 1. Coincidencia exacta o contenida en la transcripción ASR real
       if (cleanRec && (cleanRec.includes(cleanTarget) || cleanTarget.includes(cleanRec))) {
@@ -935,7 +1002,7 @@ class PhonoAudioEngine {
       } else if (attemptCount >= 3) {
         result = { verdict: 'DDA_INTERVENTION', confidence: 0.70 };
       } else {
-        const approvedProb = 0.65;
+        const approvedProb = 0.75;
         result = Math.random() < approvedProb 
           ? { verdict: 'APPROVED', confidence: 0.88 } 
           : { verdict: 'RETRY_GENTLE', confidence: 0.50 };

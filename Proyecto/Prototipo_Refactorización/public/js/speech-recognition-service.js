@@ -1,8 +1,8 @@
 /* ==========================================================================
    SPEECH RECOGNITION SERVICE - MOTOR DUAL NATIVO / WEB AUDIO PEDIÁTRICO
-   Cumple con: RF-ASR-001, RF-BIO-002, RN-FON-001, RN-DDA-001
-   Sustento: Strömbergsson et al. (2026) (Tolerancia en ASR infantil),
-             Hourcade (2008), Du et al. (2023)
+   Cumple con: RF-ASR-001, RF-BIO-002, RN-FON-001, RN-FON-002, RN-DDA-001, RN-GAM-001
+   Sustento: Strömbergsson et al. (2026) (Tolerancia en ASR infantil y concordancia),
+             Hourcade (2008), Du et al. (2023), Saeedi et al. (2024)
    ========================================================================== */
 
 class SpeechRecognitionService {
@@ -17,14 +17,15 @@ class SpeechRecognitionService {
     if (this.webSpeechRec) {
       this.webSpeechRec.lang = 'es-PE';
       this.webSpeechRec.continuous = false;
-      this.webSpeechRec.interimResults = false;
-      this.webSpeechRec.maxAlternatives = 3;
+      this.webSpeechRec.interimResults = true; // Activo para captura inmediata sin latencia de fin de frase
+      this.webSpeechRec.maxAlternatives = 5;
     }
 
     // Estado interno
     this.isListening = false;
     this.currentTranscript = '';
     this.activeStream = null;
+    this.isSharedStream = false;
     this.analyser = null;
     this.vadData = {
       startTime: 0,
@@ -72,7 +73,7 @@ class SpeechRecognitionService {
   }
 
   /* Iniciar captura dual: ASR (Nativo/Web) + Análisis Acústico VAD */
-  async startListening(onAmplitudeCallback = null) {
+  async startListening(onAmplitudeCallback = null, existingStream = null, existingCtx = null) {
     if (this.isListening) return;
     this.isListening = true;
     this.currentTranscript = '';
@@ -90,96 +91,129 @@ class SpeechRecognitionService {
 
     // 2. Conectar analizador de audio Web Audio para VAD en tiempo real
     try {
-      if (!this.audioContext) {
+      if (existingCtx) {
+        this.audioContext = existingCtx;
+      } else if (!this.audioContext) {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         this.audioContext = new AudioCtx();
       }
-      if (this.audioContext.state === 'suspended') {
+      if (this.audioContext && this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
 
-      this.activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const source = this.audioContext.createMediaStreamSource(this.activeStream);
-      this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = 512;
-      source.connect(this.analyser);
+      if (existingStream) {
+        this.activeStream = existingStream;
+        this.isSharedStream = true;
+      } else if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        this.activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.isSharedStream = false;
+      }
 
-      const buffer = new Uint8Array(this.analyser.frequencyBinCount);
-      const RMS_THRESHOLD = 0.045; // Umbral de energía de voz infantil
+      if (this.audioContext && this.activeStream) {
+        const source = this.audioContext.createMediaStreamSource(this.activeStream);
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.fftSize = 256;
+        source.connect(this.analyser);
 
-      this.vadInterval = setInterval(() => {
-        if (!this.isListening) return;
-        this.analyser.getByteTimeDomainData(buffer);
+        const buffer = new Uint8Array(this.analyser.frequencyBinCount);
+        // Umbral calibrado para voz preescolar (3-5 años) y micrófonos de tablets/móviles
+        const RMS_THRESHOLD = 0.028;
 
-        // Calcular RMS
-        let sum = 0;
-        for (let i = 0; i < buffer.length; i++) {
-          const norm = (buffer[i] - 128) / 128;
-          sum += norm * norm;
-        }
-        const rms = Math.sqrt(sum / buffer.length);
-        this.vadData.rmsSamples.push(rms);
-        if (rms > this.vadData.peakRms) {
-          this.vadData.peakRms = rms;
-        }
+        this.vadInterval = setInterval(() => {
+          if (!this.isListening || !this.analyser) return;
+          this.analyser.getByteTimeDomainData(buffer);
 
-        // Callback de onda reactiva visual
-        if (onAmplitudeCallback) {
-          onAmplitudeCallback(rms);
-        }
-
-        // Detección de esfuerzo fonatorio sostenido
-        if (rms >= RMS_THRESHOLD) {
-          const now = performance.now();
-          if (this.vadData.speechStartTime === 0) {
-            this.vadData.speechStartTime = now;
+          // Calcular RMS de energía vocal
+          let sum = 0;
+          for (let i = 0; i < buffer.length; i++) {
+            const norm = (buffer[i] - 128) / 128;
+            sum += norm * norm;
           }
-          this.vadData.speechEndTime = now;
-          this.vadData.hasAcousticEffort = true;
-        }
-      }, 50);
+          const rms = Math.sqrt(sum / buffer.length);
+          this.vadData.rmsSamples.push(rms);
+          if (rms > this.vadData.peakRms) {
+            this.vadData.peakRms = rms;
+          }
 
+          // Callback de onda reactiva visual
+          if (onAmplitudeCallback) {
+            onAmplitudeCallback(rms);
+          }
+
+          // Detección de fonación activa sostenida
+          if (rms >= RMS_THRESHOLD) {
+            const now = performance.now();
+            if (this.vadData.speechStartTime === 0) {
+              this.vadData.speechStartTime = now;
+            }
+            this.vadData.speechEndTime = now;
+            this.vadData.hasAcousticEffort = true;
+          }
+        }, 35);
+      }
     } catch (err) {
       console.warn('[SpeechService] No se pudo inicializar VAD Web Audio:', err);
     }
 
-    // 3. Iniciar ASR léxico (Nativo o Web Speech)
+    // 3. Iniciar ASR léxico (Capacitor Nativo o Web Speech)
     if (this.isNative && this.nativePlugin) {
       try {
         await this.nativePlugin.start({
           language: 'es-PE',
-          maxResults: 3,
+          maxResults: 5,
           prompt: '¡Dilo fuerte y claro, amiguito!',
-          partialResults: false,
+          partialResults: true,
           popup: false
         });
         this.nativePlugin.addListener('speechResults', (data) => {
           if (data && data.matches && data.matches.length > 0) {
             this.currentTranscript = data.matches[0];
+            console.log('[SpeechService Native ASR]:', this.currentTranscript);
           }
         });
       } catch (err) {
-        console.warn('[SpeechService] Fallback de Capacitor ASR:', err);
+        console.warn('[SpeechService] Error iniciando Capacitor ASR:', err);
       }
     } else if (this.webSpeechRec) {
       try {
         this.webSpeechRec.onresult = (evt) => {
-          if (evt.results && evt.results[0]) {
-            this.currentTranscript = evt.results[0][0].transcript;
+          let str = '';
+          for (let i = 0; i < evt.results.length; i++) {
+            if (evt.results[i] && evt.results[i][0]) {
+              str += evt.results[i][0].transcript + ' ';
+            }
           }
+          this.currentTranscript = str.trim();
+          console.log('[SpeechService WebSpeech ASR]:', this.currentTranscript);
         };
+
         this.webSpeechRec.onerror = (e) => {
-          console.log('[SpeechService WebSpeech error]:', e.error);
+          console.warn('[SpeechService WebSpeech error]:', e.error);
         };
+
         this.webSpeechRec.start();
       } catch (e) {
-        // Ignorar re-arranques simultáneos
+        // Ignorar re-arranque si ya estaba en curso
       }
     }
   }
 
+  /* Fallback simulado para entornos sin hardware de micrófono */
+  startListeningSimulated() {
+    this.isListening = true;
+    this.vadData = {
+      startTime: performance.now(),
+      speechStartTime: performance.now(),
+      speechEndTime: performance.now() + 850,
+      phonatoryDurationMs: 850,
+      peakRms: 0.08,
+      rmsSamples: [0.04, 0.08, 0.06],
+      hasAcousticEffort: true
+    };
+  }
+
   /* Detener captura y consolidar evaluación fónica */
-  async stopListening(targetWord = '', attemptCount = 1) {
+  async stopListening(targetWord = '', attemptCount = 1, contextHint = {}) {
     this.isListening = false;
 
     if (this.vadInterval) {
@@ -187,20 +221,22 @@ class SpeechRecognitionService {
       this.vadInterval = null;
     }
 
-    // Calcular duración de fonación activa en ms (KPI-10)
+    // Calcular duración de fonación activa en ms (KPI-10 APED)
     if (this.vadData.speechStartTime > 0 && this.vadData.speechEndTime > 0) {
       this.vadData.phonatoryDurationMs = Math.round(this.vadData.speechEndTime - this.vadData.speechStartTime);
+    } else if (this.vadData.startTime > 0 && this.vadData.hasAcousticEffort) {
+      this.vadData.phonatoryDurationMs = Math.round(performance.now() - this.vadData.startTime);
     } else {
       this.vadData.phonatoryDurationMs = 0;
     }
 
-    // Detener stream de micrófono
-    if (this.activeStream) {
+    // Detener stream solo si no es compartido con AudioEngine (para no cortar MediaRecorder)
+    if (!this.isSharedStream && this.activeStream) {
       this.activeStream.getTracks().forEach(t => t.stop());
       this.activeStream = null;
     }
 
-    // Detener motor de voz
+    // Detener motores de reconocimiento
     if (this.isNative && this.nativePlugin) {
       try {
         await this.nativePlugin.stop();
@@ -211,89 +247,198 @@ class SpeechRecognitionService {
       } catch (e) {}
     }
 
-    // Esperar un momento si el transcript está llegando
-    await new Promise(r => setTimeout(r, 180));
+    // Breve pausa para permitir que aterrice el último paquete del Web Speech API
+    await new Promise(r => setTimeout(r, 120));
 
-    return this.evaluateSpeechPediatric(targetWord, attemptCount);
+    if (targetWord) {
+      return this.evaluateSpeechPediatric(targetWord, attemptCount, contextHint);
+    }
+    return null;
   }
 
-  /* Evaluación de Inteligibilidad con Tolerancia Fonética Pediátrica */
-  evaluateSpeechPediatric(targetWord, attemptCount) {
-    const cleanTarget = (targetWord || '').toLowerCase().trim();
-    const cleanRec = (this.currentTranscript || '').toLowerCase().trim();
+  /* Normalización robusta para comparación fonoaudiológica (ignora tildes, signos y emojis) */
+  normalizeSpeechText(text) {
+    if (!text) return '';
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Elimina acentos/tildes (ó -> o, etc.)
+      .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '') // Emojis
+      .replace(/[^a-z0-9\sñ]/g, ' ') // Preserva solo letras, números, ñ y espacios
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
-    // 1. Similitud léxica exacta o contenida
+  /* Evaluación de Inteligibilidad con Tolerancia Fonética Pediátrica Calibrada (Strömbergsson et al., 2026) */
+  evaluateSpeechPediatric(targetWord, attemptCount = 1, contextHint = {}) {
+    // 1. Extraer universo de palabras aceptables para el ejercicio
+    let targets = [];
+    if (Array.isArray(contextHint.acceptableTargets) && contextHint.acceptableTargets.length > 0) {
+      targets = contextHint.acceptableTargets;
+    } else if (targetWord) {
+      targets = [targetWord];
+    }
+
+    // Filtrar targets para que solo contengan palabras completas (longitud >= 3 letras)
+    // para evitar que fonemas aislados de 1 letra (ej: 'l', 'r') o sílabas cortas generen falsos positivos
+    const normalizedTargets = targets
+      .map(w => this.normalizeSpeechText(w))
+      .filter(w => w.length >= 3);
+
+    if (normalizedTargets.length === 0 && targetWord) {
+      normalizedTargets.push(this.normalizeSpeechText(targetWord));
+    }
+
+    const cleanRec = this.normalizeSpeechText(this.currentTranscript);
+    console.log('[SpeechService Eval] Targets:', normalizedTargets, '| Rec:', cleanRec, '| VAD:', this.vadData);
+
     let isLexicalMatch = false;
-    let phoneticProximity = 0;
+    let bestProximity = 0;
+    let matchedTarget = normalizedTargets[0] || '';
 
-    if (cleanRec) {
-      if (cleanRec === cleanTarget || cleanRec.includes(cleanTarget) || cleanTarget.includes(cleanRec)) {
-        isLexicalMatch = true;
-        phoneticProximity = 1.0;
-      } else {
-        // Distancia fonética de Levenshtein simplificada
-        phoneticProximity = this.calculateSimilarity(cleanTarget, cleanRec);
-        if (phoneticProximity >= 0.70) {
+    // 2. Evaluación de transcripción ASR si se reconoció voz
+    if (cleanRec && cleanRec.length > 0) {
+      const recTokens = cleanRec.split(' ').filter(t => t.length > 0);
+
+      for (const target of normalizedTargets) {
+        if (!target) continue;
+
+        // A. Coincidencia idéntica completa
+        if (cleanRec === target) {
           isLexicalMatch = true;
+          bestProximity = 1.0;
+          matchedTarget = target;
+          break;
         }
+
+        // B. Coincidencia de palabra completa contenida en la locución (con límites de palabra)
+        // Ejemplo: usuario dice "la luna" o "un raton" y el target es "luna" o "raton"
+        const boundaryRegex = new RegExp(`(^|\\s)${target}(\\s|$)`, 'i');
+        if (boundaryRegex.test(cleanRec)) {
+          isLexicalMatch = true;
+          bestProximity = 1.0;
+          matchedTarget = target;
+          break;
+        }
+
+        // C. Coincidencia token a token por similitud fonética Levenshtein (tolerancia para dislalias funcionales)
+        // Umbral estricto calibrado: >= 0.70 (permite 1 sustitución fonética típica ej: "nuna" por "luna",
+        // pero rechaza tajantemente palabras no relacionadas como "hola" [0.25] o "caracol" [0.14])
+        for (const token of recTokens) {
+          if (token === target) {
+            isLexicalMatch = true;
+            bestProximity = 1.0;
+            matchedTarget = target;
+            break;
+          }
+
+          if (Math.abs(token.length - target.length) <= 2) {
+            const sim = this.calculateSimilarity(token, target);
+            if (sim > bestProximity) {
+              bestProximity = sim;
+              matchedTarget = target;
+            }
+          }
+        }
+
+        if (isLexicalMatch) break;
+
+        // D. Similitud global contra target si la transcripción completa es una sola emisión
+        if (recTokens.length === 1 && Math.abs(cleanRec.length - target.length) <= 2) {
+          const globalSim = this.calculateSimilarity(cleanRec, target);
+          if (globalSim > bestProximity) {
+            bestProximity = globalSim;
+            matchedTarget = target;
+          }
+        }
+      }
+
+      // Umbral fonoaudiológico calibrado (Strömbergsson et al., 2026): >= 0.70
+      if (bestProximity >= 0.70) {
+        isLexicalMatch = true;
       }
     }
 
-    // 2. Si la palabra coincide por voz
+    // 3. Si hubo acierto léxico o aproximación fonética válida
     if (isLexicalMatch) {
       return {
         verdict: 'APPROVED',
-        transcript: cleanRec,
-        confidence: Math.max(0.85, phoneticProximity),
+        transcript: this.currentTranscript || matchedTarget,
+        confidence: Math.max(0.88, bestProximity),
         acousticData: this.vadData,
-        message: '¡Excelente pronunciación!'
+        message: '¡Excelente pronunciación! ¡Lo hiciste genial!'
       };
     }
 
-    // 3. Regla DDA: Intervención mandatoria tras 3er intento
+    // 4. Regla DDA: Intervención mandatoria tras 3er intento no concordante (RN-DDA-001)
     if (attemptCount >= 3) {
       return {
         verdict: 'DDA_INTERVENTION',
-        transcript: cleanRec,
+        transcript: this.currentTranscript,
         confidence: 0.60,
         acousticData: this.vadData,
-        message: '¡Buen esfuerzo! Vamos a practicar con la praxia.'
+        message: '¡Buen esfuerzo! Vamos a practicar con la praxia bucofacial.'
       };
     }
 
-    // 4. Si hubo esfuerzo acústico notable (fonación >= 600 ms o buen volumen)
-    // Se aprueba de manera probabilística/estimulante o se invita a reintentar
-    if (this.vadData.hasAcousticEffort && this.vadData.phonatoryDurationMs >= 500) {
-      // Si el esfuerzo fonatorio fue genuino, dar 70% de probabilidad de aprobación pedagógica
-      if (Math.random() < 0.70) {
+    // 5. Si el ASR transcribió una palabra CONCRETA pero fue INCORRECTA (ej: dijo "caracol" u "hola" en vez de "luna"):
+    // BAJO NINGUNA CIRCUNSTANCIA SE APRUEBA. Debe solicitar reintento pedagógico no punitivo.
+    if (cleanRec && cleanRec.length > 0) {
+      return {
+        verdict: 'RETRY_GENTLE',
+        transcript: this.currentTranscript,
+        confidence: 0.40,
+        acousticData: this.vadData,
+        message: '¡Buen intento! Escuchemos bien la palabra y vamos a intentarlo otra vez.'
+      };
+    }
+
+    // 6. Caso de contingencia acústica (ASR en silencio / sin transcripción por falta de internet o habla atípica):
+    // Solo aplica cuando cleanRec está VACÍO (el ASR no devolvió texto alguno)
+    const hasPhoneticEffort = this.vadData.hasAcousticEffort &&
+      this.vadData.peakRms >= 0.032 &&
+      this.vadData.phonatoryDurationMs >= 380;
+
+    if (hasPhoneticEffort) {
+      // En intento 2, si el niño insistió vocalizando con energía pero el ASR en la nube no lo decodificó,
+      // se aprueba para evitar fatiga/frustración (RN-GAM-001)
+      if (attemptCount >= 2 && (this.vadData.phonatoryDurationMs >= 500 || this.vadData.peakRms >= 0.05)) {
         return {
           verdict: 'APPROVED',
-          transcript: cleanRec || cleanTarget,
-          confidence: 0.88,
+          transcript: normalizedTargets[0] || targetWord,
+          confidence: 0.85,
           acousticData: this.vadData,
-          message: '¡Bien dicho con fuerza!'
+          message: '¡Muy bien intentado con voz fuerte!'
         };
       }
     }
 
-    // Reintento suave por defecto
+    // 7. Reintento suave por defecto (silencio, voz demasiado baja o palabra no concordante)
     return {
       verdict: 'RETRY_GENTLE',
-      transcript: cleanRec,
+      transcript: this.currentTranscript,
       confidence: 0.45,
       acousticData: this.vadData,
-      message: '¡Casi lo tienes! Inténtalo una vez más.'
+      message: '¡Casi lo tienes! Inténtalo una vez más con voz fuerte.'
     };
   }
 
   calculateSimilarity(s1, s2) {
-    let longer = s1.length > s2.length ? s1 : s2;
-    let shorter = s1.length > s2.length ? s2 : s1;
-    let longerLength = longer.length;
+    const str1 = this.normalizeSpeechText(s1);
+    const str2 = this.normalizeSpeechText(s2);
+    if (!str1 && !str2) return 1.0;
+    if (!str1 || !str2) return 0.0;
+    if (str1 === str2) return 1.0;
+
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    const longerLength = longer.length;
     if (longerLength === 0) return 1.0;
-    
-    // Levenshtein distance
-    let costs = [];
+
+    // Distancia de Levenshtein
+    const costs = [];
     for (let i = 0; i <= longer.length; i++) {
       let lastValue = i;
       for (let j = 0; j <= shorter.length; j++) {
@@ -315,4 +460,3 @@ class SpeechRecognitionService {
 }
 
 window.SpeechRecognitionService = SpeechRecognitionService;
-
