@@ -110,4 +110,9 @@ Para asegurar la fundamentación rigurosa de cada propuesta y la coherencia en e
    - **Propósito:** Operacionaliza las 4 metáforas de interfaz (Visual, Funcional, Organizacional y de Interacción) para erradicar el texto en usuarios pre-lectores de 3 a 5 años (Voice-First).
    - **Ergonomía Pediátrica:** Regula los blancos táctiles (*touch targets* mínimos $\ge 48\text{ dp}$, recomendados $64\text{ a }76\text{ px}$, pulsador de fonación $80\text{ a }100\text{ px}$), separación inter-elemento $\ge 16\text{ px}$, margen palmar $24\text{ a }32\text{ px}$, gamificación no punitiva con DDA y compuerta de seguridad cognitiva (**MathGate**).
 
+3. **`voz-ava-pediatrica`** ([SKILL.md](file:///d:/.Antigravity/IHC/.agents/skills/voz-ava-pediatrica/SKILL.md)):
+   - **Propósito:** Regula la arquitectura vocal de Ava, prohíbe el uso de la "voz antigua" (TTS sintético robótico de navegador como Microsoft Helena) y prescribe el uso prioritario del Banco de Audio de Estudio Humano (44.1 kHz, Norma Lima Metropolitana).
+   - **Técnica:** Especifica el catálogo SSOT de clips de estudio (`public/assets/audio/`), el patrón mandatorio de encadenamiento secuencial (`audioEngine.speak(frase, () => audioEngine.speak(palabra))`), la prohibición de la schwa neutra `[ə]` en fonemas puros y el filtro de exclusión de voces peninsulares con ceceo en respaldos.
+
+
 

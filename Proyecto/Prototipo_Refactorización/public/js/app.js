@@ -457,7 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (state.consecutiveFailures === 1) {
           // ==============================================================
           // ESCENARIO 2A: FALLO 1 - PISTA EMPÁTICA Y MODELADO AUDITIVO DE AVA
-          // (Intento 1 No Logrado: Ava alienta con afecto y repite el modelado fónico)
+          // (Intento 1 No Logrado: Ava alienta con afecto y repite el modelado fónico con voz de estudio)
           // ==============================================================
           audioEngine.playGentleEncouragement();
           elements.feedbackBadge.className = 'feedback-status-badge status-retry active';
@@ -466,20 +466,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
           telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "REINTENTO (1)", url, "tag-yellow");
 
-          // Mensaje cálido y modelado auditivo real de la palabra objetivo
+          // Mensaje en avatar
           elements.avatarBalloon.textContent = `¡Casi lo tienes! Escucha cómo lo digo: "${currentTargetWord}".`;
-          const promptSpeech = `¡Casi lo tienes amiguito! Escucha cómo suena mi vocecita: ${currentTargetWord}. ¡Ahora inténtalo tú, vuelve a tocar el botón!`;
 
-          audioEngine.speak(promptSpeech, () => {
-            elements.micCaption.textContent = "Toca para reintentar";
-            elements.avatarBalloon.textContent = `¡Ahora dilo tú! Toca el botón y di "${currentTargetWord}".`;
+          // 1. Locución humana de estudio de Ava (reintento_suave_344.mp3):
+          // "¡qué buen intento! escucha cómo lo decimos y vuelve a tocar el botón."
+          audioEngine.speak("¡qué buen intento! escucha cómo lo decimos y vuelve a tocar el botón.", () => {
+            // 2. Inmediatamente Ava modela la palabra estímulo con su clip de estudio 44.1 kHz (ej. "luna")
+            audioEngine.speak(currentTargetWord, () => {
+              elements.micCaption.textContent = "Toca para reintentar";
+              elements.avatarBalloon.textContent = `¡Ahora dilo tú! Toca el botón y di "${currentTargetWord}".`;
+            });
           });
 
         } else if (state.consecutiveFailures === 2) {
           // ==============================================================
           // ESCENARIO 2B: FALLO 2 - ANDAMIAJE VISUAL (CANVAS 2D DE PRAXIA)
-          // (Intento 2 Consecutivo: Despliega la animación en pantalla y
-          // luego permite al niño volver a intentarlo para el Intento 3)
+          // (Intento 2 Consecutivo: Despliega la animación en pantalla con voz de estudio
+          // y luego permite al niño volver a intentarlo para el Intento 3)
           // ==============================================================
           audioEngine.playGentleEncouragement();
           elements.feedbackBadge.className = 'feedback-status-badge status-retry active';
@@ -489,10 +493,11 @@ document.addEventListener('DOMContentLoaded', () => {
           telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "ANDAMIAJE VISUAL (2)", url, "tag-yellow");
 
           elements.avatarBalloon.textContent = `¡Mira en la pantalla cómo movemos la boca para decir "${currentTargetWord}"!`;
-          const promptVisual = `¡Buen esfuerzo amiguito! Mira en la pantalla cómo colocamos la lengua y los labios para el sonido de ${currentTargetWord}.`;
 
-          audioEngine.speak(promptVisual, () => {
-            // Abre el modal con el Canvas 2D de Praxia anatómica
+          // Locución humana de estudio de Ava (dda_rescate.mp3):
+          // "¡qué gran esfuerzo amigo! mira en la pantalla cómo colocamos la lengua para que sea más fácil."
+          audioEngine.speak("¡qué gran esfuerzo amigo! mira en la pantalla cómo colocamos la lengua para que sea más fácil.", () => {
+            // Abre el modal con el Canvas 2D de Praxia anatómica (narra praxia con voz de estudio)
             openPraxiaModal(state.activePhoneme, () => {
               // AL CERRAR LA ANIMACIÓN: PERMITIR AL NIÑO VOLVER A INTENTARLO (INTENTO 3)
               // (Mantiene state.consecutiveFailures = 2 para que el próximo intento sea evaluado)
@@ -500,7 +505,10 @@ document.addEventListener('DOMContentLoaded', () => {
               elements.feedbackBadge.textContent = `🎯 ¡Ahora inténtalo tú! (2/3) Toca el botón para hablar.`;
               elements.micCaption.textContent = "Toca para hablar";
               elements.avatarBalloon.textContent = `¡Muy bien! Ahora que viste cómo se mueve la lengua, ¡dilo tú fuerte: "${currentTargetWord}"!`;
-              audioEngine.speak(`¡Excelente! Ahora que viste cómo movemos la lengua, ¡toca el botón y di ${currentTargetWord}!`);
+              // Ava refuerza con su voz de estudio grabada (aliento_1.mp3) y modela la palabra objetivo
+              audioEngine.speak("¡excelente intento, diste lo mejor de ti! ¡dilo fuerte!", () => {
+                audioEngine.speak(currentTargetWord);
+              });
             }, "¡Listo! Quiero intentarlo ✨");
           });
 
@@ -517,8 +525,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
           telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "DDA ASISTIDO", url, "tag-purple");
 
-          // Despliega automáticamente la Praxia 2D y avanza asistido sin bloquear al menor
-          audioEngine.speak("¡Qué gran esfuerzo amigo! Te ganaste una estrella gigante por tu perseverancia. Mira la pantalla y pasemos al siguiente vagón.", () => {
+          // Despliega automáticamente la Praxia 2D y avanza asistido sin bloquear al menor con voz de estudio de Ava
+          audioEngine.speak("¡qué gran esfuerzo amigo! mira en la pantalla cómo colocamos la lengua para que sea más fácil.", () => {
             openPraxiaModal(state.activePhoneme, () => {
               // Al cerrar praxia avanza asistido al siguiente ejercicio
               loadExercise(state.currentActivity, state.activityIndex + 1);

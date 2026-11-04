@@ -32,9 +32,11 @@ class PhonoAudioEngine {
       "¡Me encanta cómo practicas! Escucha cómo vuela mi sonido y repite conmigo."
     ];
 
+    this.availableVoices = [];
     this.initStudioSoundbank();
     this.initAudioContext();
     this.initSpeechRecognition();
+    this.initTTS();
 
     // Servicio Dual de Reconocimiento y VAD Pediátrico
     this.speechService = window.SpeechRecognitionService ? new window.SpeechRecognitionService(this.audioCtx) : null;
@@ -138,6 +140,22 @@ class PhonoAudioEngine {
       "¡qué gran esfuerzo amigo! mira en la pantalla cómo colocamos la lengua para que sea más fácil.": basePath + "refuerzos/dda_rescate.mp3",
       "¡escucha cómo sonó tu voz en el megáfono!": basePath + "refuerzos/escuchate.mp3",
       "¡te escuché muy bien!": basePath + "refuerzos/te_escuche.mp3",
+
+      // Variaciones de andamiaje y aliento para matching infalible de voz de estudio
+      "¡casi lo tienes amiguito! escucha cómo suena mi vocecita y vuelve a tocar el botón.": basePath + "refuerzos/reintento_suave_344.mp3",
+      "¡casi lo tienes! escucha cómo lo digo y vuelve a tocar el botón.": basePath + "refuerzos/reintento_suave_344.mp3",
+      "¡casi lo tienes amiguito!": basePath + "refuerzos/reintento_suave_344.mp3",
+      "¡casi lo tienes!": basePath + "refuerzos/reintento_suave_344.mp3",
+      "¡buen intento!": basePath + "refuerzos/reintento_suave_344.mp3",
+      "¡buen esfuerzo amiguito!": basePath + "refuerzos/dda_rescate.mp3",
+      "¡mira la animación!": basePath + "refuerzos/dda_rescate.mp3",
+      "¡mira en la pantalla cómo colocamos la lengua!": basePath + "refuerzos/dda_rescate.mp3",
+      "¡mira en la pantalla cómo movemos la boca!": basePath + "refuerzos/dda_rescate.mp3",
+      "¡excelente! ahora que viste cómo movemos la lengua, ¡dilo fuerte!": basePath + "refuerzos/aliento_1.mp3",
+      "¡dilo tú fuerte!": basePath + "refuerzos/aliento_1.mp3",
+      "¡ahora inténtalo tú!": basePath + "refuerzos/aliento_1.mp3",
+      "¡qué gran esfuerzo amigo! te ganaste una estrella gigante por tu perseverancia. mira la pantalla y pasemos al siguiente vagón.": basePath + "refuerzos/dda_rescate.mp3",
+      "¡estrella por persistencia otorgada! avanzamos juntos.": basePath + "refuerzos/dda_rescate.mp3",
 
       // 9. Taps Reinteractivos de Ava
       "¡aquí estoy amiguito! repite conmigo: guitarra. ¡toca el gran botón del micrófono y dilo bien fuerte!": basePath + "consignas/ava_tap_exercise.mp3",
@@ -280,7 +298,44 @@ class PhonoAudioEngine {
       return 'assets/audio/consignas/emoji_cierre_estrella.mp3';
     }
 
-    // 3. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
+    // 3. Detección semántica infalible para andamiaje fónico y refuerzos de Ava (Voz Nueva de Estudio 44.1 kHz)
+    // Andamiaje 1 (Fallo 1 / Pista empática): "casi lo tienes", "buen intento", "vocecita", "escucha cómo decimos/suena"
+    if (
+      clean.includes('casi lo tienes') ||
+      clean.includes('buen intento') ||
+      clean.includes('vocecita') ||
+      (clean.includes('escucha') && (clean.includes('decimos') || clean.includes('suena') || clean.includes('digo')))
+    ) {
+      return 'assets/audio/refuerzos/reintento_suave_344.mp3';
+    }
+
+    // Andamiaje 2 y 3 (Fallo 2 / Fallo 3 / Praxia / DDA): "mira en la pantalla", "colocamos la lengua", "movemos la boca", "persistencia"
+    if (
+      clean.includes('colocamos la lengua') ||
+      clean.includes('movemos la lengua') ||
+      clean.includes('movemos la boca') ||
+      clean.includes('animacion') ||
+      (clean.includes('pantalla') && (clean.includes('lengua') || clean.includes('boca') || clean.includes('mira'))) ||
+      clean.includes('siguiente vagon') ||
+      clean.includes('perseverancia') ||
+      clean.includes('persistencia') ||
+      clean.includes('rescate dda')
+    ) {
+      return 'assets/audio/refuerzos/dda_rescate.mp3';
+    }
+
+    // Aliento general / Dilo fuerte / Inténtalo tú
+    if (
+      clean.includes('diste lo mejor') ||
+      clean.includes('dilo fuerte') ||
+      clean.includes('intentalo tu') ||
+      clean.includes('ahora dilo tu') ||
+      clean.includes('toca el boton y di')
+    ) {
+      return 'assets/audio/refuerzos/aliento_1.mp3';
+    }
+
+    // 4. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
     for (const [key, path] of Object.entries(this.normalizedSoundbank)) {
       if (key.includes(' ') && key.length >= 14 && (clean.includes(key) || (clean.length >= 14 && key.includes(clean)))) {
         return path;
@@ -757,6 +812,8 @@ class PhonoAudioEngine {
       return;
     }
 
+    console.warn("⚠️ [AudioEngine] Locución fuera del banco de estudio de Ava, aplicando TTS sintético de respaldo:", text);
+
     const sanitizedText = String(text)
       .replace(/\/([a-záéíóúñ]{1,3})\//gi, 'el sonido $1')
       .replace(/\[([a-záéíóúñ]{1,3})\]/gi, '$1')
@@ -773,17 +830,7 @@ class PhonoAudioEngine {
     utterance.rate = 0.88;    // Velocidad pausada para preescolares no lectores (Du et al., 2023)
     utterance.pitch = 1.16;   // Tono cálido, afectuoso y maternal (tutor empático no punitivo)
 
-    const voices = window.speechSynthesis.getVoices();
-    // Prioridad 1: es-PE nativo de Perú
-    // Prioridad 2: es-419 latinoamericano
-    // Prioridad 3: Voces femeninas cálidas latinoamericanas (evita ceceo peninsular de España)
-    const preferredVoice =
-      voices.find(v => v.lang === 'es-PE' || v.lang === 'es_PE') ||
-      voices.find(v => v.lang.includes('es-419')) ||
-      voices.find(v => (v.lang.startsWith('es') && !v.lang.includes('ES')) && (v.name.includes('Sabina') || v.name.includes('Paulina') || v.name.includes('Sofia') || v.name.includes('Mia') || v.name.includes('Monica') || v.name.includes('Paloma') || v.name.includes('Camila'))) ||
-      voices.find(v => v.lang.startsWith('es') && !v.lang.includes('ES')) ||
-      voices.find(v => v.lang.startsWith('es'));
-
+    const preferredVoice = this.getPreferredVoice();
     if (preferredVoice) {
       utterance.voice = preferredVoice;
     }
@@ -792,6 +839,39 @@ class PhonoAudioEngine {
     utterance.onerror = handleEnd;
 
     window.speechSynthesis.speak(utterance);
+  }
+
+  initTTS() {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const updateVoices = () => {
+        try {
+          this.availableVoices = window.speechSynthesis.getVoices() || [];
+        } catch (e) {}
+      };
+      updateVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = updateVoices;
+      }
+    }
+  }
+
+  getPreferredVoice() {
+    const voices = (this.availableVoices && this.availableVoices.length > 0)
+      ? this.availableVoices
+      : (typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis.getVoices() : []);
+
+    if (!voices || voices.length === 0) return null;
+
+    // Prioridad 1: es-PE nativo de Perú (Lima Metropolitana)
+    // Prioridad 2: es-419 latinoamericano
+    // Prioridad 3: Voces femeninas cálidas latinoamericanas (evita ceceo peninsular de España)
+    return voices.find(v => (v.lang === 'es-PE' || v.lang === 'es_PE')) ||
+      voices.find(v => v.lang.includes('es-419')) ||
+      voices.find(v => (v.lang.startsWith('es') && !v.lang.includes('ES')) && (v.name.includes('Sabina') || v.name.includes('Paulina') || v.name.includes('Sofia') || v.name.includes('Mia') || v.name.includes('Monica') || v.name.includes('Paloma') || v.name.includes('Camila') || v.name.includes('Google') || v.name.includes('Natural'))) ||
+      voices.find(v => v.lang.startsWith('es') && !v.lang.includes('ES') && !v.name.includes('Helena') && !v.name.includes('Laura')) ||
+      voices.find(v => v.lang.startsWith('es') && !v.name.includes('Helena')) ||
+      voices.find(v => v.lang.startsWith('es')) ||
+      null;
   }
 
   /* --- REFUERZO POSITIVO AFECTIVO Y NO PUNITIVO (CRITERIO 3) --- */
