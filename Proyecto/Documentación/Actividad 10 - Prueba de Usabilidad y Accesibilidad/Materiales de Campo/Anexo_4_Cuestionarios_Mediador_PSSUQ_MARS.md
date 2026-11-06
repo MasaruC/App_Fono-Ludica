@@ -58,7 +58,7 @@ fecha: 2026-11-03
 | **C. Estética (*Aesthetics*)** | Calidad gráfica de ilustraciones, armonía cromática del bosque y animaciones suaves a 60 FPS. | `[ 1 - 5 ]` |
 | **D. Información Clínica (*Information*)** | Rigor fonoaudiológico del banco Bosch & Melgar, métricas objetivas de simplificación y erradicación de antipatrones (*schwa* `[ə]`). | `[ 1 - 5 ]` |
 
-$$\text{Puntuación Total MARS} = \frac{\text{A + B + C + D}}{4} = \frac{\text{_____}}{4} = \mathbf{\text{_______ / 5.0}} \quad (\text{Meta: } \ge 4.20)$$
+$$\text{Puntuación Total MARS} = \frac{\text{A + B + C + D}}{4} = \frac{\text{---}}{4} = \mathbf{\text{--- / 5.0}} \quad (\text{Meta: } \ge 4.20)$$
 
 ---
 
