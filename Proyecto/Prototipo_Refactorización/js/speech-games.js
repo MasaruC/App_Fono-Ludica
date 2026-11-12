@@ -29,11 +29,12 @@ const TRABALENGUAS_DATA = [
   {
     id: "trab-1",
     title: "El Loro y la Guitarra",
-    targetPhoneme: "r",
+    targetPhoneme: "rr",
     word: "Guitarra",
     icon: "🎸",
     phrase: "Erre con erre guitarra, erre con erre barril...",
     rhythmSyllables: ["E", "rre", "con", "e", "rre", "gui", "ta", "rra"],
+    acceptableTargets: ["guitarra", "erre con erre guitarra", "barril"],
     hint: "Sube la lengüita al techo de la boca 👅"
   },
   {
@@ -44,6 +45,7 @@ const TRABALENGUAS_DATA = [
     icon: "🐸",
     phrase: "El sapo salta sobre el sauce solo...",
     rhythmSyllables: ["El", "sa", "po", "sal", "ta", "so", "bre"],
+    acceptableTargets: ["sapo", "el sapo salta sobre el sauce", "salta"],
     hint: "Sopla suave como el viento entre los dientes 🌬️"
   },
   {
@@ -54,9 +56,142 @@ const TRABALENGUAS_DATA = [
     icon: "🌙",
     phrase: "La luna luminosa ilumina la laguna...",
     rhythmSyllables: ["La", "lu", "na", "lu", "mi", "no", "sa"],
+    acceptableTargets: ["luna", "la luna luminosa", "laguna"],
     hint: "Pega la lengüita a los dientes de arriba ✨"
   }
 ];
+
+/* Etapa 1-2 Van Riper: Sonido Aislado Puro (Cero Schwa [ə]) y Escalera Silábica CV -> CVC -> CCV (Furlong et al., 2018) */
+const SONIDOS_SILABAS_DATA = [
+  {
+    id: "son-r",
+    phoneme: "r",
+    pureSound: "r",
+    praxiaKey: "r",
+    anchorWord: "Pera",
+    icon: "🍐",
+    soundCue: "Como Pera 🍐",
+    syllables: ["Ra", "Re", "Ri", "Pera"],
+    acceptableTargets: ["pera", "ra", "re", "ri"],
+    ageMin: 4
+  },
+  {
+    id: "son-rr",
+    phoneme: "rr",
+    pureSound: "rr",
+    praxiaKey: "rr",
+    anchorWord: "Perro",
+    icon: "🐶",
+    soundCue: "Como Perro 🐶",
+    syllables: ["Rra", "Rre", "Rri", "Perro"],
+    acceptableTargets: ["perro", "rra", "rre", "rri"],
+    ageMin: 5
+  },
+  {
+    id: "son-s",
+    phoneme: "s",
+    pureSound: "s",
+    praxiaKey: "s",
+    anchorWord: "Sol",
+    icon: "☀️",
+    soundCue: "Como Sol ☀️",
+    syllables: ["Sa", "Se", "Si", "Sol"],
+    acceptableTargets: ["sol", "sa", "se", "si"],
+    ageMin: 3
+  },
+  {
+    id: "son-l",
+    phoneme: "l",
+    pureSound: "l",
+    praxiaKey: "l",
+    anchorWord: "Luna",
+    icon: "🌙",
+    soundCue: "Como Luna 🌙",
+    syllables: ["La", "Le", "Li", "Lu"],
+    acceptableTargets: ["luna", "la", "le", "li", "lu"],
+    ageMin: 3
+  },
+  {
+    id: "son-k",
+    phoneme: "k",
+    pureSound: "k",
+    praxiaKey: "k",
+    anchorWord: "Casa",
+    icon: "🏠",
+    soundCue: "Como Casa 🏠",
+    syllables: ["Ca", "Que", "Qui", "Co"],
+    acceptableTargets: ["casa", "ca", "que", "qui", "co"],
+    ageMin: 3
+  },
+  {
+    id: "son-p",
+    phoneme: "p",
+    pureSound: "p",
+    praxiaKey: "p",
+    anchorWord: "Pato",
+    icon: "🦆",
+    soundCue: "Como Pato 🦆",
+    syllables: ["Pa", "Pe", "Pi", "Po"],
+    acceptableTargets: ["pato", "pa", "pe", "pi", "po"],
+    ageMin: 3
+  },
+  {
+    id: "son-pl",
+    phoneme: "pl",
+    clusterGroup: "clusters",
+    pureSound: "l",
+    praxiaKey: "l",
+    anchorWord: "Plátano",
+    icon: "🍌",
+    soundCue: "Como Plátano 🍌",
+    syllables: ["Pla", "Ple", "Pli", "Plo"],
+    acceptableTargets: ["platano", "plátano", "pla", "ple", "pli"],
+    ageMin: 4
+  },
+  {
+    id: "son-tr",
+    phoneme: "tr",
+    clusterGroup: "clusters",
+    pureSound: "r",
+    praxiaKey: "r",
+    anchorWord: "Tren",
+    icon: "🚂",
+    soundCue: "Como Tren 🚂",
+    syllables: ["Tra", "Tre", "Tri", "Tren"],
+    acceptableTargets: ["tren", "tra", "tre", "tri"],
+    ageMin: 5
+  }
+];
+
+const POSITION_FRIENDLY_LABELS = {
+  I: "Al inicio",
+  M: "Al medio",
+  F: "Al final"
+};
+
+const PHONEME_AGE_MIN = {
+  p: 3, b: 3, k: 3, d: 3, f: 3, g: 3,
+  s: 4, l: 4,
+  r: 5, rr: 5, pl: 5, tr: 5, gl: 5
+};
+
+/* Etapa 3 Van Riper: Palabras Mágicas conectadas directamente al banco Bosch & Melgar */
+const PALABRAS_MAGICAS_DATA = BOSCH_MELGAR_BANK.map((item, idx) => {
+  const isCluster = ["pl", "tr", "gl", "fl", "dr"].includes(item.phoneme);
+  const praxiaMap = { pl: "l", tr: "r", gl: "l", g: "k", b: "p", d: "l", f: "s" };
+  return {
+    id: `pal-${idx + 1}`,
+    word: item.word,
+    phoneme: item.phoneme,
+    clusterGroup: isCluster ? "clusters" : item.phoneme,
+    praxiaKey: praxiaMap[item.phoneme] || item.phoneme,
+    pos: item.pos,
+    posLabel: POSITION_FRIENDLY_LABELS[item.pos] || "Palabra",
+    icon: item.icon,
+    syllables: item.syllables,
+    ageMin: PHONEME_AGE_MIN[item.phoneme] || 4
+  };
+});
 
 const RIMAS_DATA = [
   {
@@ -159,6 +294,8 @@ const BINGO_DATA = [
 
 window.SpeechGamesData = {
   BOSCH_MELGAR_BANK,
+  SONIDOS_SILABAS_DATA,
+  PALABRAS_MAGICAS_DATA,
   TRABALENGUAS_DATA,
   RIMAS_DATA,
   ADIVINANZAS_DATA,

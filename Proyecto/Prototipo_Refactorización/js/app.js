@@ -27,10 +27,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) {}
 
+  // Recuperar perfil clínico calibrado por el adulto/fonoaudiólogo (DEC-05)
+  const DEFAULT_CLINICAL_PROFILE = {
+    phonemes: ['r', 'rr', 's', 'l', 'clusters'],
+    age: '4',
+    asrTolerance: 2
+  };
+  let initialClinicalProfile = { ...DEFAULT_CLINICAL_PROFILE };
+  try {
+    const savedProfile = localStorage.getItem('bosque_clinical_profile');
+    if (savedProfile) {
+      const parsed = JSON.parse(savedProfile);
+      if (parsed && Array.isArray(parsed.phonemes) && parsed.phonemes.length > 0) {
+        initialClinicalProfile = {
+          phonemes: parsed.phonemes,
+          age: String(parsed.age || '4'),
+          asrTolerance: Math.min(3, Math.max(1, Number(parsed.asrTolerance) || 2))
+        };
+      }
+    }
+  } catch (e) {}
+
+  // Recuperar progreso del viaje en el Tren Van Riper (DEC-01 / DEC-03)
+  let initialTrainProgress = { completed: [] };
+  try {
+    const savedProgress = localStorage.getItem('bosque_train_progress');
+    if (savedProgress) {
+      const parsedProg = JSON.parse(savedProgress);
+      if (parsedProg && Array.isArray(parsedProg.completed)) {
+        initialTrainProgress.completed = parsedProg.completed;
+      }
+    }
+  } catch (e) {}
+
   // Estado global de la aplicación
   const state = {
     currentScreen: 'screen-menu',
-    currentActivity: 'trabalenguas', // 'trabalenguas', 'rimas', 'adivinanzas', 'carrera', 'bingo'
+    currentActivity: 'trabalenguas', // 'sonidos', 'palabras', 'trabalenguas', 'rimas', 'adivinanzas', 'carrera', 'bingo'
     activityIndex: 0,
     effortStars: initialEffortStars,
     consecutiveFailures: 0,
@@ -40,7 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
     cviMode: false,
     soundEnabled: true,
     lastTouchTime: 0,
-    activeStoreCategory: 'all'
+    activeStoreCategory: 'all',
+    clinicalProfile: initialClinicalProfile,
+    trainProgress: initialTrainProgress
   };
 
   // Referencias al DOM
@@ -55,24 +90,34 @@ document.addEventListener('DOMContentLoaded', () => {
     dosingFill: document.getElementById('dosingFill'),
     dosingLabel: document.getElementById('dosingLabel'),
 
-    // Pantallas
+    // Pantallas & Barra Transversal de Progreso del Tren
     screens: document.querySelectorAll('.screen-view'),
     screenMenu: document.getElementById('screen-menu'),
     screenExercise: document.getElementById('screen-exercise'),
     screenPairs: document.getElementById('screen-pairs'),
     screenAvatar: document.getElementById('screen-avatar'),
     screenAdult: document.getElementById('screen-adult'),
+    trainJourneyStrip: document.getElementById('trainJourneyStrip'),
+    journeyStagesRow: document.getElementById('journeyStagesRow'),
+    journeyCargoDots: document.getElementById('journeyCargoDots'),
+    btnJourneyNextWagon: document.getElementById('btnJourneyNextWagon'),
 
-    // Menú Principal Cards
+    // Menú Principal Cards (Escalera Van Riper en 4 Estaciones)
     wagonLocomotive: document.getElementById('wagon-locomotive-engine'),
-    wagonTrabalenguas: document.getElementById('wagon-trabalenguas'),
+    locomotiveGuideBadge: document.getElementById('locomotiveGuideBadge'),
+    wagonCaritas: document.getElementById('wagon-caritas'),
+    wagonPares: document.getElementById('wagon-pares'),
+    wagonSonidos: document.getElementById('wagon-sonidos'),
+    wagonPalabras: document.getElementById('wagon-palabras'),
+    wagonCarrera: document.getElementById('wagon-carrera'),
     wagonRimas: document.getElementById('wagon-rimas'),
     wagonAdivinanzas: document.getElementById('wagon-adivinanzas'),
-    wagonCarrera: document.getElementById('wagon-carrera'),
+    wagonTrabalenguas: document.getElementById('wagon-trabalenguas'),
     wagonBingo: document.getElementById('wagon-bingo'),
-    wagonPares: document.getElementById('wagon-pares'),
     btnOpenPairs: document.getElementById('wagon-pares') || document.getElementById('btnOpenPairs'),
     btnOpenAvatar: document.getElementById('btnOpenAvatar'),
+    trainConvoyHitchLeft: document.getElementById('trainConvoyHitchLeft'),
+    trainStageViewport: document.getElementById('trainStageViewport'),
 
     // Ejercicio CUS-01 Elements
     exerciseWord: document.getElementById('exerciseWord'),
@@ -145,6 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
     dashContents: document.querySelectorAll('.dashboard-tab-content'),
     audioVaultBody: document.getElementById('audioVaultBody'),
     chkCviAdultToggle: document.getElementById('chkCviAdultToggle'),
+    calibAgeGroup: document.getElementById('calibAgeGroup'),
+    calibAsrTolerance: document.getElementById('calibAsrTolerance'),
+    calibSaveFeedback: document.getElementById('calibSaveFeedback'),
     btnSaveAdultConfig: document.getElementById('btnSaveAdultConfig'),
     btnExitAdultPortal: document.getElementById('btnExitAdultPortal')
   };
@@ -190,8 +238,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (screenId === 'screen-menu') {
       elements.btnBackMenu.style.visibility = 'hidden';
+      updateTrainVisualState();
     } else {
       elements.btnBackMenu.style.visibility = 'visible';
+    }
+
+    // Mostrar mini-vía transversal del tren solo durante actividades infantiles
+    const activityScreens = new Set(['screen-exercise', 'screen-pairs', 'screen-carrera', 'screen-bingo']);
+    if (elements.trainJourneyStrip) {
+      const showStrip = activityScreens.has(screenId);
+      elements.trainJourneyStrip.hidden = !showStrip;
+      if (showStrip) {
+        updateJourneyStrip();
+      }
     }
 
     if (window.telemetryEval && window.telemetryEval.isActive) {
@@ -219,6 +278,241 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateStars(0);
 
+  /* --- CALIBRACIÓN CLÍNICA Y PROGRESIÓN VAN RIPER (DEC-01 / DEC-03 / DEC-05) --- */
+  const VAN_RIPER_WAGONS = [
+    { id: 'palabras', page: 0, label: 'Palabras' },
+    { id: 'caritas', page: 0, label: 'Caritas' },
+    { id: 'pares', page: 1, label: 'Parejas' },
+    { id: 'sonidos', page: 1, label: 'Sonidos' },
+    { id: 'carrera', page: 1, label: 'Flores' },
+    { id: 'rimas', page: 2, label: 'Rimas' },
+    { id: 'adivinanzas', page: 2, label: 'Adivinanzas' },
+    { id: 'trabalenguas', page: 3, label: 'Trabalenguas' },
+    { id: 'bingo', page: 3, label: 'Bingo' }
+  ];
+
+  function getAsrSimilarityThreshold() {
+    const tol = Number(state.clinicalProfile.asrTolerance) || 2;
+    if (tol <= 1) return 0.58;
+    if (tol >= 3) return 0.80;
+    return 0.70;
+  }
+
+  function getPrimaryCalibratedPhoneme() {
+    const valid = (state.clinicalProfile.phonemes || []).filter(p => p !== 'clusters' && SOUND_NARRATIONS[p]);
+    return valid[0] || 'r';
+  }
+
+  function getFilteredSonidosData() {
+    const all = (SpeechGamesData && SpeechGamesData.SONIDOS_SILABAS_DATA) || [];
+    const selected = state.clinicalProfile.phonemes || [];
+    if (!selected.length) return all;
+    const matched = all.filter(item => selected.includes(item.phoneme) || (item.phoneme === 'clusters' && selected.includes('clusters')));
+    return matched.length ? matched : all;
+  }
+
+  function getFilteredPalabrasData() {
+    const all = (SpeechGamesData && SpeechGamesData.PALABRAS_MAGICAS_DATA) || [];
+    const selected = state.clinicalProfile.phonemes || [];
+    const maxAge = Number(state.clinicalProfile.age) || 4;
+    let filtered = all.filter(item => {
+      const phonemeMatch = !selected.length || selected.includes(item.phoneme) || (item.phoneme === 'clusters' && selected.includes('clusters'));
+      const ageMatch = !item.ageNorm || item.ageNorm <= maxAge;
+      return phonemeMatch && ageMatch;
+    });
+    if (!filtered.length) {
+      filtered = all.filter(item => !selected.length || selected.includes(item.phoneme));
+    }
+    return filtered.length ? filtered : all;
+  }
+
+  function getFilteredPairsData() {
+    const all = (typeof MinimalPairsData !== 'undefined' && Array.isArray(MinimalPairsData)) ? MinimalPairsData : [];
+    const selected = state.clinicalProfile.phonemes || [];
+    if (!selected.length) return all;
+    const prioritized = all.filter(p => selected.includes(p.correctOption.phonemeTarget));
+    const others = all.filter(p => !selected.includes(p.correctOption.phonemeTarget));
+    return prioritized.length ? [...prioritized, ...others] : all;
+  }
+
+  function getFilteredTrabalenguasData() {
+    const all = (SpeechGamesData && SpeechGamesData.TRABALENGUAS_DATA) || [];
+    const selected = state.clinicalProfile.phonemes || [];
+    if (!selected.length) return all;
+    const matched = all.filter(t => selected.includes(t.targetPhoneme));
+    return matched.length ? matched : all;
+  }
+
+  function getRecommendedWagonId() {
+    const completed = state.trainProgress.completed || [];
+    const nextItem = VAN_RIPER_WAGONS.find(w => !completed.includes(w.id));
+    return nextItem ? nextItem.id : 'caritas';
+  }
+
+  function getCurrentWagonId() {
+    if (state.currentScreen === 'screen-pairs') return 'pares';
+    if (state.currentScreen === 'screen-carrera') return 'carrera';
+    if (state.currentScreen === 'screen-bingo') return 'bingo';
+    if (state.currentScreen === 'screen-exercise') return state.currentActivity;
+    return null;
+  }
+
+  function markWagonCompleted(wagonId) {
+    if (!wagonId) return;
+    const completed = state.trainProgress.completed || [];
+    if (!completed.includes(wagonId)) {
+      completed.push(wagonId);
+      state.trainProgress.completed = completed;
+      try {
+        localStorage.setItem('bosque_train_progress', JSON.stringify(state.trainProgress));
+      } catch (e) {}
+    }
+    updateTrainVisualState();
+  }
+
+  function updateTrainVisualState() {
+    const recommendedId = getRecommendedWagonId();
+    const recommendedObj = VAN_RIPER_WAGONS.find(w => w.id === recommendedId) || VAN_RIPER_WAGONS[0];
+    const completed = state.trainProgress.completed || [];
+
+    document.querySelectorAll('.train-wagon-card[data-wagon-id]').forEach(card => {
+      const id = card.getAttribute('data-wagon-id');
+      const isDone = completed.includes(id);
+      const isRec = id === recommendedId;
+      card.classList.toggle('wagon-completed', isDone);
+      card.classList.toggle('wagon-recommended', isRec);
+      const starEl = card.querySelector('.wagon-progress-star');
+      if (starEl) {
+        starEl.textContent = isDone ? '⭐' : (isRec ? '✨' : '');
+      }
+    });
+
+    if (elements.locomotiveGuideBadge) {
+      elements.locomotiveGuideBadge.textContent = '¡Chu chú! 🔔';
+    }
+  }
+
+  function updateJourneyStrip(cargoCurrent = null, cargoTotal = null) {
+    if (!elements.trainJourneyStrip) return;
+    const wagonId = getCurrentWagonId();
+    const wagonMeta = VAN_RIPER_WAGONS.find(w => w.id === wagonId);
+    const activeStage = wagonMeta ? wagonMeta.page : 0;
+    const completed = state.trainProgress.completed || [];
+
+    document.querySelectorAll('.journey-node[data-journey-stage]').forEach(node => {
+      const st = Number(node.getAttribute('data-journey-stage'));
+      const stageWagons = VAN_RIPER_WAGONS.filter(w => w.page === st);
+      const isStageDone = stageWagons.length > 0 && stageWagons.every(w => completed.includes(w.id));
+      node.classList.toggle('stage-active', st === activeStage);
+      node.classList.toggle('stage-done', isStageDone);
+      node.setAttribute('aria-current', st === activeStage ? 'step' : 'false');
+    });
+
+    if (elements.journeyCargoDots) {
+      let cur = cargoCurrent;
+      let tot = cargoTotal;
+      if (cur === null || tot === null) {
+        if (wagonId === 'sonidos') {
+          const list = getFilteredSonidosData();
+          tot = Math.min(5, list.length || 1);
+          cur = (state.activityIndex % (list.length || 1)) + 1;
+        } else if (wagonId === 'palabras') {
+          const list = getFilteredPalabrasData();
+          tot = Math.min(5, list.length || 1);
+          cur = ((state.activityIndex % (list.length || 1)) % tot) + 1;
+        } else if (wagonId === 'trabalenguas') {
+          const list = getFilteredTrabalenguasData();
+          tot = list.length || 3;
+          cur = (state.activityIndex % tot) + 1;
+        } else if (wagonId === 'rimas') {
+          tot = SpeechGamesData.RIMAS_DATA.length || 3;
+          cur = (state.activityIndex % tot) + 1;
+        } else if (wagonId === 'adivinanzas') {
+          tot = SpeechGamesData.ADIVINANZAS_DATA.length || 3;
+          cur = (state.activityIndex % tot) + 1;
+        } else if (wagonId === 'pares') {
+          const list = getFilteredPairsData();
+          tot = list.length || 3;
+          cur = (currentPairIndex % tot) + 1;
+        } else {
+          tot = 3;
+          cur = 1;
+        }
+      }
+      elements.journeyCargoDots.innerHTML = '';
+      const dotCount = Math.max(1, Math.min(5, tot));
+      const activeIndex = ((cur - 1) % dotCount);
+      for (let i = 0; i < dotCount; i++) {
+        const dot = document.createElement('span');
+        dot.className = `journey-cargo-dot${i < activeIndex ? ' filled' : ''}${i === activeIndex ? ' current' : ''}`;
+        elements.journeyCargoDots.appendChild(dot);
+      }
+    }
+  }
+
+  function launchWagonById(wagonId) {
+    switch (wagonId) {
+      case 'caritas':
+        openPraxiaModal(getPrimaryCalibratedPhoneme(), () => {
+          markWagonCompleted('caritas');
+        });
+        break;
+      case 'pares':
+        loadMinimalPair(0);
+        break;
+      case 'sonidos':
+        loadExercise('sonidos', 0);
+        break;
+      case 'palabras':
+        loadExercise('palabras', 0);
+        break;
+      case 'carrera':
+        loadCarreraGame(0);
+        break;
+      case 'rimas':
+        loadExercise('rimas', 0);
+        break;
+      case 'adivinanzas':
+        loadExercise('adivinanzas', 0);
+        break;
+      case 'trabalenguas':
+        loadExercise('trabalenguas', 0);
+        break;
+      case 'bingo':
+        loadBingoGame(0);
+        break;
+      default:
+        openPraxiaModal(getPrimaryCalibratedPhoneme());
+    }
+  }
+
+  function advanceToNextVanRiperWagon() {
+    const currentId = getCurrentWagonId();
+    if (currentId) {
+      markWagonCompleted(currentId);
+    }
+    const idx = VAN_RIPER_WAGONS.findIndex(w => w.id === currentId);
+    const nextWagon = idx >= 0 ? VAN_RIPER_WAGONS[(idx + 1) % VAN_RIPER_WAGONS.length] : VAN_RIPER_WAGONS[0];
+    audioEngine.stopSpeaking();
+    audioEngine.playTrainWhistle();
+    launchWagonById(nextWagon.id);
+  }
+
+  function syncCalibrationUI() {
+    const checkboxes = document.querySelectorAll('input[name="calibPhoneme"]');
+    checkboxes.forEach(cb => {
+      cb.checked = state.clinicalProfile.phonemes.includes(cb.value);
+    });
+    if (elements.calibAgeGroup) {
+      elements.calibAgeGroup.value = String(state.clinicalProfile.age || '4');
+    }
+    if (elements.calibAsrTolerance) {
+      elements.calibAsrTolerance.value = String(state.clinicalProfile.asrTolerance || 2);
+    }
+  }
+
+  syncCalibrationUI();
+
   /* --- PANTALLA CUS-01: CARGA DE EJERCICIOS FONO-LÚDICOS --- */
   function loadExercise(activityType, index = 0) {
     state.currentActivity = activityType;
@@ -228,8 +522,87 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.feedbackBadge.textContent = '';
     elements.btnSelfPlayback.disabled = true;
 
-    if (activityType === 'trabalenguas') {
-      const data = SpeechGamesData.TRABALENGUAS_DATA[index % SpeechGamesData.TRABALENGUAS_DATA.length];
+    if (activityType === 'sonidos') {
+      const pool = getFilteredSonidosData();
+      const data = pool[index % pool.length];
+      state.activePhoneme = data.phoneme === 'clusters' ? 'l' : data.phoneme;
+      elements.exerciseWord.textContent = data.anchorWord;
+      elements.exercisePhoneme.textContent = data.isolatedCue || data.soundCue || data.anchorWord;
+      elements.exerciseIcon.textContent = data.icon;
+      elements.exercisePhrase.textContent = data.cueText || `¡Suena como ${data.anchorWord}!`;
+      elements.avatarBalloon.textContent = `¡Escucha el sonido y repite "${data.anchorWord}"!`;
+
+      elements.syllableStrip.innerHTML = '';
+      const pureBtn = document.createElement('div');
+      pureBtn.className = 'syllable-chip active-highlight';
+      pureBtn.textContent = `🔊 ${data.isolatedCue || data.soundCue || 'Sonido'}`;
+      pureBtn.style.cursor = 'pointer';
+      pureBtn.onclick = () => {
+        audioEngine.stopSpeaking();
+        audioEngine.playPurePhoneme(state.activePhoneme);
+      };
+      elements.syllableStrip.appendChild(pureBtn);
+
+      (data.syllables || []).forEach((syl, i) => {
+        const chip = document.createElement('div');
+        chip.className = 'syllable-chip';
+        chip.textContent = syl;
+        chip.id = `syl-${i}`;
+        chip.style.cursor = 'pointer';
+        chip.onclick = () => {
+          audioEngine.stopSpeaking();
+          audioEngine.speak(data.anchorWord);
+        };
+        elements.syllableStrip.appendChild(chip);
+      });
+
+      showScreen('screen-exercise', 'Sonidos y Sílabas');
+      updateJourneyStrip((index % pool.length) + 1, pool.length);
+      audioEngine.speak("¡Me encanta cómo practicas! Escucha cómo vuela mi sonido y repite conmigo.", () => {
+        audioEngine.playPurePhoneme(state.activePhoneme, () => {
+          audioEngine.speak(data.anchorWord);
+        });
+      });
+
+    } else if (activityType === 'palabras') {
+      const pool = getFilteredPalabrasData();
+      const data = pool[index % pool.length];
+      state.activePhoneme = data.phoneme;
+      elements.exerciseWord.textContent = data.word;
+      elements.exercisePhoneme.textContent = data.posLabel || data.positionLabel || 'Palabrita';
+      elements.exerciseIcon.textContent = data.icon;
+      elements.exercisePhrase.textContent = `¡Escucha y repite "${data.word}" en el micrófono!`;
+      elements.avatarBalloon.textContent = `¡Escucha la palabra y repítela fuerte: "${data.word}"!`;
+
+      elements.syllableStrip.innerHTML = '';
+      (data.syllables || [data.word]).forEach((syl, i) => {
+        const chip = document.createElement('div');
+        chip.className = 'syllable-chip';
+        chip.textContent = syl;
+        chip.id = `syl-${i}`;
+        chip.style.cursor = 'pointer';
+        chip.onclick = () => {
+          audioEngine.stopSpeaking();
+          audioEngine.speak(data.word);
+        };
+        elements.syllableStrip.appendChild(chip);
+      });
+
+      showScreen('screen-exercise', 'Palabras Mágicas');
+      updateJourneyStrip((index % Math.min(5, pool.length)) + 1, Math.min(5, pool.length));
+      if (index === 0) {
+        audioEngine.speak("¡Aquí estoy amiguito! Escucha la palabra y repítela conmigo. ¡Toca el gran botón del micrófono y dilo bien fuerte!", () => {
+          audioEngine.speak(data.word);
+        });
+      } else {
+        audioEngine.speak("¡Me encanta practicar palabras contigo!", () => {
+          audioEngine.speak(data.word);
+        });
+      }
+
+    } else if (activityType === 'trabalenguas') {
+      const pool = getFilteredTrabalenguasData();
+      const data = pool[index % pool.length];
       state.activePhoneme = data.targetPhoneme;
       elements.exerciseWord.textContent = data.word;
       elements.exercisePhoneme.textContent = `Sonido ${data.targetPhoneme.toUpperCase()}`;
@@ -248,6 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       showScreen('screen-exercise', 'Trabalenguas Divertidos');
+      updateJourneyStrip((index % pool.length) + 1, pool.length);
       audioEngine.speak(`Vamos a jugar con el trabalenguas de la palabra ${data.word}. Toca el botón y di la palabra.`);
 
     } else if (activityType === 'rimas') {
@@ -270,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
             audioEngine.playSuccessFanfare();
             confetti.launch(40);
             updateStars(2);
+            markWagonCompleted('rimas');
             audioEngine.speak(data.fullRhyme);
             elements.avatarBalloon.textContent = data.fullRhyme;
           } else {
@@ -281,6 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       showScreen('screen-exercise', 'Rimas Interactivas');
+      updateJourneyStrip((index % SpeechGamesData.RIMAS_DATA.length) + 1, SpeechGamesData.RIMAS_DATA.length);
       audioEngine.speak(`¿Qué palabra rima con ${data.baseWord}?`);
 
     } else if (activityType === 'adivinanzas') {
@@ -302,6 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.syllableStrip.appendChild(clueBtn);
 
       showScreen('screen-exercise', 'Adivinanzas Mágicas');
+      updateJourneyStrip((index % SpeechGamesData.ADIVINANZAS_DATA.length) + 1, SpeechGamesData.ADIVINANZAS_DATA.length);
       audioEngine.speak(data.riddleText);
     }
   }
@@ -309,8 +686,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Repetición contextual de consigna por voz guiada por Ava (A.10 - H10)
   function repeatCurrentExercisePrompt() {
     audioEngine.playClick();
-    if (state.currentActivity === 'trabalenguas') {
-      const data = SpeechGamesData.TRABALENGUAS_DATA[state.activityIndex % SpeechGamesData.TRABALENGUAS_DATA.length];
+    if (state.currentActivity === 'sonidos') {
+      const pool = getFilteredSonidosData();
+      const data = pool[state.activityIndex % pool.length];
+      if (data) {
+        audioEngine.playPurePhoneme(state.activePhoneme, () => audioEngine.speak(data.anchorWord));
+      }
+    } else if (state.currentActivity === 'palabras') {
+      const pool = getFilteredPalabrasData();
+      const data = pool[state.activityIndex % pool.length];
+      if (data) {
+        audioEngine.speak("¡Aquí estoy amiguito! Escucha la palabra y repítela conmigo. ¡Toca el gran botón del micrófono y dilo bien fuerte!", () => {
+          audioEngine.speak(data.word);
+        });
+      }
+    } else if (state.currentActivity === 'trabalenguas') {
+      const pool = getFilteredTrabalenguasData();
+      const data = pool[state.activityIndex % pool.length];
       if (data) {
         audioEngine.speak(`Vamos a jugar con el trabalenguas de la palabra ${data.word}. Toca el botón y di la palabra.`);
       }
@@ -413,7 +805,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentTargetWord = elements.exerciseWord ? elements.exerciseWord.textContent : '';
         let acceptableTargets = [currentTargetWord];
 
-        if (state.currentActivity === 'adivinanzas') {
+        if (state.currentActivity === 'sonidos') {
+          const pool = getFilteredSonidosData();
+          const sonData = pool[state.activityIndex % pool.length];
+          if (sonData) {
+            currentTargetWord = sonData.anchorWord;
+            acceptableTargets = [sonData.anchorWord, ...(sonData.syllables || [])];
+          }
+        } else if (state.currentActivity === 'palabras') {
+          const pool = getFilteredPalabrasData();
+          const palData = pool[state.activityIndex % pool.length];
+          if (palData) {
+            currentTargetWord = palData.word;
+            acceptableTargets = [palData.word];
+          }
+        } else if (state.currentActivity === 'adivinanzas') {
           const adivData = SpeechGamesData.ADIVINANZAS_DATA[state.activityIndex % SpeechGamesData.ADIVINANZAS_DATA.length];
           if (adivData && adivData.answerWord) {
             currentTargetWord = adivData.answerWord;
@@ -428,18 +834,22 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTargetWord = correctOpt ? correctOpt.word : rimaData.baseWord;
           }
         } else if (state.currentActivity === 'trabalenguas') {
-          const trabData = SpeechGamesData.TRABALENGUAS_DATA[state.activityIndex % SpeechGamesData.TRABALENGUAS_DATA.length];
+          const pool = getFilteredTrabalenguasData();
+          const trabData = pool[state.activityIndex % pool.length];
           if (trabData) {
             currentTargetWord = trabData.word;
-            acceptableTargets = [trabData.word];
+            acceptableTargets = Array.isArray(trabData.acceptableTargets) && trabData.acceptableTargets.length
+              ? trabData.acceptableTargets
+              : [trabData.word];
           }
         }
 
         const evalContext = {
-          context: state.currentActivity === 'trabalenguas' ? 'continuous' : 'isolated',
+          context: state.currentActivity === 'sonidos' ? 'pure_sound' : (state.currentActivity === 'trabalenguas' ? 'continuous' : 'isolated'),
           phoneme: state.activePhoneme,
           activity: state.currentActivity,
-          acceptableTargets: acceptableTargets
+          acceptableTargets: acceptableTargets,
+          similarityThreshold: getAsrSimilarityThreshold()
         };
         const evaluation = audioEngine.evaluateSpeech(currentTargetWord, state.consecutiveFailures, evalContext);
 
@@ -449,6 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
           audioEngine.playSuccessFanfare();
           confetti.launch(70);
           updateStars(3);
+          markWagonCompleted(state.currentActivity);
           window.dispatchEvent(new CustomEvent('ava-celebrate'));
 
           elements.feedbackBadge.className = 'feedback-status-badge status-approved active';
@@ -538,9 +949,9 @@ document.addEventListener('DOMContentLoaded', () => {
           // Despliega automáticamente la Praxia 2D y avanza asistido sin bloquear al menor con voz de estudio de Ava
           audioEngine.speak("¡qué gran esfuerzo amigo! mira en la pantalla cómo colocamos la lengua para que sea más fácil.", () => {
             openPraxiaModal(state.activePhoneme, () => {
-              // Al cerrar praxia avanza asistido al siguiente ejercicio
+              // Al cerrar praxia avanza asistido al siguiente estímulo dentro del mismo vagón
               loadExercise(state.currentActivity, state.activityIndex + 1);
-            }, "¡Siguiente vagón! 🚂");
+            }, "¡Otro dibujito! ➡️");
           });
         }
       }, 1000);
@@ -566,7 +977,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function repeatCurrentPairsPrompt() {
     audioEngine.playClick();
-    const pair = MinimalPairsData[currentPairIndex];
+    const pairsList = getFilteredPairsData();
+    const pair = pairsList[currentPairIndex % pairsList.length];
     if (pair && pair.question) {
       audioEngine.speak(pair.question);
     }
@@ -574,8 +986,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.repeatCurrentPairsPrompt = repeatCurrentPairsPrompt;
 
   function loadMinimalPair(index) {
-    currentPairIndex = index % MinimalPairsData.length;
-    const pair = MinimalPairsData[currentPairIndex];
+    const pairsList = getFilteredPairsData();
+    currentPairIndex = index % pairsList.length;
+    const pair = pairsList[currentPairIndex];
     elements.pairQuestionText.textContent = pair.question;
 
     elements.pairWordCorrect.textContent = pair.correctOption.word;
@@ -589,18 +1002,21 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.pairCardCorrect.className = 'pair-card';
     elements.pairCardFoil.className = 'pair-card';
 
-    showScreen('screen-pairs', 'Juego de Caritas y Palabras');
+    showScreen('screen-pairs', 'Parejas Sonoras');
+    updateJourneyStrip(currentPairIndex + 1, pairsList.length);
     audioEngine.speak(pair.question);
   }
 
   elements.pairCardCorrect.addEventListener('click', () => {
     if (!canTouch()) return;
     audioEngine.stopSpeaking();
-    const pair = MinimalPairsData[currentPairIndex];
+    const pairsList = getFilteredPairsData();
+    const pair = pairsList[currentPairIndex % pairsList.length];
     elements.pairCardCorrect.classList.add('selected-correct');
     audioEngine.playSuccessFanfare();
     confetti.launch(50);
     updateStars(2);
+    markWagonCompleted('pares');
     window.dispatchEvent(new CustomEvent('ava-celebrate'));
 
     audioEngine.speak(`¡Muy bien! ¡Es ${pair.correctOption.word}! Mira cómo se pronuncia:`, () => {
@@ -613,79 +1029,177 @@ document.addEventListener('DOMContentLoaded', () => {
   elements.pairCardFoil.addEventListener('click', () => {
     if (!canTouch()) return;
     audioEngine.stopSpeaking();
-    const pair = MinimalPairsData[currentPairIndex];
+    const pairsList = getFilteredPairsData();
+    const pair = pairsList[currentPairIndex % pairsList.length];
     elements.pairCardFoil.classList.add('selected-comic');
     audioEngine.playGentleEncouragement();
     audioEngine.speak(pair.foilOption.comicFeedback);
   });
 
-  /* --- PANTALLA: CAMINO DE FLORES FÓNICAS 2D (RF-LUD-004 - Vuelo de Ava en Perspectiva) --- */
+  /* --- PANTALLA: CAMINO DE FLORES 2D (RF-LUD-004 - Escenario Woodland Storybook) --- */
   let carreraCurrentStep = 0;
 
   const MEADOW_FLOWERS = [
-    { 
-      x: 18, 
-      y: 73, 
-      scale: 1.60, 
-      sizeClass: 'flower-depth-foreground', 
-      name: "Flor Margarita", 
-      petalColor: "#42A5F5", 
-      centerColor: "#FFF59D"
+    {
+      x: 19,
+      y: 70,
+      scale: 1.24,
+      sizeClass: 'flower-depth-foreground',
+      species: 'daisy',
+      name: "Flor Margarita",
+      petalColor: "#42A5F5",
+      petalLight: "#90CAF9",
+      centerColor: "#FFD54F"
     },
-    { 
-      x: 36, 
-      y: 22.5, 
-      scale: 1.05, 
-      sizeClass: 'flower-depth-distant', 
-      name: "Flor Girasol", 
-      petalColor: "#FFCA28", 
-      centerColor: "#E65100"
+    {
+      x: 34,
+      y: 34,
+      scale: 0.96,
+      sizeClass: 'flower-depth-distant',
+      species: 'sunflower',
+      name: "Flor Girasol",
+      petalColor: "#FFA000",
+      petalLight: "#FFEE58",
+      centerColor: "#6D4C41"
     },
-    { 
-      x: 53, 
-      y: 73, 
-      scale: 1.55, 
-      sizeClass: 'flower-depth-foreground', 
-      name: "Flor Campanilla", 
-      petalColor: "#AB47BC", 
+    {
+      x: 50,
+      y: 71,
+      scale: 1.22,
+      sizeClass: 'flower-depth-foreground',
+      species: 'bellflower',
+      name: "Flor Campanilla",
+      petalColor: "#9C27B0",
+      petalLight: "#E1BEE7",
       centerColor: "#FFE082"
     },
-    { 
-      x: 69, 
-      y: 28, 
-      scale: 1.08, 
-      sizeClass: 'flower-depth-distant', 
-      name: "Flor Rosa", 
-      petalColor: "#FF7043", 
-      centerColor: "#FFF9C4"
+    {
+      x: 64,
+      y: 35,
+      scale: 0.98,
+      sizeClass: 'flower-depth-distant',
+      species: 'rose',
+      name: "Flor Rosa",
+      petalColor: "#FF7043",
+      petalLight: "#FFCCBC",
+      centerColor: "#FFF59D"
     },
-    { 
-      x: 80, 
-      y: 56, 
-      scale: 1.28, 
-      sizeClass: 'flower-depth-midground', 
-      name: "Flor Orquídea", 
-      petalColor: "#26A69A", 
+    {
+      x: 75,
+      y: 63,
+      scale: 1.10,
+      sizeClass: 'flower-depth-midground',
+      species: 'orchid',
+      name: "Flor Orquídea",
+      petalColor: "#00897B",
+      petalLight: "#80CBC4",
       centerColor: "#FFD54F"
     }
   ];
+
+  function buildBotanicalFlowerSvg(flowerInfo, isCompleted) {
+    let petalsMarkup = '';
+    if (flowerInfo.species === 'sunflower') {
+      const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+      petalsMarkup = `
+        ${angles.map((a, i) => `
+          <ellipse cx="36" cy="14" rx="4.6" ry="12" fill="${i % 2 === 0 ? flowerInfo.petalColor : flowerInfo.petalLight}" transform="rotate(${a} 36 28)"/>
+        `).join('')}
+        <circle cx="36" cy="28" r="10.5" fill="${flowerInfo.centerColor}" stroke="#4E342E" stroke-width="1.5"/>
+        <circle cx="33" cy="25" r="1.4" fill="#FFD54F"/>
+        <circle cx="39" cy="26" r="1.4" fill="#FFD54F"/>
+        <circle cx="35" cy="31" r="1.4" fill="#FFD54F"/>
+      `;
+    } else if (flowerInfo.species === 'bellflower') {
+      const angles = [0, 60, 120, 180, 240, 300];
+      petalsMarkup = `
+        ${angles.map(a => `
+          <path d="M36,28 C28,16 31,9 36,9 C41,9 44,16 36,28 Z" fill="${flowerInfo.petalColor}" stroke="#6A1B9A" stroke-width="1" transform="rotate(${a} 36 28)"/>
+          <ellipse cx="36" cy="17" rx="2.2" ry="5.5" fill="${flowerInfo.petalLight}" opacity="0.6" transform="rotate(${a} 36 28)"/>
+        `).join('')}
+        <circle cx="36" cy="28" r="7.5" fill="${flowerInfo.centerColor}" stroke="#F57F17" stroke-width="1.3"/>
+      `;
+    } else if (flowerInfo.species === 'rose') {
+      const angles = [0, 72, 144, 216, 288];
+      petalsMarkup = `
+        ${angles.map(a => `
+          <ellipse cx="36" cy="17" rx="9" ry="10.5" fill="${flowerInfo.petalColor}" stroke="#D84315" stroke-width="1" transform="rotate(${a} 36 28)"/>
+        `).join('')}
+        ${[36, 108, 180, 252, 324].map(a => `
+          <ellipse cx="36" cy="20" rx="6.5" ry="7.5" fill="${flowerInfo.petalLight}" transform="rotate(${a} 36 28)"/>
+        `).join('')}
+        <circle cx="36" cy="28" r="7" fill="${flowerInfo.centerColor}" stroke="#FF8F00" stroke-width="1.3"/>
+        <path d="M33 27 Q36 24 39 27 Q39 31 35 31" fill="none" stroke="#FF7043" stroke-width="1.4" stroke-linecap="round"/>
+      `;
+    } else if (flowerInfo.species === 'orchid') {
+      petalsMarkup = `
+        <ellipse cx="36" cy="15" rx="7" ry="11" fill="${flowerInfo.petalColor}" stroke="#00695C" stroke-width="1"/>
+        <ellipse cx="22" cy="24" rx="11" ry="6.8" fill="${flowerInfo.petalColor}" stroke="#00695C" stroke-width="1" transform="rotate(-18 22 24)"/>
+        <ellipse cx="50" cy="24" rx="11" ry="6.8" fill="${flowerInfo.petalColor}" stroke="#00695C" stroke-width="1" transform="rotate(18 50 24)"/>
+        <ellipse cx="27" cy="36" rx="7.5" ry="9" fill="${flowerInfo.petalLight}" stroke="#00796B" stroke-width="1" transform="rotate(25 27 36)"/>
+        <ellipse cx="45" cy="36" rx="7.5" ry="9" fill="${flowerInfo.petalLight}" stroke="#00796B" stroke-width="1" transform="rotate(-25 45 36)"/>
+        <circle cx="36" cy="28" r="7.5" fill="${flowerInfo.centerColor}" stroke="#EF6C00" stroke-width="1.4"/>
+      `;
+    } else {
+      // Margarita Azul layered botanical petals
+      const angles = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324];
+      petalsMarkup = `
+        ${angles.map((a, i) => `
+          <ellipse cx="36" cy="14" rx="4.8" ry="12.5" fill="${i % 2 === 0 ? flowerInfo.petalColor : '#29B6F6'}" stroke="#1565C0" stroke-width="0.9" transform="rotate(${a} 36 28)"/>
+          <ellipse cx="36" cy="16" rx="2.2" ry="7" fill="${flowerInfo.petalLight}" opacity="0.65" transform="rotate(${a} 36 28)"/>
+        `).join('')}
+        <circle cx="36" cy="28" r="8.8" fill="${flowerInfo.centerColor}" stroke="#F57F17" stroke-width="1.5"/>
+        <circle cx="33.5" cy="25.5" r="2.2" fill="#FFF9C4" opacity="0.8"/>
+      `;
+    }
+
+    return `
+      <svg class="flower-svg-petals" viewBox="0 0 72 72" fill="none" aria-hidden="true">
+        <!-- Base de césped y hojitas al pie -->
+        <ellipse cx="36" cy="64" rx="17" ry="5" fill="#2E7D32" opacity="0.35"/>
+        <path d="M36 62 C34 52, 37 42, 36 32" stroke="#2E7D32" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M35 56 C24 54, 18 46, 22 41 C27 42, 33 48, 35 56 Z" fill="#66BB6A" stroke="#2E7D32" stroke-width="1.4"/>
+        <path d="M37 54 C48 52, 54 44, 50 39 C45 40, 39 46, 37 54 Z" fill="#4CAF50" stroke="#2E7D32" stroke-width="1.4"/>
+        ${petalsMarkup}
+        ${isCompleted ? `
+          <g transform="translate(52, 10)">
+            <circle cx="6" cy="6" r="8.5" fill="#FFB300" stroke="#FFFFFF" stroke-width="2"/>
+            <path d="M2.5 6 L5 8.5 L9.8 3.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+        ` : ''}
+      </svg>
+    `;
+  }
 
   function loadCarreraGame(stepIndex = 0) {
     carreraCurrentStep = stepIndex % SpeechGamesData.CARRERA_DATA.length;
     const currentData = SpeechGamesData.CARRERA_DATA[carreraCurrentStep];
 
     elements.carreraStepBadge.textContent = `Flor ${currentData.step} de 5`;
-    elements.carreraStationBadge.textContent = `Sinfón /${currentData.phoneme}/`;
+    elements.carreraStationBadge.textContent = `🌸 ${currentData.word}`;
     elements.carreraStationIcon.textContent = currentData.icon;
     elements.carreraStationWord.textContent = currentData.word;
-    elements.carreraStationInstruction.textContent = `¡Di "${currentData.word}" para que Ava vuele a la flor!`;
+    elements.carreraStationInstruction.textContent = `¡Di "${currentData.word}"!`;
     elements.carreraMicCaption.textContent = "Toca para hablar";
     elements.btnCarreraMic.classList.remove('state-recording');
 
-    // Renderiza las 5 flores en coordenadas 2D con perspectiva y Ava en vuelo
+    // Renderiza indicadores visuales de avance en cabecera (5 flores)
+    const progressDotsEl = document.getElementById('carreraProgressDots');
+    if (progressDotsEl) {
+      progressDotsEl.innerHTML = '';
+      SpeechGamesData.CARRERA_DATA.forEach((_, idx) => {
+        const dot = document.createElement('span');
+        dot.className = `carrera-progress-petal${idx < carreraCurrentStep ? ' done' : ''}${idx === carreraCurrentStep ? ' current' : ''}`;
+        dot.textContent = idx < carreraCurrentStep ? '✓' : (idx === carreraCurrentStep ? '🐝' : '🌸');
+        progressDotsEl.appendChild(dot);
+      });
+    }
+
+    // Renderiza las 5 flores botánicas en coordenadas 2D con perspectiva y Ava volando libre
     elements.riverStonesContainer.innerHTML = '';
     SpeechGamesData.CARRERA_DATA.forEach((s, idx) => {
-      const flower = document.createElement('div');
+      const flower = document.createElement('button');
+      flower.type = 'button';
       const isCompleted = idx < carreraCurrentStep;
       const isActive = idx === carreraCurrentStep;
       const flowerInfo = MEADOW_FLOWERS[idx] || MEADOW_FLOWERS[0];
@@ -694,38 +1208,21 @@ document.addEventListener('DOMContentLoaded', () => {
       flower.style.left = `${flowerInfo.x}%`;
       flower.style.top = `${flowerInfo.y}%`;
       flower.style.transform = `translate(-50%, -50%) scale(${flowerInfo.scale})`;
+      flower.setAttribute('aria-label', `${flowerInfo.name}: ${s.word}`);
 
       flower.innerHTML = `
         <div class="flower-ground-shadow" aria-hidden="true"></div>
-        <svg class="flower-svg-petals" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-          <!-- Hojas verdes al pie -->
-          <ellipse cx="14" cy="38" rx="7" ry="3" fill="#4CAF50" transform="rotate(-25 14 38)"/>
-          <ellipse cx="34" cy="38" rx="7" ry="3" fill="#4CAF50" transform="rotate(25 34 38)"/>
-          <!-- Tallo central -->
-          <path d="M24 24 L24 44" stroke="#2E7D32" stroke-width="3.2" stroke-linecap="round"/>
-          <!-- Corona de pétalos radiantes -->
-          <circle cx="24" cy="14" r="6" fill="${flowerInfo.petalColor}"/>
-          <circle cx="24" cy="34" r="6" fill="${flowerInfo.petalColor}"/>
-          <circle cx="14" cy="24" r="6" fill="${flowerInfo.petalColor}"/>
-          <circle cx="34" cy="24" r="6" fill="${flowerInfo.petalColor}"/>
-          <circle cx="17" cy="17" r="5.5" fill="${flowerInfo.petalColor}"/>
-          <circle cx="31" cy="17" r="5.5" fill="${flowerInfo.petalColor}"/>
-          <circle cx="17" cy="31" r="5.5" fill="${flowerInfo.petalColor}"/>
-          <circle cx="31" cy="31" r="5.5" fill="${flowerInfo.petalColor}"/>
-          <!-- Disco central de polen con brillo -->
-          <circle cx="24" cy="24" r="8" fill="${flowerInfo.centerColor}" stroke="#F57F17" stroke-width="1.2"/>
-          ${isCompleted ? '<circle cx="24" cy="24" r="4.5" fill="#FFA000"/><text x="20.5" y="27" font-size="8.5" fill="#FFFFFF" font-weight="900">✓</text>' : ''}
-        </svg>
+        ${buildBotanicalFlowerSvg(flowerInfo, isCompleted)}
         ${isActive ? `
           <div class="ava-flying-bee" title="Ava volando sobre esta flor">
-            <div class="ava-bee-avatar ava-container" style="width: 48px; height: 48px;">
-              ${avaEngine.generateSvg({ size: 48, mood: 'happy' })}
+            <div class="ava-bee-avatar ava-container">
+              ${avaEngine.generateSvg({ size: 66, mood: 'happy' })}
             </div>
             <div class="pollen-dust-ring" aria-hidden="true"></div>
           </div>
         ` : ''}
         <div class="flower-tag-label">
-          <span class="flower-phoneme-chip">${s.phoneme.toUpperCase()}</span>
+          <span class="flower-icon-badge" aria-hidden="true">${s.icon}</span>
           <span class="flower-name-text">${s.word}</span>
         </div>
       `;
@@ -733,6 +1230,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const stepNames = ['uno', 'dos', 'tres', 'cuatro', 'cinco'];
       const stepLabel = stepNames[s.step - 1] || s.step;
       flower.onclick = () => {
+        if (!canTouch()) return;
         audioEngine.speak(`Flor ${stepLabel}: ¡${s.word}! Escucha y repite: ${s.word}.`);
       };
 
@@ -740,6 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     showScreen('screen-carrera', 'Camino de Flores');
+    updateJourneyStrip(carreraCurrentStep + 1, SpeechGamesData.CARRERA_DATA.length);
     audioEngine.speak(`Estación ${currentData.step}: Pronuncia la palabra ${currentData.word} para que la abejita Ava vuele a la flor.`);
   }
 
@@ -775,7 +1274,8 @@ document.addEventListener('DOMContentLoaded', () => {
       audioEngine.evaluateSpeech(currentData.word, 1, {
         context: 'isolated',
         phoneme: currentData.phoneme,
-        activity: 'carrera'
+        activity: 'carrera',
+        similarityThreshold: getAsrSimilarityThreshold()
       });
 
       audioEngine.playSuccessFanfare();
@@ -790,6 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       } else {
         // Meta alcanzada: Colmena Real
+        markWagonCompleted('carrera');
         confetti.launch(120);
         updateStars(5);
         audioEngine.speak("¡¡Bravo amigo!! ¡Volaste por todo el jardín y llenaste la Colmena Real con néctar!");
@@ -806,6 +1307,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentData = SpeechGamesData.CARRERA_DATA[carreraCurrentStep];
     audioEngine.speak(currentData.word);
   });
+
+  const carreraCardIllustrationEl = document.getElementById('carreraCardIllustration');
+  if (carreraCardIllustrationEl) {
+    carreraCardIllustrationEl.style.cursor = 'pointer';
+    carreraCardIllustrationEl.addEventListener('click', () => {
+      if (!canTouch()) return;
+      const currentData = SpeechGamesData.CARRERA_DATA[carreraCurrentStep];
+      audioEngine.speak(currentData.word);
+    });
+  }
 
   /* --- PANTALLA: BINGO FONOLÓGICO VISUAL-AUDITIVO (RF-LUD-005 - Mora et al., 2024) --- */
   let bingoRoundIndex = 0;
@@ -870,6 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           } else {
             // ¡BINGO COMPLETO!
+            markWagonCompleted('bingo');
             confetti.launch(120);
             updateStars(5);
             window.dispatchEvent(new CustomEvent('ava-celebrate'));
@@ -890,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     showScreen('screen-bingo', 'Bingo Sonoro (Cartón 2x2)');
+    updateJourneyStrip(bingoRoundIndex + 1, BINGO_ROUNDS.length);
     audioEngine.speak(round.prompt);
   }
 
@@ -942,14 +1455,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.playCurrentPraxiaNarration = playCurrentPraxiaNarration;
 
+  function syncPraxiaSoundPills(activeKey) {
+    const pillsContainer = document.getElementById('praxiaSoundPills');
+    if (!pillsContainer) return;
+    pillsContainer.querySelectorAll('.praxia-sound-pill').forEach(btn => {
+      const isMatch = (btn.dataset.sound || '').toLowerCase() === activeKey;
+      btn.classList.toggle('active', isMatch);
+      btn.setAttribute('aria-pressed', isMatch ? 'true' : 'false');
+    });
+  }
+
+  function syncPraxiaPlayPauseBtn() {
+    if (!elements.btnPraxiaPlayPause || !praxiaCanvas) return;
+    elements.btnPraxiaPlayPause.innerHTML = praxiaCanvas.isPlaying
+      ? `<svg class="ui-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg><span id="praxiaPlayPauseLabel">Pausar</span>`
+      : `<svg class="ui-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg><span id="praxiaPlayPauseLabel">Reproducir</span>`;
+  }
+
   function openPraxiaModal(soundKey = 'r', onCloseCallback = null, customExitLabel = null) {
     audioEngine.stopSpeaking();
     praxiaCallbackOnClose = onCloseCallback;
-    const key = (soundKey || 'r').toLowerCase();
-    const narration = SOUND_NARRATIONS[key] || SOUND_NARRATIONS['r'];
+    const rawKey = (soundKey || 'r').toLowerCase();
+    const key = SOUND_NARRATIONS[rawKey] ? rawKey : 'r';
+    const narration = SOUND_NARRATIONS[key];
 
     praxiaCanvas.setPhoneme(key);
-    elements.praxiaPhonemeSelect.value = key;
+    if (!praxiaCanvas.isPlaying) {
+      praxiaCanvas.togglePlay();
+    }
+    syncPraxiaPlayPauseBtn();
+
+    if (elements.praxiaPhonemeSelect) {
+      elements.praxiaPhonemeSelect.value = key;
+    }
+    syncPraxiaSoundPills(key);
+
     elements.praxiaTitle.textContent = narration.title;
     elements.praxiaDesc.textContent = narration.display;
 
@@ -996,6 +1536,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const praxiaSoundPillsEl = document.getElementById('praxiaSoundPills');
+  if (praxiaSoundPillsEl) {
+    praxiaSoundPillsEl.addEventListener('click', (e) => {
+      const pill = e.target.closest('.praxia-sound-pill');
+      if (!pill || !pill.dataset.sound) return;
+      if (!canTouch()) return;
+      openPraxiaModal(pill.dataset.sound, praxiaCallbackOnClose);
+    });
+  }
+
   elements.btnOpenMiniPraxia.addEventListener('click', () => {
     openPraxiaModal(state.activePhoneme);
   });
@@ -1006,9 +1556,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   elements.btnPraxiaPlayPause.addEventListener('click', () => {
     praxiaCanvas.togglePlay();
-    elements.btnPraxiaPlayPause.innerHTML = praxiaCanvas.isPlaying 
-      ? `<svg class="ui-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg><span>Pausar</span>`
-      : `<svg class="ui-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg><span>Reproducir</span>`;
+    syncPraxiaPlayPauseBtn();
   });
 
   const btnPraxiaSpeed = document.getElementById('btnPraxiaSpeed');
@@ -1439,7 +1987,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   elements.btnSaveAdultConfig.addEventListener('click', () => {
     audioEngine.playChime();
-    alert("✅ Configuración Fonoaudiológica Guardada con éxito.\nLas sesiones activas se actualizaron según los fonemas seleccionados.");
+    const checkedPhonemes = Array.from(document.querySelectorAll('input[name="calibPhoneme"]:checked')).map(el => el.value);
+    if (!checkedPhonemes.length) {
+      checkedPhonemes.push('r');
+      const fallbackChk = document.querySelector('input[name="calibPhoneme"][value="r"]');
+      if (fallbackChk) fallbackChk.checked = true;
+    }
+
+    const selectedAge = elements.calibAgeGroup ? String(elements.calibAgeGroup.value || '4') : '4';
+    const selectedTol = elements.calibAsrTolerance ? Math.min(3, Math.max(1, Number(elements.calibAsrTolerance.value) || 2)) : 2;
+
+    state.clinicalProfile = {
+      phonemes: checkedPhonemes,
+      age: selectedAge,
+      asrTolerance: selectedTol
+    };
+
+    try {
+      localStorage.setItem('bosque_clinical_profile', JSON.stringify(state.clinicalProfile));
+    } catch (e) {}
+
+    updateTrainVisualState();
+
+    if (elements.calibSaveFeedback) {
+      const tolLabels = { 1: 'Alta (3 años)', 2: 'Media (4 años)', 3: 'Estricta (5 años)' };
+      elements.calibSaveFeedback.textContent = `✅ Calibración activa: ${checkedPhonemes.map(p => p === 'clusters' ? 'Sinfones' : `/${p}/`).join(', ')} · ${selectedAge} años · Tolerancia ${tolLabels[selectedTol]}.`;
+      elements.calibSaveFeedback.style.display = 'block';
+    }
   });
 
   elements.btnExitAdultPortal.addEventListener('click', () => {
@@ -1470,22 +2044,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Vagón Principal: Locomotora Fónica (Silbato y Saludo)
+  // Locomotora del Tren de Ava: solo toca el silbato y da el saludo amigable (no inicia ningún minijuego)
   if (elements.wagonLocomotive) {
-    elements.wagonLocomotive.addEventListener('click', () => {
+    const playLocomotiveGreeting = () => {
+      if (!canTouch()) return;
+      audioEngine.stopSpeaking();
       audioEngine.playTrainWhistle();
-      audioEngine.speak("¡Chu chú! Toca un vagón para jugar.");
+      elements.wagonLocomotive.classList.remove('ava-touch-wiggle');
+      void elements.wagonLocomotive.offsetWidth;
+      elements.wagonLocomotive.classList.add('ava-touch-wiggle');
+      setTimeout(() => elements.wagonLocomotive.classList.remove('ava-touch-wiggle'), 600);
+      setTimeout(() => {
+        audioEngine.speak("¡Chu chú! Toca un vagón para jugar.");
+      }, 280);
+    };
+    elements.wagonLocomotive.addEventListener('click', playLocomotiveGreeting);
+    elements.wagonLocomotive.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        playLocomotiveGreeting();
+      }
     });
   }
 
-  /* --- CARRUSEL PAGINADO DEL TREN (3 ESTACIONES: 3 + 2 + 2 VAGONES) --- */
+  /* --- CARRUSEL PAGINADO DEL TREN VAN RIPER (4 ESTACIONES: 3 + 3 + 2 + 2 VAGONES) --- */
   const trainTrackContainer = document.getElementById('trainTrackContainer');
   const btnTrainPrev = document.getElementById('btnTrainPrev');
   const btnTrainNext = document.getElementById('btnTrainNext');
   const trainStationDots = document.querySelectorAll('.train-station-dot');
   const allTrainWagons = document.querySelectorAll('.train-wagon-card[data-train-page]');
   let currentTrainPage = 0;
-  const MAX_TRAIN_PAGE = 2;
+  const MAX_TRAIN_PAGE = 3;
+  let suppressTrainSwipeClick = false;
+
+  // Clips de estudio 44.1 kHz validados para guía Voice-First al cambiar de estación
+  const STATION_VOICE_PROMPTS = {
+    0: "¡Hola! Toca un vagón para jugar.",
+    1: "¡Me encanta cómo practicas! Escucha cómo vuela mi sonido y repite conmigo.",
+    2: "¡Hola amiguito! ¡Sigue jugando en el bosque sonoro!",
+    3: "¡Hola amiguito! Bienvenido al bosque sonoro. ¡Toca un vagón para empezar a jugar!"
+  };
 
   function setTrainPage(nextPage, playSound = true) {
     const clampedPage = Math.max(0, Math.min(MAX_TRAIN_PAGE, Number(nextPage) || 0));
@@ -1498,6 +2096,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // Forzar reflow ligero para reiniciar animación de rodaje sobre rieles
       void trainTrackContainer.offsetWidth;
       trainTrackContainer.classList.add(direction === 'next' ? 'anim-slide-next' : 'anim-slide-prev');
+    }
+
+    if (elements.trainConvoyHitchLeft) {
+      elements.trainConvoyHitchLeft.hidden = clampedPage <= 0;
     }
 
     allTrainWagons.forEach((wagon) => {
@@ -1525,8 +2127,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (playSound) {
+      audioEngine.stopSpeaking();
       audioEngine.playClick();
       audioEngine.playChime();
+      const stationPrompt = STATION_VOICE_PROMPTS[clampedPage];
+      if (stationPrompt) {
+        audioEngine.speak(stationPrompt);
+      }
     }
   }
 
@@ -1558,37 +2165,113 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Inicializar estado de la Estación 0 del tren
+  // Gesto táctil horizontal (Swipe izquierda/derecha) sobre el escenario del tren
+  if (elements.trainStageViewport) {
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let trackingSwipe = false;
+
+    elements.trainStageViewport.addEventListener('pointerdown', (e) => {
+      swipeStartX = e.clientX;
+      swipeStartY = e.clientY;
+      trackingSwipe = true;
+    }, { passive: true });
+
+    elements.trainStageViewport.addEventListener('pointerup', (e) => {
+      if (!trackingSwipe) return;
+      trackingSwipe = false;
+      const dx = e.clientX - swipeStartX;
+      const dy = e.clientY - swipeStartY;
+      if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+        if (dx < 0 && currentTrainPage < MAX_TRAIN_PAGE) {
+          suppressTrainSwipeClick = true;
+          setTrainPage(currentTrainPage + 1, true);
+          setTimeout(() => { suppressTrainSwipeClick = false; }, 160);
+        } else if (dx > 0 && currentTrainPage > 0) {
+          suppressTrainSwipeClick = true;
+          setTrainPage(currentTrainPage - 1, true);
+          setTimeout(() => { suppressTrainSwipeClick = false; }, 160);
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Navegación por la Mini-Vía Transversal del Tren dentro de actividades
+  if (elements.trainJourneyStrip) {
+    elements.trainJourneyStrip.querySelectorAll('.journey-node[data-journey-stage]').forEach((node) => {
+      node.addEventListener('click', () => {
+        if (!canTouch()) return;
+        const targetStage = Number(node.getAttribute('data-target-page'));
+        audioEngine.stopSpeaking();
+        audioEngine.playClick();
+        showScreen('screen-menu', 'Bosque Sonoro Amigable');
+        setTrainPage(targetStage, true);
+      });
+    });
+  }
+
+  if (elements.btnJourneyNextWagon) {
+    elements.btnJourneyNextWagon.addEventListener('click', () => {
+      if (!canTouch()) return;
+      advanceToNextVanRiperWagon();
+    });
+  }
+
+  // Inicializar estado de la Estación 0 del tren y estrellas/guía de progreso
   setTrainPage(0, false);
+  updateTrainVisualState();
 
-  elements.wagonTrabalenguas.addEventListener('click', () => {
-    if (!canTouch()) return;
-    loadExercise('trabalenguas', 0);
+  function bindWagonCardActivation(el, handler) {
+    if (!el) return;
+    el.addEventListener('click', () => {
+      if (suppressTrainSwipeClick || !canTouch()) return;
+      handler();
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!canTouch()) return;
+        handler();
+      }
+    });
+  }
+
+  bindWagonCardActivation(elements.wagonCaritas, () => {
+    openPraxiaModal(getPrimaryCalibratedPhoneme(), () => {
+      markWagonCompleted('caritas');
+    });
   });
 
-  elements.wagonRimas.addEventListener('click', () => {
-    if (!canTouch()) return;
-    loadExercise('rimas', 0);
+  bindWagonCardActivation(elements.btnOpenPairs, () => {
+    loadMinimalPair(0);
   });
 
-  elements.wagonAdivinanzas.addEventListener('click', () => {
-    if (!canTouch()) return;
-    loadExercise('adivinanzas', 0);
+  bindWagonCardActivation(elements.wagonSonidos, () => {
+    loadExercise('sonidos', 0);
   });
 
-  elements.wagonCarrera.addEventListener('click', () => {
-    if (!canTouch()) return;
+  bindWagonCardActivation(elements.wagonPalabras, () => {
+    loadExercise('palabras', 0);
+  });
+
+  bindWagonCardActivation(elements.wagonCarrera, () => {
     loadCarreraGame(0);
   });
 
-  elements.wagonBingo.addEventListener('click', () => {
-    if (!canTouch()) return;
-    loadBingoGame(0);
+  bindWagonCardActivation(elements.wagonRimas, () => {
+    loadExercise('rimas', 0);
   });
 
-  elements.btnOpenPairs.addEventListener('click', () => {
-    if (!canTouch()) return;
-    loadMinimalPair(0);
+  bindWagonCardActivation(elements.wagonAdivinanzas, () => {
+    loadExercise('adivinanzas', 0);
+  });
+
+  bindWagonCardActivation(elements.wagonTrabalenguas, () => {
+    loadExercise('trabalenguas', 0);
+  });
+
+  bindWagonCardActivation(elements.wagonBingo, () => {
+    loadBingoGame(0);
   });
 
   function openAvatarCaveScreen() {

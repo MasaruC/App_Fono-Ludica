@@ -379,8 +379,12 @@ class SpeechRecognitionService {
         }
       }
 
-      // Umbral fonoaudiológico calibrado (Strömbergsson et al., 2026): >= 0.70
-      if (bestProximity >= 0.70) {
+      // Umbral fonoaudiológico calibrado (Strömbergsson et al., 2026): >= 0.70 por defecto,
+      // ajustable por el fonoaudiólogo desde #calibAsrTolerance (0.62 | 0.70 | 0.78)
+      const simThreshold = typeof contextHint.similarityThreshold === 'number'
+        ? contextHint.similarityThreshold
+        : 0.70;
+      if (bestProximity >= simThreshold) {
         isLexicalMatch = true;
       }
     }
@@ -393,6 +397,21 @@ class SpeechRecognitionService {
         confidence: Math.max(0.88, bestProximity),
         acousticData: this.vadData,
         message: '¡Excelente pronunciación! ¡Lo hiciste genial!'
+      };
+    }
+
+    // 3B. Contingencia acústica inmediata para sonidos puros y sílabas aisladas (Etapa 1-2 Van Riper):
+    // Los motores ASR léxicos suelen devolver vacío ante fricativas/vibrantes sostenidas ("ssss", "rrrr")
+    if (contextHint.context === 'pure_sound' && !cleanRec &&
+      this.vadData.hasAcousticEffort &&
+      this.vadData.peakRms >= 0.032 &&
+      this.vadData.phonatoryDurationMs >= 300) {
+      return {
+        verdict: 'APPROVED',
+        transcript: normalizedTargets[0] || targetWord,
+        confidence: 0.86,
+        acousticData: this.vadData,
+        message: '¡Qué lindo sonó ese sonido! ¡Muy bien!'
       };
     }
 
