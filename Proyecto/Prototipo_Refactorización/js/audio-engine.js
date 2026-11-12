@@ -104,14 +104,19 @@ class PhonoAudioEngine {
       // 6. Carrera de Flores (Estaciones 1 a 5 y toques naturales sin deletreo de sinfones)
       "estación 1: pronuncia la palabra plátano para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_1.mp3",
       "flor uno: ¡plátano! escucha y repite: plátano.": basePath + "consignas/carrera_flor_1.mp3",
+      "flor 1: ¡plátano! escucha y repite: plátano.": basePath + "consignas/carrera_flor_1.mp3",
       "estación 2: pronuncia la palabra globo para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_2.mp3",
       "flor dos: ¡globo! escucha y repite: globo.": basePath + "consignas/carrera_flor_2.mp3",
+      "flor 2: ¡globo! escucha y repite: globo.": basePath + "consignas/carrera_flor_2.mp3",
       "estación 3: pronuncia la palabra tren para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_3.mp3",
       "flor tres: ¡tren! escucha y repite: tren.": basePath + "consignas/carrera_flor_3.mp3",
+      "flor 3: ¡tren! escucha y repite: tren.": basePath + "consignas/carrera_flor_3.mp3",
       "estación 4: pronuncia la palabra flor para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_4.mp3",
       "flor cuatro: ¡flor! escucha y repite: flor.": basePath + "consignas/carrera_flor_4.mp3",
+      "flor 4: ¡flor! escucha y repite: flor.": basePath + "consignas/carrera_flor_4.mp3",
       "estación 5: pronuncia la palabra dragón para que la abejita ava vuele a la flor.": basePath + "consignas/carrera_estacion_5.mp3",
       "flor cinco: ¡dragón! escucha y repite: dragón.": basePath + "consignas/carrera_flor_5.mp3",
+      "flor 5: ¡dragón! escucha y repite: dragón.": basePath + "consignas/carrera_flor_5.mp3",
       "¡genial! ¡ava voló a la siguiente flor y recolectó néctar!": basePath + "consignas/carrera_avance.mp3",
       "¡bravo amigo! ¡volaste por todo el jardín y llenaste la colmena real con néctar!": basePath + "consignas/carrera_meta.mp3",
       "¡¡bravo amigo!! ¡volaste por todo el jardín y llenaste la colmena real con néctar!": basePath + "consignas/carrera_meta.mp3",
@@ -123,6 +128,10 @@ class PhonoAudioEngine {
       "¡ahora busca y toca la tarjeta que empieza con el sonido de luna! 🌙": basePath + "consignas/bingo_round_2_luna.mp3",
       "¡toca la tarjeta que empieza con el sonido de fresa!": basePath + "consignas/bingo_round_3_fresa.mp3",
       "¡toca la tarjeta que empieza con el sonido de fresa! 🍓": basePath + "consignas/bingo_round_3_fresa.mp3",
+      "¡bingo! ¡qué gran oído tienes, completaste todo el cartón sonoro!": basePath + "consignas/bingo_win_bravo.mp3",
+      "¡bingo! ¡qué gran oído tienes!": basePath + "consignas/bingo_win_bravo.mp3",
+      "casi casi amiguito, busca con atención la tarjeta que tiene el sonido pedido.": basePath + "consignas/bingo_card_wrong.mp3",
+      "¡excelente! ¡tiene el sonido pedido! pasemos a la siguiente.": basePath + "consignas/bingo_card_correct_generic.mp3",
       "¡encuentra la tarjeta que empieza con el sonido de sol!": basePath + "consignas/bingo_round_1_sol.mp3",
       "¡excelente! ¡tiene el sonido pedido! pasemos a la siguiente.": basePath + "consignas/bingo_card_correct_generic.mp3",
       "casi casi amiguito, busca con atención la tarjeta que tiene el sonido pedido.": basePath + "consignas/bingo_card_wrong.mp3",
@@ -309,6 +318,17 @@ class PhonoAudioEngine {
       return 'assets/audio/refuerzos/reintento_suave_344.mp3';
     }
 
+    // 3. Detección semántica infalible para andamiaje fónico y refuerzos de Ava (Voz Nueva de Estudio 44.1 kHz)
+    // Andamiaje 1 (Fallo 1 / Pista empática): "casi lo tienes", "buen intento", "vocecita", "escucha cómo decimos/suena"
+    if (
+      clean.includes('casi lo tienes') ||
+      clean.includes('buen intento') ||
+      clean.includes('vocecita') ||
+      (clean.includes('escucha') && (clean.includes('decimos') || clean.includes('suena') || clean.includes('digo')))
+    ) {
+      return 'assets/audio/refuerzos/reintento_suave_344.mp3';
+    }
+
     // Andamiaje 2 y 3 (Fallo 2 / Fallo 3 / Praxia / DDA): "mira en la pantalla", "colocamos la lengua", "movemos la boca", "persistencia"
     if (
       clean.includes('colocamos la lengua') ||
@@ -335,7 +355,80 @@ class PhonoAudioEngine {
       return 'assets/audio/refuerzos/aliento_1.mp3';
     }
 
-    // 4. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
+    // 4. Carrera de Flores (Estaciones 1 a 5 y toques en flores)
+    if (clean.includes('flor') || clean.includes('estacion')) {
+      if (clean.includes('dragon') || clean.includes(' 5') || clean.includes('cinco')) return 'assets/audio/consignas/carrera_flor_5.mp3';
+      if (clean.includes('flor') && (clean.includes(' 4') || clean.includes('cuatro') || clean.endsWith('flor'))) return 'assets/audio/consignas/carrera_flor_4.mp3';
+      if (clean.includes('tren') || clean.includes(' 3') || clean.includes('tres')) return 'assets/audio/consignas/carrera_flor_3.mp3';
+      if (clean.includes('globo') || clean.includes(' 2') || clean.includes('dos')) return 'assets/audio/consignas/carrera_flor_2.mp3';
+      if (clean.includes('platano') || clean.includes(' 1') || clean.includes('uno')) return 'assets/audio/consignas/carrera_flor_1.mp3';
+    }
+
+    // 5. Trabalenguas
+    if (clean.includes('trabalenguas')) {
+      if (clean.includes('guitarra')) return 'assets/audio/consignas/trabalenguas_guitarra.mp3';
+      if (clean.includes('sapo')) return 'assets/audio/consignas/trabalenguas_sapo.mp3';
+      if (clean.includes('luna')) return 'assets/audio/consignas/trabalenguas_luna.mp3';
+    }
+
+    // 6. Rimas
+    if (clean.includes('rima')) {
+      if (clean.includes('boton')) return 'assets/audio/consignas/rima_intro_boton.mp3';
+      if (clean.includes('gato')) return 'assets/audio/consignas/rima_intro_gato.mp3';
+      if (clean.includes('estrella')) return 'assets/audio/consignas/rima_intro_estrella.mp3';
+    }
+    if (clean.includes('casi casi') && clean.includes('suene como')) {
+      if (clean.includes('boton')) return 'assets/audio/consignas/rima_casi_boton.mp3';
+      if (clean.includes('gato')) return 'assets/audio/consignas/rima_casi_gato.mp3';
+      if (clean.includes('estrella')) return 'assets/audio/consignas/rima_casi_estrella.mp3';
+    }
+
+    // 7. Adivinanzas
+    if (clean.includes('melena') || clean.includes('rujo') || clean.includes('selva')) return 'assets/audio/consignas/adiv_1_leon.mp3';
+    if (clean.includes('miel') || clean.includes('zumbidos')) return 'assets/audio/consignas/adiv_2_abeja.mp3';
+    if (clean.includes('orejas muy largas') || clean.includes('zanahoria')) return 'assets/audio/consignas/adiv_3_conejo.mp3';
+    if (clean.includes('pista especial') || clean.includes('su nombre empieza')) {
+      if (clean.includes('luna')) return 'assets/audio/consignas/adiv_clue_1.mp3';
+      if (clean.includes('avion') || clean.includes(' con a')) return 'assets/audio/consignas/adiv_clue_2.mp3';
+      if (clean.includes('casa')) return 'assets/audio/consignas/adiv_clue_3.mp3';
+    }
+
+    // 8. Bingo Sonoro
+    if (clean.includes('bingo') && (clean.includes('carton') || clean.includes('oido') || clean.includes('completaste') || clean.includes('bravo'))) {
+      return 'assets/audio/consignas/bingo_win_bravo.mp3';
+    }
+    if (clean.includes('casi casi') && (clean.includes('tarjeta') || clean.includes('atencion'))) {
+      return 'assets/audio/consignas/bingo_card_wrong.mp3';
+    }
+    if (clean.includes('excelente') && clean.includes('sonido pedido')) {
+      return 'assets/audio/consignas/bingo_card_correct_generic.mp3';
+    }
+
+    // 9. Cueva del Avatar y Premios
+    if (clean.includes('bienvenido a mi cueva') || clean.includes('tesoro para vestirme')) {
+      return 'assets/audio/avatar_cave/cave_welcome.mp3';
+    }
+    if (clean.includes('mira que linda me veo') || clean.includes('tesoros del bosque')) {
+      return 'assets/audio/avatar_cave/ava_outfit_1.mp3';
+    }
+    if (clean.includes('mira que lindo me queda') || clean.includes('probar')) {
+      return 'assets/audio/avatar_cave/cave_try_on.mp3';
+    }
+
+    // 10. Detección de palabra estímulo individual del repertorio infantil
+    const stimulusWords = [
+      'guitarra', 'raton', 'sapo', 'luna', 'lapiz', 'sol', 'pelota', 'collar',
+      'vaso', 'gato', 'casa', 'boca', 'pato', 'bota', 'dedo', 'foca', 'cama',
+      'pera', 'perro', 'boton', 'estrella', 'botella', 'tren', 'globo',
+      'platano', 'flor', 'dragon', 'fresa', 'leon', 'abeja', 'conejo', 'mesa'
+    ];
+    for (const w of stimulusWords) {
+      if (clean === w || clean === `palabra ${w}` || clean === `di ${w}` || clean === `di la palabra ${w}`) {
+        return `assets/audio/estimulos/${w}.mp3`;
+      }
+    }
+
+    // 11. Búsqueda difusa solo para consignas fraseológicas (evita que palabras estímulo aisladas como "estrella" intercepten oraciones)
     for (const [key, path] of Object.entries(this.normalizedSoundbank)) {
       if (key.includes(' ') && key.length >= 14 && (clean.includes(key) || (clean.length >= 14 && key.includes(clean)))) {
         return path;
@@ -806,13 +899,38 @@ class PhonoAudioEngine {
       return;
     }
 
-    // 3. Fallback: Web Speech API calibrada y sanitizada (nunca lee barras "/s/", corchetes "[r]" ni onomatopeyas sin vocal)
+    // 3. Salvaguarda Pediátrica: Prohibición Terminante de la "Voz Antigua" (TTS Sintético Comercial)
+    // En el entorno infantil, NUNCA disparar Microsoft Helena ni voces robóticas sintéticas de SO.
+    // Si no se especifica allowTTS explícitamente (solo reservado para herramientas clínicas adultas),
+    // Ava emite locución empática de estudio humano (reintento_suave_344.mp3) o campana armónica.
+    if (!options.allowTTS) {
+      console.warn("⚠️ [AudioEngine] Locución no encontrada en estudio humano, aplicando voz empática de Ava (cero TTS robótico):", text);
+      const fallbackAudio = new Audio('assets/audio/refuerzos/reintento_suave_344.mp3');
+      this.currentPlayingAudio = fallbackAudio;
+      fallbackAudio.onended = () => {
+        this.currentPlayingAudio = null;
+        handleEnd();
+      };
+      fallbackAudio.onerror = () => {
+        this.currentPlayingAudio = null;
+        this.playChime();
+        handleEnd();
+      };
+      fallbackAudio.play().catch(e => {
+        this.currentPlayingAudio = null;
+        this.playChime();
+        handleEnd();
+      });
+      return;
+    }
+
+    // 4. Fallback Excepcional Exclusivo para Modo Adulto/Evaluador (Permitido solo con allowTTS=true)
     if (!('speechSynthesis' in window)) {
       setTimeout(handleEnd, 1000);
       return;
     }
 
-    console.warn("⚠️ [AudioEngine] Locución fuera del banco de estudio de Ava, aplicando TTS sintético de respaldo:", text);
+    console.warn("⚠️ [AudioEngine] Locución de respaldo clínico adulto con TTS sintético:", text);
 
     const sanitizedText = String(text)
       .replace(/\/([a-záéíóúñ]{1,3})\//gi, 'el sonido $1')

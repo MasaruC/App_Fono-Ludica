@@ -1051,16 +1051,25 @@ class TelemetryEvalEngine {
       this.currentTask.ttftSec = Math.max(0.15, Number(Math.min(rawTtft, 25).toFixed(2)));
     }
 
-    // KPI-04: Detección de apoyo en Franja Palmar Inferior (56 dp / .app-footer-cushion)
-    const isPalmFooter = e.target && e.target.closest && e.target.closest('.app-footer-cushion, #palm-rest-bar');
+    // KPI-04: Detección de apoyo en Franja Palmar Inferior (césped) y Franjas Laterales (árboles en tablet)
+    const palmZoneEl = e.target && e.target.closest ? e.target.closest('.app-footer-cushion, .app-lateral-cushion, #palm-rest-bar') : null;
+    const isPalmZone = Boolean(palmZoneEl);
     const isBottomMargin = e.clientY >= (window.innerHeight - 56);
+    const isLateralMargin = e.clientX <= 72 || e.clientX >= (window.innerWidth - 72);
     const interactiveEl = e.target && e.target.closest
       ? e.target.closest('button, [role="button"], a, input, select, .touch-btn, .train-wagon-card, .pair-card, .store-item-card, .syllable-chip, .bingo-card-cell, .meadow-flower-item')
       : null;
 
-    if ((isPalmFooter || isBottomMargin) && !interactiveEl) {
+    if ((isPalmZone || isBottomMargin || isLateralMargin) && !interactiveEl) {
       this.touchStats.palmTouchesFiltered++;
-      this.logEvent('PALM_REST_FILTERED', { x: Math.round(e.clientX), y: Math.round(e.clientY) });
+      const palmZoneSide = palmZoneEl && palmZoneEl.classList.contains('app-lateral-left')
+        ? 'lateral-left'
+        : palmZoneEl && palmZoneEl.classList.contains('app-lateral-right')
+          ? 'lateral-right'
+          : isLateralMargin && !isBottomMargin
+            ? (e.clientX <= 72 ? 'lateral-left' : 'lateral-right')
+            : 'bottom-grass';
+      this.logEvent('PALM_REST_FILTERED', { x: Math.round(e.clientX), y: Math.round(e.clientY), zone: palmZoneSide });
       this.broadcastStateSnapshot('PALM_REST_FILTERED');
       return;
     }

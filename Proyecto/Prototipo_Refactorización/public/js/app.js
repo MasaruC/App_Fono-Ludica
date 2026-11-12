@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Montaje del Avatar Vectorial Dinámico Ava en todos los contextos (CUS-05 / A.10 - H10)
   avaEngine.mount('#headerAppLogo', { size: 40 });
   avaEngine.mount('#menuAvaAvatar', { size: 70 });
-  avaEngine.mount('#locomotiveAvaAvatar', { size: 64 });
+  avaEngine.mount('#locomotiveAvaAvatar', { size: 74 });
   avaEngine.mount('#exerciseAvaAvatar', { size: 122, onTap: () => window.repeatCurrentExercisePrompt && window.repeatCurrentExercisePrompt() });
   avaEngine.mount('#pairsAvaAvatar', { size: 54, onTap: () => window.repeatCurrentPairsPrompt && window.repeatCurrentPairsPrompt() });
   avaEngine.mount('#bingoAvaAvatar', { size: 58, onTap: () => window.repeatCurrentBingoPrompt && window.repeatCurrentBingoPrompt() });
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.syllableStrip.appendChild(chip);
       });
 
-      showScreen('screen-exercise', 'Trabalenguas Fonoarticulatorio');
+      showScreen('screen-exercise', 'Trabalenguas Divertidos');
       audioEngine.speak(`Vamos a jugar con el trabalenguas de la palabra ${data.word}. Toca el botón y di la palabra.`);
 
     } else if (activityType === 'rimas') {
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       elements.syllableStrip.appendChild(clueBtn);
 
-      showScreen('screen-exercise', 'Adivinanza Guiada por Voz');
+      showScreen('screen-exercise', 'Adivinanzas Mágicas');
       audioEngine.speak(data.riddleText);
     }
   }
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window.dispatchEvent(new CustomEvent('ava-celebrate'));
 
           elements.feedbackBadge.className = 'feedback-status-badge status-approved active';
-          elements.feedbackBadge.textContent = "⭐ ¡Fantástico! ¡Pronunciación aprobada!";
+          elements.feedbackBadge.textContent = "⭐ ¡Fantástico! ¡Lo dijiste genial! ✨";
           elements.micCaption.textContent = "¡Lo lograste!";
           audioEngine.speak("¡Lo hiciste genial amiguito!", () => {
             // Avanza automáticamente al siguiente ejercicio
@@ -530,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
           audioEngine.playChime();
           updateStars(1); // Estrella por persistencia / esfuerzo GL-005
           elements.feedbackBadge.className = 'feedback-status-badge status-dda active';
-          elements.feedbackBadge.textContent = "🌟 ¡Estrella por persistencia otorgada! Avanzamos juntos.";
+          elements.feedbackBadge.textContent = "🌟 ¡Qué gran esfuerzo amiguito! ¡Ganaste una estrella! 🐝✨";
           elements.micCaption.textContent = "¡Gran esfuerzo!";
 
           telemetry.addRecordedSample(currentTargetWord, `/${state.activePhoneme}/`, "DDA ASISTIDO", url, "tag-purple");
@@ -589,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.pairCardCorrect.className = 'pair-card';
     elements.pairCardFoil.className = 'pair-card';
 
-    showScreen('screen-pairs', 'Pares Mínimos y Praxias');
+    showScreen('screen-pairs', 'Juego de Caritas y Palabras');
     audioEngine.speak(pair.question);
   }
 
@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.riverStonesContainer.appendChild(flower);
     });
 
-    showScreen('screen-carrera', 'Camino de Flores Fónicas');
+    showScreen('screen-carrera', 'Camino de Flores');
     audioEngine.speak(`Estación ${currentData.step}: Pronuncia la palabra ${currentData.word} para que la abejita Ava vuele a la flor.`);
   }
 
@@ -1477,6 +1477,89 @@ document.addEventListener('DOMContentLoaded', () => {
       audioEngine.speak("¡Chu chú! Toca un vagón para jugar.");
     });
   }
+
+  /* --- CARRUSEL PAGINADO DEL TREN (3 ESTACIONES: 3 + 2 + 2 VAGONES) --- */
+  const trainTrackContainer = document.getElementById('trainTrackContainer');
+  const btnTrainPrev = document.getElementById('btnTrainPrev');
+  const btnTrainNext = document.getElementById('btnTrainNext');
+  const trainStationDots = document.querySelectorAll('.train-station-dot');
+  const allTrainWagons = document.querySelectorAll('.train-wagon-card[data-train-page]');
+  let currentTrainPage = 0;
+  const MAX_TRAIN_PAGE = 2;
+
+  function setTrainPage(nextPage, playSound = true) {
+    const clampedPage = Math.max(0, Math.min(MAX_TRAIN_PAGE, Number(nextPage) || 0));
+    const direction = clampedPage >= currentTrainPage ? 'next' : 'prev';
+    currentTrainPage = clampedPage;
+
+    if (trainTrackContainer) {
+      trainTrackContainer.setAttribute('data-active-page', String(clampedPage));
+      trainTrackContainer.classList.remove('anim-slide-next', 'anim-slide-prev');
+      // Forzar reflow ligero para reiniciar animación de rodaje sobre rieles
+      void trainTrackContainer.offsetWidth;
+      trainTrackContainer.classList.add(direction === 'next' ? 'anim-slide-next' : 'anim-slide-prev');
+    }
+
+    allTrainWagons.forEach((wagon) => {
+      const wagonPage = Number(wagon.getAttribute('data-train-page'));
+      const isVisible = wagonPage === clampedPage;
+      wagon.hidden = !isVisible;
+      wagon.classList.toggle('wagon-page-visible', isVisible);
+    });
+
+    if (btnTrainPrev) {
+      btnTrainPrev.classList.toggle('is-hidden', clampedPage <= 0);
+      btnTrainPrev.disabled = clampedPage <= 0;
+    }
+
+    if (btnTrainNext) {
+      btnTrainNext.classList.toggle('is-hidden', clampedPage >= MAX_TRAIN_PAGE);
+      btnTrainNext.disabled = clampedPage >= MAX_TRAIN_PAGE;
+    }
+
+    trainStationDots.forEach((dot) => {
+      const dotPage = Number(dot.getAttribute('data-target-page'));
+      const isActive = dotPage === clampedPage;
+      dot.classList.toggle('active', isActive);
+      dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    if (playSound) {
+      audioEngine.playClick();
+      audioEngine.playChime();
+    }
+  }
+
+  if (btnTrainPrev) {
+    btnTrainPrev.addEventListener('click', () => {
+      if (!canTouch()) return;
+      if (currentTrainPage > 0) {
+        setTrainPage(currentTrainPage - 1, true);
+      }
+    });
+  }
+
+  if (btnTrainNext) {
+    btnTrainNext.addEventListener('click', () => {
+      if (!canTouch()) return;
+      if (currentTrainPage < MAX_TRAIN_PAGE) {
+        setTrainPage(currentTrainPage + 1, true);
+      }
+    });
+  }
+
+  trainStationDots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      if (!canTouch()) return;
+      const targetPage = Number(dot.getAttribute('data-target-page'));
+      if (!Number.isNaN(targetPage) && targetPage !== currentTrainPage) {
+        setTrainPage(targetPage, true);
+      }
+    });
+  });
+
+  // Inicializar estado de la Estación 0 del tren
+  setTrainPage(0, false);
 
   elements.wagonTrabalenguas.addEventListener('click', () => {
     if (!canTouch()) return;

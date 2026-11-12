@@ -24,7 +24,7 @@ El sistema opera bajo un **Modelo Asimétrico Dual** diseñado para la interacci
 - **Condición Cognitiva:** Pre-lector estricto (etapa preoperacional piagetiana). **NO sabe leer.**
 - **Principio Fundamental:** **Voice-First y 100% No-Textual**.
   - **PROHIBIDO:** Colocar párrafos, instrucciones escritas, subtítulos extensos o etiquetas técnicas ("fonema", "articulación") en las pantallas del niño.
-  - **OBLIGATORIO:** Toda consigna debe ser guiada por la voz y animación de la mascota **Ava**, apoyada en iconografía colosal y metáforas tangibles (el tren fonético, la carrera soplada, el espejo mágico).
+  - **OBLIGATORIO:** Toda consigna debe ser guiada por la voz y animación de la mascota **Ava** (una abeja), apoyada en iconografía colosal y metáforas tangibles (el tren fonético, la carrera soplada, el espejo mágico).
 - **Ergonomía Motriz:**
   - Blancos táctiles colosales (*touch targets* $\ge 48\times 48\text{ dp}$, recomendados $64\text{ a }76\text{ px}$).
   - Separación amplia entre elementos interactivos ($\ge 16\text{ px}$) para evitar toques accidentales por motricidad fina en desarrollo.
@@ -109,5 +109,14 @@ Para asegurar la fundamentación rigurosa de cada propuesta y la coherencia en e
 2. **`diseno-ihc-metaforas-pediatricas`** ([SKILL.md](file:///d:/.Antigravity/IHC/.agents/skills/diseno-ihc-metaforas-pediatricas/SKILL.md)):
    - **Propósito:** Operacionaliza las 4 metáforas de interfaz (Visual, Funcional, Organizacional y de Interacción) para erradicar el texto en usuarios pre-lectores de 3 a 5 años (Voice-First).
    - **Ergonomía Pediátrica:** Regula los blancos táctiles (*touch targets* mínimos $\ge 48\text{ dp}$, recomendados $64\text{ a }76\text{ px}$, pulsador de fonación $80\text{ a }100\text{ px}$), separación inter-elemento $\ge 16\text{ px}$, margen palmar $24\text{ a }32\text{ px}$, gamificación no punitiva con DDA y compuerta de seguridad cognitiva (**MathGate**).
+
+3. **`voz-ava-pediatrica`** ([SKILL.md](file:///d:/.Antigravity/IHC/.agents/skills/voz-ava-pediatrica/SKILL.md)):
+   - **Propósito:** Regula la arquitectura vocal de Ava, prohíbe el uso de la "voz antigua" (TTS sintético robótico de navegador como Microsoft Helena) y prescribe el uso prioritario del Banco de Audio de Estudio Humano (44.1 kHz, Norma Lima Metropolitana).
+   - **Técnica:** Especifica el catálogo SSOT de clips de estudio (`public/assets/audio/`), el patrón mandatorio de encadenamiento secuencial (`audioEngine.speak(frase, () => audioEngine.speak(palabra))`), la prohibición de la schwa neutra `[ə]` en fonemas puros y el filtro de exclusión de voces peninsulares con ceceo en respaldos.
+
+4. **`vocabulario-infantil-preescolar`** ([SKILL.md](file:///d:/.Antigravity/IHC/.agents/skills/vocabulario-infantil-preescolar/SKILL.md)):
+   - **Propósito:** Regula el vocabulario y comunicación verbal para usuarios preescolares de 3 a 5 años (etapa preoperacional, pre-lectores).
+   - **Restricción:** Prohíbe terminantemente la jerga clínica o metalingüística (*praxias*, *fonema*, *articulación*, *estímulo*, *aprobado*, *persistencia*, *DDA*, *biofeedback*) en elementos visibles o audibles del niño. Establece la matriz de equivalencias lúdicas (*Caritas*, *Mover la lengua*, *Sonido*, *Dibujito*, *¡Lo dijiste súper bien!*), el catálogo léxico de sustantivos concretos cotidianos y la directiva de texto residual mínimo (Voice-First).
+
 
 

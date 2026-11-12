@@ -28,33 +28,33 @@ const BOSCH_MELGAR_BANK = [
 const TRABALENGUAS_DATA = [
   {
     id: "trab-1",
-    title: "Trabalenguas del Fonema /r/",
+    title: "El Loro y la Guitarra",
     targetPhoneme: "r",
     word: "Guitarra",
     icon: "🎸",
     phrase: "Erre con erre guitarra, erre con erre barril...",
     rhythmSyllables: ["E", "rre", "con", "e", "rre", "gui", "ta", "rra"],
-    hint: "Punta de la lengua arriba en el techo de la boca"
+    hint: "Sube la lengüita al techo de la boca 👅"
   },
   {
     id: "trab-2",
-    title: "Trabalenguas del Fonema /s/",
+    title: "El Sapo Saltarín",
     targetPhoneme: "s",
     word: "Sapo",
     icon: "🐸",
     phrase: "El sapo salta sobre el sauce solo...",
     rhythmSyllables: ["El", "sa", "po", "sal", "ta", "so", "bre"],
-    hint: "Sopla el aire como el viento suave entre los dientes"
+    hint: "Sopla suave como el viento entre los dientes 🌬️"
   },
   {
     id: "trab-3",
-    title: "Trabalenguas del Fonema /l/",
+    title: "La Luna Luminosa",
     targetPhoneme: "l",
     word: "Luna",
     icon: "🌙",
     phrase: "La luna luminosa ilumina la laguna...",
     rhythmSyllables: ["La", "lu", "na", "lu", "mi", "no", "sa"],
-    hint: "Pega la punta de la lengua en los dientes de arriba"
+    hint: "Pega la lengüita a los dientes de arriba ✨"
   }
 ];
 

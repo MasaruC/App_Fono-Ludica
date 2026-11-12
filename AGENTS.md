@@ -114,5 +114,9 @@ Para asegurar la fundamentación rigurosa de cada propuesta y la coherencia en e
    - **Propósito:** Regula la arquitectura vocal de Ava, prohíbe el uso de la "voz antigua" (TTS sintético robótico de navegador como Microsoft Helena) y prescribe el uso prioritario del Banco de Audio de Estudio Humano (44.1 kHz, Norma Lima Metropolitana).
    - **Técnica:** Especifica el catálogo SSOT de clips de estudio (`public/assets/audio/`), el patrón mandatorio de encadenamiento secuencial (`audioEngine.speak(frase, () => audioEngine.speak(palabra))`), la prohibición de la schwa neutra `[ə]` en fonemas puros y el filtro de exclusión de voces peninsulares con ceceo en respaldos.
 
+4. **`vocabulario-infantil-preescolar`** ([SKILL.md](file:///d:/.Antigravity/IHC/.agents/skills/vocabulario-infantil-preescolar/SKILL.md)):
+   - **Propósito:** Regula el vocabulario y comunicación verbal para usuarios preescolares de 3 a 5 años (etapa preoperacional, pre-lectores).
+   - **Restricción:** Prohíbe terminantemente la jerga clínica o metalingüística (*praxias*, *fonema*, *articulación*, *estímulo*, *aprobado*, *persistencia*, *DDA*, *biofeedback*) en elementos visibles o audibles del niño. Establece la matriz de equivalencias lúdicas (*Caritas*, *Mover la lengua*, *Sonido*, *Dibujito*, *¡Lo dijiste súper bien!*), el catálogo léxico de sustantivos concretos cotidianos y la directiva de texto residual mínimo (Voice-First).
+
 
 
